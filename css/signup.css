@@ -16,7 +16,6 @@ p{
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  overflow-x: hidden;
 }
 
 @keyframes fadeInAnimation {
@@ -49,7 +48,7 @@ body {
   width: 80%;
   height: 80%;
   overflow: hidden;
-  position: fixed;
+  position: relative;
   background-color: var(--white);
   border-radius: 15px;
   box-shadow: 0 0 30px rgba(0,0,0,0.2);
@@ -238,5 +237,66 @@ body {
 
 .switch-signup-login-msg{
   margin-top: 10px;
+}
+
+@media (max-width: 1024px) {
+  .signup-container {
+    width: 90%;
+    margin-top: 80px;
+  }
+  
+  .message {
+    font-size: 34px;
+  }
+  
+  .message span {
+    font-size: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  body{
+    background-color: var(--light);
+  }
+
+  .outer-signup-container {
+    padding: 100px 15px 30px;
+    margin: 100px 0;
+  }
+  
+  .signup-container {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+    overflow-x: scroll;
+  }
+  
+  .design {
+    min-height: 200px;
+    order: -1;
+    padding: 30px 20px;
+  }
+  
+  .form-container {
+    padding: 30px 20px;
+  }
+  
+  .message {
+    font-size: 20px;
+  }
+  
+  .message span {
+    font-size: 32px;
+  }
+  
+  .name-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .name-field .user-inputs-name {
+    width: 100%;
+  }
 }
 
