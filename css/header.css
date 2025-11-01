@@ -2,8 +2,18 @@ p {
   margin: 0;
 }
 
+:root {
+    --primary: #2c3e50;
+    --secondary: #e74c3c;
+    --accent: #3498db;
+    --light: #ecf0f1;
+    --dark: #2c3e50;
+    --text: #333;
+    --text-light: #7f8c8d;
+}
+
 .header{
-  height: 65px;
+  height: 100px;
   position: fixed;
   top: 0;
   left: 0;
@@ -12,13 +22,24 @@ p {
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid rgb(240, 240, 240);
-  background-color: #942c3c;
+  background-color: var(--primary);
   z-index: 100; /* Ensure header is above other content */
 }
 
+.header-format{
+  display: flex;
+  flex-direction: row;
+  gap:40px;
+  color: white;
+}
+
+.header-format div:hover{
+  color: var(--secondary);
+  cursor: pointer;
+}
+
 .content-section {
-  margin-left: 72px; /* To account for the sidebar */
-  margin-top: 65px;
+  margin-top: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,6 +47,8 @@ p {
   padding-bottom: 40px;
 }
 
+
+/* left section */
 .left-section {
   display: flex;
   align-items: center;
@@ -39,216 +62,134 @@ p {
   object-fit: fill;
 }
 
+.shop-name {
+  color: var(--light);
+  font-size: 24px;
+  font-family: 'Bungee', cursive;
+}
+
+
+.middle-section {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.nav-item {
+  color: var(--light);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  color: var(--secondary);
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.bottom-row{
+  margin-left: -30px;
+}
+
+
+/*right section*/
 .right-section {
   margin-right: 40px;
   display: flex;
   align-items: center;
-  gap:10px;
-  color: white;
-}
-
-.right-section i{
-  font-size: 34px;
-  margin-right: 10px;
+  gap:20px;
+  color: var(--light);
 }
 
 .right-section p{
-  font-size: 16px;
+  font-size: 14px;
   margin: 0;
   font-weight: 300;
-}
-
-.profile-pic-name-container{
-  margin:10px 0px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: left;
-  vertical-align: middle;
-  padding-bottom: 10px;
-  border-bottom: rgb(230,230,230) 2px solid;
-}
-
-.profile-pic-name-container p{
-  margin:0;
-  margin-left: 16px;
-  font-size: 20px;
-}
-
-.check-profile-buttons{
-  width:100%;
-  padding:10px;
-  background-color: white;
-  border:none;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: left;
-  padding-left: 20px;
-}
-
-.check-profile-buttons:hover, .back-to-prof-dropdown:hover{
-  background-color: rgb(247, 247, 247);
-}
-
-.check-profile-buttons i{
-  margin:0px 10px;
-  vertical-align: middle;
-  font-size: 28px;
-}
-
-#check-profile,#check-account-setting{
-  display: flex;
-  flex-direction: column;
-  flex:1;
-  position: absolute;
-  height: 230px;
-  width:230px;
-  top:100%;
-  right: 20px;
-  margin-top: 10px;
-  background-color: white;
-  border: rgb(230,230,230) solid 2px;
-  border-radius: 8px;
-  z-index: 1000;
-  box-shadow: 0px 0px 20px rgba(0,0,0, 0.1);
-  opacity: 0;
-  visibility: hidden;
-}
-
-#check-profile.visible, #check-account-setting.visible,#extended-sidebar.visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-.back-to-prof-dropdown{
-  width:36%;
-  padding:10px;
-  background-color: white;
-  border:none;
-  font-size: 16px;
-  font-weight: bold;
-  text-align: left;
-}
-
-
-.sign-in-button, .login-button {
-  display: flex;
-  align-items: center;
-  padding: 8px 10px;
-  border: 1px solid rgb(204, 204, 204);
-  border-radius: 40px;
-  background-color: white;
   cursor: pointer;
+}
+
+.profile-icon{
+  font-size: 24px;
+  text-align: center;
+  color: var(--light);
+}
+
+.cart-icon, .search-icon{
+  font-size: 20px;
+  color: var(--light);
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  cursor: pointer;
+  background-color: var(--primary);
   transition: background-color 0.3s;
-  width:130px;
-  height:44px;
+  width:40px;
+  height:40px;
+  border-radius: 100%;
 }
 
-.sign-in-button:hover {
-  background-color: rgb(247, 247, 247);
+.icon-button:hover {
+  background-color: var(--light);
+  border-color: var(--secondary);
 }
 
-.sidebar {
-  width: 72px;
-  background-color: white;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  top: 65px;
-  border-right: 2px solid rgb(240, 240, 240);
-  z-index: 200;
+.right-section button:hover .profile-icon,
+.right-section button:hover .cart-icon,
+.right-section button:hover .search-icon {
+  color: var(--primary);
 }
 
-.sidebar-link {
+.icon-container{
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding-top: 15px;
-  padding-bottom: 15px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.sidebar-link:hover {
-  background-color: rgb(247, 247, 247);
-}
-
-.sidebar-link i {
-  font-size: 26px;
-}
-
-.sidebar-link p {
-  font-size: 11px;
-  margin-top: 8px;
-  font-weight: bold;
-}
-
-.sidebar-link:hover {
-  background-color: #942c3c;
-}
-
-.sidebar-link:hover p , .sidebar-link:hover i{
-    color:antiquewhite;
-}
-
-#rules-reg-label{
-  align-items: center;
   text-align: center;
+  gap:6px;
 }
 
-/*@media (min-width: 1200.1px) {
-.sidebar {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  top: 65px;
-  background-color: white;
-  width: 220px;
-  z-index: 200;
+.right-section .icon-container:hover p {
+  color: var(--secondary);
 }
 
-.content-section{
-  margin-left: 220px;
-}
-
-.sidebar-link {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: left;
-  padding: 18px 12px;
-  cursor: pointer;
-}
-
-.sidebar-link i {
-  margin-left: 12px;
-  width: 24px;
-  text-align: center;
-}
-
-.fa-house, .fa-file, .fa-rectangle-list, .fa-magnifying-glass, .sidebar-link .fa-desktop {
-  margin-left: 12px !important;
-}
-
-.sidebar-link .fa-desktop{
-  margin-top:5px;
-}
-
-.sidebar-link p {
-  font-family: Roboto, Arial;
-  font-size: 16px;
-  margin-left: 30px;
-}
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 15px;
+  }
   
+  .nav-row {
+    gap: 20px;
+  }
+  
+  .nav-item {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .right-section {
+    gap: 20px;
+  }
 
-#report-label{
-  margin-left: 26px;
+  
 }
-
-#help-label{
-  margin-left: 28px;
-}
-}
-
-*/
