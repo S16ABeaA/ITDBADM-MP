@@ -43,10 +43,9 @@
   gap:20px;
 }
 
-.logo-img{
-  width: 60px;
-  height: 60px;
-  object-fit: fill;
+.logo-icon{
+  color: white;
+  font-size: 24px;
 }
 
 .shop-name {
