@@ -25,6 +25,7 @@
       <div class="hp-product-row">
         <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingball1.png">
+          <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Ball
           </h5>
@@ -35,6 +36,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingball1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Ball
           </h5>
@@ -45,6 +47,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingball1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Ball
           </h5>
@@ -55,6 +58,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingball1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Ball
           </h5>
@@ -65,6 +69,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingball1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Ball hwrb hiewbqjebrifvjerbfiherbr
           </h5>
@@ -85,6 +90,7 @@
       <div class="hp-product-row">
         <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Shoes
           </h5>
@@ -95,6 +101,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Shoes
           </h5>
@@ -105,6 +112,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Shoes
           </h5>
@@ -115,6 +123,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Shoes
           </h5>
@@ -125,6 +134,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Shoes
           </h5>
@@ -145,6 +155,7 @@
       <div class="hp-product-row">
         <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Bag
           </h5>
@@ -155,6 +166,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Bag
           </h5>
@@ -165,6 +177,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Bag
           </h5>
@@ -175,6 +188,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Bag
           </h5>
@@ -185,6 +199,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Bowling Bag
           </h5>
@@ -205,6 +220,7 @@
       <div class="hp-product-row">
         <div class="hp-product-container">
           <img class="hp-product-image" src="./images/wristsupport.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Wrist Support
           </h5>
@@ -215,6 +231,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/wristsupport.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Wrist Support
           </h5>
@@ -225,6 +242,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/wristsupport.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Wrist Support
           </h5>
@@ -235,6 +253,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/gloves.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Gloves
           </h5>
@@ -245,6 +264,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/gloves.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Gloves
           </h5>
@@ -265,6 +285,7 @@
       <div class="hp-product-row">
         <div class="hp-product-container">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Cleaning Supplies
           </h5>
@@ -275,6 +296,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Cleaning Supplies
           </h5>
@@ -285,6 +307,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Cleaning Supplies
           </h5>
@@ -295,6 +318,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Cleaning Supplies
           </h5>
@@ -305,6 +329,7 @@
 
          <div class="hp-product-container">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
+           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
             Cleaning Supplies
           </h5>

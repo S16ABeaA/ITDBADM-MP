@@ -101,6 +101,17 @@ h5, h2{
   background-color: #f8f9fa;
 }
 
+.sold-out{
+  position: absolute;
+  background-color: var(--primary);
+  color: var(--white);
+  padding: 6px 10px;
+  border-radius: 20px;
+  margin-top: 130px;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
 .product-info {
   flex: 1;
   display: flex;
