@@ -96,8 +96,12 @@ body {
   text-align: center;
 }
 
-.signup, .login {
+.login {
   margin-bottom: 20px;
+  color: var(--dark);
+}
+.signup{
+  margin-bottom: 10px;
   color: var(--dark);
 }
 
