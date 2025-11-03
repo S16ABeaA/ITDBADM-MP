@@ -1,4 +1,37 @@
 <?php include("header.html")?>
+<?php require_once 'dependencies/config.php'; ?>
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
+    $firstName = trim($_POST["firstname"]);
+    $lastName = trim($_POST["lastname"]);
+    $email = trim($_POST["user-email"]);
+    $contact = trim($_POST["user-cell-no"]);
+    $password = trim($_POST["signup-password"]);
+    $confirmPassword = trim($_POST["confirm-password-input"]);
+
+    // Basic validation again for safety
+    if ($password !== $confirmPassword) {
+        echo "<script>alert('Passwords do not match!');</script>";
+    } else {
+        // Hash the password for security
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Use prepared statement to prevent SQL injection
+        $stmt = $conn->prepare("INSERT INTO users (FirstName, LastName, Email, MobileNumber, Password) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $firstName, $lastName, $email, $contact, $hashedPassword);
+
+        if ($stmt->execute()) {
+            echo "<script>alert('Account successfully created! You can now log in.');</script>";
+        } else {
+            echo "<script>alert('Error: " . $stmt->error . "');</script>";
+        }
+
+        $stmt->close();
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -23,15 +56,6 @@
                 <input id="login-email" name="login-email" type="text" placeholder="Email"/>
                 <i class="fa-solid fa-circle-exclamation login-warning" style="color: #ff6f61;"></i>
               </div> 
-
-              <div class="role-dropdown">
-                <label for="signup-role">Role:</label>
-                <select id="signup-role" name="signup-role" required class="role-pick">
-                  <option value="user">User</option>
-                  <option value="staff">Staff</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
 
               <div class="input-container">
                 <input id="login-password" name="login-password" type="password" placeholder="Password"/>
@@ -73,15 +97,6 @@
               <div class="input-container">
                 <input id="user-cell-no" name="user-cell-no" class="user-inputs" type="text" placeholder="Contact No."/>
                 <i class="fa-solid fa-circle-exclamation signup-warning" style="color: #ff6f61;"></i>
-              </div>
-
-              <div class="role-dropdown">
-                <label for="signup-role">Role:</label>
-                <select id="signup-role" name="signup-role" required class="role-pick">
-                  <option value="user">User</option>
-                  <option value="staff">Staff</option>
-                  <option value="admin">Admin</option>
-                </select>
               </div>
 
               <div class="input-container">
