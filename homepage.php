@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/main.css?v=1.1">
   <link rel="stylesheet" href="./css/homepage.css?v=1.1">
-  <title>Homepage</title>
+  <link rel="stylesheet" href="./css/main.css?v=1.1">
+  <title>Homepage | AnimoBowl</title>
 </head>
 <body>
   <div class="content-section">
@@ -23,7 +23,7 @@
     <div class="bowling-ball-section">
       <h2>Bowling Ball</h2>
       <div class="hp-product-row">
-        <div class="hp-product-container">
+        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingball1.png">
           <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -34,7 +34,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container"  onclick="location.href= 'product-page.php'">>
           <img class="hp-product-image" src="./images/bowlingball1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -45,7 +45,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingball1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -56,7 +56,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingball1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -67,7 +67,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingball1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -79,7 +79,7 @@
         </div>
       </div>
       <div class="display-view-btn">
-        <button class="view-more-btn">
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
           View More
         </button>
       </div>
@@ -88,7 +88,7 @@
     <div class="bowling-shoes-section">
       <h2>Bowling Shoes</h2>
       <div class="hp-product-row">
-        <div class="hp-product-container">
+        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -99,7 +99,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -110,7 +110,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -121,7 +121,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -132,7 +132,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingshoes1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -144,7 +144,7 @@
         </div>
       </div>
       <div class="display-view-btn">
-        <button class="view-more-btn">
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
           View More
         </button>
       </div>
@@ -153,7 +153,7 @@
     <div class="bowling-bag-section">
       <h2>Bowling Bag</h2>
       <div class="hp-product-row">
-        <div class="hp-product-container">
+        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -164,7 +164,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -175,7 +175,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -186,7 +186,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -197,7 +197,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingbag1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -209,7 +209,7 @@
         </div>
       </div>
       <div class="display-view-btn">
-        <button class="view-more-btn">
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
           View More
         </button>
       </div>
@@ -218,7 +218,7 @@
     <div class="bowling-accessories-section">
       <h2>Bowling Accessories</h2>
       <div class="hp-product-row">
-        <div class="hp-product-container">
+        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/wristsupport.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -229,7 +229,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/wristsupport.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -240,7 +240,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/wristsupport.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -251,7 +251,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/gloves.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -262,7 +262,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/gloves.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -274,7 +274,7 @@
         </div>
       </div>
       <div class="display-view-btn">
-        <button class="view-more-btn">
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
           View More
         </button>
       </div>
@@ -283,7 +283,7 @@
     <div class="cleaning-supplies-section">
       <h2>Cleaning Supplies</h2>
       <div class="hp-product-row">
-        <div class="hp-product-container">
+        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -294,7 +294,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -305,7 +305,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -316,7 +316,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -327,7 +327,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container">
+         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/cleaningsupplies.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">
@@ -339,7 +339,7 @@
         </div>
       </div>
       <div class="display-view-btn">
-        <button class="view-more-btn">
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
           View More
         </button>
       </div>

@@ -21,6 +21,9 @@ h5, h2{
   max-width: 1200px;
   margin: 0 auto;
   margin-top: 100px;
+  align-items: center;
+  min-height: calc(100vh - 65px); /* Ensures the welcome section is centered */
+  padding-bottom: 40px;
 }
 
 .welcome {
@@ -31,6 +34,7 @@ h5, h2{
   margin: 50px 0; 
   margin-top: 100px;
   padding: 20px; 
+  text-align: center;
 }
 
 .get-started-button {
