@@ -39,7 +39,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
     <title>Signup | Login</title>
       <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/login-signup.css?v=1.1">
-    <link rel="stylesheet" href="./css/main.css?v=1.1">
   </head>
   <body>
 

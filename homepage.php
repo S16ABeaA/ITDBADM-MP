@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/homepage.css?v=1.1">
-  <link rel="stylesheet" href="./css/main.css?v=1.1">
   <title>Homepage | AnimoBowl</title>
 </head>
 <body>

@@ -50,7 +50,6 @@ $current_products = array_slice($products, $start_index, $items_per_page);
   <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <link rel="stylesheet" href="./css/main.css?v=1.1">
   <link rel="stylesheet" href="./css/view-all-products.css?v=1.1">
   <title>Bowling Balls - Page <?php echo $current_page; ?></title>
 </head>
