@@ -33,7 +33,7 @@
           </h2>
         </div>
 
-         <div class="hp-product-container"  onclick="location.href= 'product-page.php'">>
+         <div class="hp-product-container"  onclick="location.href= 'product-page.php'">
           <img class="hp-product-image" src="./images/bowlingball1.png">
            <div class="sold-out">SOLD OUT</div>
           <h5 class="hp-product-name">

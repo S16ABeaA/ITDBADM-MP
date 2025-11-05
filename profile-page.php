@@ -71,6 +71,97 @@
       </div>
     </div>
 
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderDetailsModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Order Details</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="order-summary">
+            <div class="order-header">
+              <div class="order-id">Order #: <span id="modalOrderId">ORD-123456</span></div>
+              <div class="order-date">Order Date: <span id="modalOrderDate">Oct 12, 2023</span></div>
+              <div class="order-status">Status: <span id="modalOrderStatus" class="status-delivered">Delivered</span></div>
+            </div>
+            
+            <div class="order-items">
+              <h4>Items Ordered</h4>
+              <div class="order-item">
+                <div class="item-image">
+                  <img src="./images/bowlingball1.png" alt="Ball">
+                </div>
+                <div class="item-details">
+                  <div class="item-name">Professional Bowling Ball</div>
+                  <div class="item-price">₱1129.99</div>
+                  <div class="item-quantity">Quantity: 1</div>
+                </div>
+                <div class="item-total">₱1129.99</div>
+              </div>
+              
+              <div class="order-item">
+                <div class="item-image">
+                  <img src="./images/bowlingbag1.png" alt="Bag">
+                </div>
+                <div class="item-details">
+                  <div class="item-name">Premium Bowling Bag</div>
+                  <div class="item-price">₱1199.99</div>
+                  <div class="item-quantity">Quantity: 1</div>
+                </div>
+                <div class="item-total">₱1199.99</div>
+              </div>
+            </div>
+            
+            <div class="order-totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₱2329.98</span>
+              </div>
+              <div class="total-row">
+                <span>Shipping:</span>
+                <span>₱59.99</span>
+              </div>
+              <div class="total-row">
+                <span>Tax:</span>
+                <span>₱128.00</span>
+              </div>
+              <div class="total-row grand-total">
+                <span>Total:</span>
+                <span>₱2517.97</span>
+              </div>
+            </div>
+            
+            <div class="shipping-info">
+              <h4>Shipping Information</h4>
+              <div class="shipping-details">
+                <p><strong>User One</strong></p>
+                <p>123 Main Street</p>
+                <p>Manila, MNL 1000</p>
+                <p>Phone: 1234 567 8910</p>
+                <p>Email: user.one@example.com</p>
+              </div>
+            </div>
+            
+            <div class="tracking-info">
+              <h4>Tracking Information</h4>
+              <div class="tracking-details">
+                <div class="tracking-number">
+                  <strong>Tracking Number:</strong> TRK-789456123
+                </div>
+                <div class="tracking-carrier">
+                  <strong>Carrier:</strong> LBC Express
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="closeOrderModal">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Account Details Tab -->
     <div class="tab-content" id="account">
       <div class="account-details-section">
@@ -293,134 +384,211 @@
       });
     });
 
-    // Order view buttons
-    document.querySelectorAll('.order button').forEach(button => {
-      button.addEventListener('click', () => {
-        alert('Order details would be displayed here');
-      });
-    });
-
 
     // Change Password Modal functionality
-const changePasswordBtn = document.getElementById('changePasswordBtn');
-const changePasswordModal = document.getElementById('changePasswordModal');
-const closeModal = document.querySelector('.close');
-const cancelPasswordChange = document.getElementById('cancelPasswordChange');
-const changePasswordForm = document.getElementById('changePasswordForm');
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    const closeModal = document.querySelector('.close');
+    const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+    const changePasswordForm = document.getElementById('changePasswordForm');
 
-// Open modal
-changePasswordBtn.addEventListener('click', () => {
-  changePasswordModal.style.display = 'block';
-});
-
-// Close modal functions
-function closePasswordModal() {
-  changePasswordModal.style.display = 'none';
-  // Clear form fields and reset validation
-  changePasswordForm.reset();
-}
-
-closeModal.addEventListener('click', closePasswordModal);
-cancelPasswordChange.addEventListener('click', closePasswordModal);
-
-// Close modal when clicking outside
-window.addEventListener('click', (event) => {
-  if (event.target === changePasswordModal) {
-    closePasswordModal();
-  }
-});
-
-// Handle form submission
-changePasswordForm.addEventListener('submit', (event) => {
-  event.preventDefault(); // Prevent default form submission
-  
-  const currentPassword = document.getElementById('currentPassword').value;
-  const newPassword = document.getElementById('newPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  
-  // Enhanced validation
-  if (newPassword !== confirmPassword) {
-    alert('New passwords do not match');
-    document.getElementById('confirmPassword').focus();
-    return;
-  }
-  
-  if (newPassword.length < 8) {
-    alert('New password must be at least 8 characters long');
-    document.getElementById('newPassword').focus();
-    return;
-  }
-  
-  // Here you would typically make an API call to change the password
-  console.log('Password change requested');
-  console.log('Current:', currentPassword);
-  console.log('New:', newPassword);
-  
-  // Simulate successful password change
-  alert('Password changed successfully!');
-  closePasswordModal();
-});
-
-
-
-    // Payment method type selection
-    document.querySelectorAll('.payment-type-option').forEach(option => {
-      option.addEventListener('click', () => {
-        document.querySelectorAll('.payment-type-option').forEach(o => {
-          o.classList.remove('selected');
-        });
-        option.classList.add('selected');
-      });
+    // Open modal
+    changePasswordBtn.addEventListener('click', () => {
+      changePasswordModal.style.display = 'block';
     });
 
-    // Set default payment method
-function setupPaymentMethodListeners() {
-  // Remove existing listeners first
-  document.querySelectorAll('.set-default').forEach(link => {
-    link.replaceWith(link.cloneNode(true));
-  });
-  
-  // Add new listeners to all "Set as Default" links
-  document.querySelectorAll('.set-default').forEach(link => {
-    link.addEventListener('click', function() {
-      // Reset ALL payment cards
-      document.querySelectorAll('.payment-card').forEach(card => {
-        card.classList.remove('default');
-        const statusElement = card.querySelector('.card-details span:last-child');
-        if (statusElement) {
-          statusElement.textContent = 'Set as Default';
-          statusElement.className = 'set-default';
-        }
-      });
+    // Close modal functions
+    function closePasswordModal() {
+      changePasswordModal.style.display = 'none';
+      // Clear form fields and reset validation
+      changePasswordForm.reset();
+    }
+
+    closeModal.addEventListener('click', closePasswordModal);
+    cancelPasswordChange.addEventListener('click', closePasswordModal);
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === changePasswordModal) {
+        closePasswordModal();
+      }
+    });
+
+    // Handle form submission
+    changePasswordForm.addEventListener('submit', (event) => {
+      event.preventDefault(); // Prevent default form submission
       
-      // Set new default
-      const clickedCard = this.closest('.payment-card');
-      clickedCard.classList.add('default');
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
       
-      // Update status
-      const statusElement = clickedCard.querySelector('.card-details span:last-child');
-      if (statusElement) {
-        statusElement.textContent = 'Default';
-        statusElement.className = 'default-badge';
+      if (newPassword !== confirmPassword) {
+        alert('New passwords do not match');
+        document.getElementById('confirmPassword').focus();
+        return;
       }
       
-      // Re-setup listeners for the new state
-      setupPaymentMethodListeners();
+      if (newPassword.length < 8) {
+        alert('New password must be at least 8 characters long');
+        document.getElementById('newPassword').focus();
+        return;
+      }
+      
+      console.log('Password change requested');
+      console.log('Current:', currentPassword);
+      console.log('New:', newPassword);
+      
+      
+      alert('Password changed successfully!');
+      closePasswordModal();
+    });
+
+
+
+        // Payment method type selection
+        document.querySelectorAll('.payment-type-option').forEach(option => {
+          option.addEventListener('click', () => {
+            document.querySelectorAll('.payment-type-option').forEach(o => {
+              o.classList.remove('selected');
+            });
+            option.classList.add('selected');
+          });
+        });
+
+        // Set default payment method
+    function setupPaymentMethodListeners() {
+      // Remove existing listeners first
+      document.querySelectorAll('.set-default').forEach(link => {
+        link.replaceWith(link.cloneNode(true));
+      });
+      
+      // Add new listeners to all "Set as Default" links
+      document.querySelectorAll('.set-default').forEach(link => {
+        link.addEventListener('click', function() {
+          // Reset ALL payment cards
+          document.querySelectorAll('.payment-card').forEach(card => {
+            card.classList.remove('default');
+            const statusElement = card.querySelector('.card-details span:last-child');
+            if (statusElement) {
+              statusElement.textContent = 'Set as Default';
+              statusElement.className = 'set-default';
+            }
+          });
+          
+          // Set new default
+          const clickedCard = this.closest('.payment-card');
+          clickedCard.classList.add('default');
+          
+          // Update status
+          const statusElement = clickedCard.querySelector('.card-details span:last-child');
+          if (statusElement) {
+            statusElement.textContent = 'Default';
+            statusElement.className = 'default-badge';
+          }
+          
+          // Re-setup listeners for the new state
+          setupPaymentMethodListeners();
+        });
+      });
+    }
+
+    // Initial setup
+    setupPaymentMethodListeners();
+
+        // Remove payment method
+        document.querySelectorAll('.remove-card').forEach(link => {
+          link.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove this payment method?')) {
+              link.closest('.payment-card').remove();
+            }
+          });
+        });
+
+
+    // Order Details Modal functionality
+function setupOrderDetailsModal() {
+  const orderDetailsModal = document.getElementById('orderDetailsModal');
+  const closeOrderModal = document.getElementById('closeOrderModal');
+  const closeBtn = orderDetailsModal.querySelector('.close');
+  
+  // Function to open modal with order data
+  function openOrderDetailsModal(orderData) {
+    // Populate modal with order data
+    document.getElementById('modalOrderId').textContent = orderData.id;
+    document.getElementById('modalOrderDate').textContent = orderData.date;
+    document.getElementById('modalOrderStatus').textContent = orderData.status;
+    document.getElementById('modalOrderStatus').className = `status-${orderData.status.toLowerCase()}`;
+    
+    // Show modal
+    orderDetailsModal.style.display = 'block';
+  }
+  
+  // Function to close modal
+  function closeOrderModalFunc() {
+    orderDetailsModal.style.display = 'none';
+  }
+  
+  // Close modal events
+  closeOrderModal.addEventListener('click', closeOrderModalFunc);
+  closeBtn.addEventListener('click', closeOrderModalFunc);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (event) => {
+    if (event.target === orderDetailsModal) {
+      closeOrderModalFunc();
+    }
+  });
+  
+  // Update existing order button listeners to use the modal
+  document.querySelectorAll('.order button').forEach((button, index) => {
+    button.addEventListener('click', () => {
+      // Sample order data - in real app, this would come from your data source
+      const sampleOrders = [
+        {
+          id: 'ORD-789456',
+          date: 'Oct 12, 2023',
+          status: 'Delivered',
+          items: [
+            { name: 'Professional Bowling Ball', price: 1129.99, quantity: 1, image: './images/bowlingball1.png' }
+          ],
+          subtotal: 1129.99,
+          shipping: 59.99,
+          tax: 67.20,
+          total: 1257.18
+        },
+        {
+          id: 'ORD-123456',
+          date: 'Oct 5, 2023',
+          status: 'Shipped',
+          items: [
+            { name: 'Premium Bowling Bag', price: 1199.99, quantity: 1, image: './images/bowlingbag1.png' }
+          ],
+          subtotal: 1199.99,
+          shipping: 59.99,
+          tax: 71.40,
+          total: 1331.38
+        },
+        {
+          id: 'ORD-456123',
+          date: 'Sep 28, 2023',
+          status: 'Delivered',
+          items: [
+            { name: 'Cleaning Supplies', price: 334.99, quantity: 1, image: './images/cleaningsupplies.png' }
+          ],
+          subtotal: 334.99,
+          shipping: 59.99,
+          tax: 19.80,
+          total: 414.78
+        }
+      ];
+      
+      openOrderDetailsModal(sampleOrders[index]);
     });
   });
 }
 
-// Initial setup
-setupPaymentMethodListeners();
-
-    // Remove payment method
-    document.querySelectorAll('.remove-card').forEach(link => {
-      link.addEventListener('click', () => {
-        if (confirm('Are you sure you want to remove this payment method?')) {
-          link.closest('.payment-card').remove();
-        }
-      });
-    });
+// Initialize the modal when page loads
+document.addEventListener('DOMContentLoaded', setupOrderDetailsModal);
   </script>
 </body>
 </html>
