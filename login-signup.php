@@ -1,47 +1,40 @@
 <?php include("header.html")?>
 <?php require_once 'dependencies/config.php'; ?>
 
-<?php
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
-    $firstName = trim($_POST["firstname"]);
-    $lastName = trim($_POST["lastname"]);
-    $email = trim($_POST["user-email"]);
-    $contact = trim($_POST["user-cell-no"]);
-    $password = trim($_POST["signup-password"]);
-    $confirmPassword = trim($_POST["confirm-password-input"]);
-
-    // Basic validation again for safety
-    if ($password !== $confirmPassword) {
-        echo "<script>alert('Passwords do not match!');</script>";
-    } else {
-        // Hash the password for security
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        // Use prepared statement to prevent SQL injection
-        $stmt = $conn->prepare("INSERT INTO users (FirstName, LastName, Email, MobileNumber, Password) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $firstName, $lastName, $email, $contact, $hashedPassword);
-
-        if ($stmt->execute()) {
-            echo "<script>alert('Account successfully created! You can now log in.');</script>";
-        } else {
-            echo "<script>alert('Error: " . $stmt->error . "');</script>";
-        }
-
-        $stmt->close();
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html>
   <head>
     <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Signup | Login</title>
       <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/login-signup.css?v=1.1">
   </head>
   <body>
 
+    <?php
+    // Handle login errors
+    if (isset($_GET['error'])) {
+        echo '<script>
+            $(document).ready(function() {
+                showLogin(); // Show login form
+                ';
+        
+        switch ($_GET['error']) {
+            case 'invalid':
+                echo 'showLoginError("Invalid email or password.");';
+                break;
+            case 'locked':
+                echo 'showLoginError("Too many login attempts. Please try again later.");';
+                break;
+            default:
+                echo 'showLoginError("An error occurred. Please try again.");';
+        }
+        
+        echo '});
+        </script>';
+    }
+    ?>
     <div class="outer-signup-container">
       <div class="signup-container">
         <!-- Form Section -->
@@ -50,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
           <div class="form-content" id="login-box" style="display: none;">
             <h1 class="login">Login</h1>
 
-            <form id="login-form" method="post" action="MemberSignup.php">
+            <form id="login-form" method="post" action="user_login.php">
               <div class="input-container">
                 <input id="login-email" name="login-email" type="text" placeholder="Email"/>
                 <i class="fa-solid fa-circle-exclamation login-warning" style="color: #ff6f61;"></i>
@@ -74,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
           <!-- Signup Form -->
           <div class="form-content" id="signup-box">
             <h1 class="signup">Sign Up</h1>
-            <form id="signup-form" method="post" action="">
+            <form id="signup-form" method="post" action="user_signup.php">
               <div class="input-container">
                 <div class="name-container">
                   <div class="name-field">
