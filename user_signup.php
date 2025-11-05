@@ -9,13 +9,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
     $password = trim($_POST["signup-password"]);
     $confirmPassword = trim($_POST["confirm-password-input"]);
 
-    // password match
-    if ($password !== $confirmPassword) {
+    if ($password !== $confirmPassword) { // passwords do not match
         header("Location: login-signup.php?show=signup&error=nomatch");
         exit();
     }
 
-    // email already exists
     $check = $conn->prepare("SELECT Email FROM users WHERE Email = ?");
     $check->bind_param("s", $email);
     $check->execute();

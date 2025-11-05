@@ -1,5 +1,7 @@
-<?php include("header.html")?>
-<?php require_once 'dependencies/config.php'; ?>
+<?php 
+include("header.html");
+require_once 'dependencies/config.php'; 
+?>
 
 <!DOCTYPE html>
 <html>
