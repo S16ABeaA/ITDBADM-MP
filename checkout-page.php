@@ -109,9 +109,9 @@
             </label>
             
             <label class="payment-method">
-              <input type="radio" name="payment" value="paypal">
-              <i class="fab fa-cc-paypal payment-icon"></i>
-              <span>PayPal</span>
+              <input type="radio" name="payment" value="online">
+              <i class="fas fa-wallet payment-icon"></i>
+              <span>Online</span>
             </label>
             
             <label class="payment-method">
