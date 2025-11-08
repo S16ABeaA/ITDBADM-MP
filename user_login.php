@@ -62,19 +62,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
-
-        // Instead of redirecting immediately, output HTML with JS alert
-        echo '<!DOCTYPE html>
-        <html>
-        <head>
-            <title>Login Successful</title>
-            <script>
-                alert("Login Successful!\\nUser ID: '.$_SESSION['user_id'].'\\nName: '.$_SESSION['user_name'].'\\nEmail: '.$_SESSION['user_email'].'");
-                window.location.href = "homepage.php"; // redirect after alert
-            </script>
-        </head>
-        <body></body>
-        </html>';
         exit();
     }
 
