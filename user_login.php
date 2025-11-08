@@ -35,7 +35,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
 
     $login_successful = false;
     if ($user) {
-        $login_successful = password_verify($password, $user['Password']);
+        $stored = $user['Password'];
+
+        $is_hashed = preg_match('/^\$2y\$|^\$2a\$|^\$2b\$/', $stored);
+
+        if ($is_hashed) {
+            $login_successful = password_verify($password, $stored);
+        } else {
+            if (hash_equals((string)$stored, (string)$password)) {
+                $login_successful = true;
+
+                $newHash = password_hash($password, PASSWORD_DEFAULT);
+                $update = $conn->prepare("UPDATE users SET Password = ? WHERE UserID = ?");
+                if ($update) {
+                    $update->bind_param("si", $newHash, $user['UserID']);
+                    $update->execute();
+                    $update->close();
+                }
+            }
+        }
     }
 
     if ($login_successful) {
@@ -43,13 +61,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
-        
+
+        $stmt->close();
         header("Location: homepage.php");
         exit();
-    } else {
-        header("Location: login-signup.php?error=invalid");
-        exit();
     }
+
     $stmt->close();
+    header("Location: login-signup.php?error=invalid");
+    exit();
 }
 ?>
