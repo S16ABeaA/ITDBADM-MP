@@ -1,353 +1,241 @@
-<?php include("header.html");?>
+<?php 
+require_once 'dependencies/session.php';
+require_once 'dependencies/config.php';
+include("header.html");
+?>
 <!DOCTYPE html>
 <html>
 <head>
   <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/homepage.css?v=1.1">
   <title>Homepage | AnimoBowl</title>
 </head>
 <body>
   <div class="content-section">
-    <div class="welcome">
-        Welcome To AnimoBowl
-      </div>
-     <button class="get-started-button" 
-      onclick="location.href = 'login-signup.php'">Sign up now</button>
+    <div class="welcome">Welcome To AnimoBowl</div>
+    <?php if (!isset($_SESSION['user_id'])): ?>
+      <button class="get-started-button" onclick="location.href='login-signup.php'">Sign up now</button>
+    <?php endif; ?>
 
+    <!-- Bowling Balls -->
     <div class="bowling-ball-section">
       <h2>Bowling Ball</h2>
-      <div class="hp-product-row">
-        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingball1.png">
-          <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Ball
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+      <?php
+        $sql = "
+            SELECT DISTINCT
+                p.ProductID,
+                p.ImageID,
+                b.Name,
+                p.Price,
+                i.Quantity
+            FROM product p
+            JOIN bowlingball b ON p.ProductID = b.ProductID
+            JOIN inventory i ON p.ProductID = i.ProductID
+            ORDER BY p.ProductID ASC
+            LIMIT 5;
+        ";
 
-         <div class="hp-product-container"  onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingball1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Ball
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+        if ($result = $conn->query($sql)) {
+            echo '<div class="hp-product-row">';
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['ProductID'];
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
+                $price = htmlspecialchars($row['Price']);
+                $quantity = (int)$row['Quantity'];
+                $soldOut = ($quantity <= 0);
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingball1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Ball
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingball1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Ball
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingball1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Ball hwrb hiewbqjebrifvjerbfiherbr
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-      </div>
+                echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
+                echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+                if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
+                echo '  <h5 class="hp-product-name">' . $name . '</h5>';
+                echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+      ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
-          View More
-        </button>
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
       </div>
     </div>
 
+    <!-- Bowling Shoes -->
     <div class="bowling-shoes-section">
       <h2>Bowling Shoes</h2>
-      <div class="hp-product-row">
-        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingshoes1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Shoes
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+      <?php
+        $sql = "
+          SELECT DISTINCT
+              p.ProductID,
+              p.ImageID,
+              s.Name,
+              p.Price,
+              i.Quantity
+          FROM product p
+          JOIN bowlingshoes s ON p.ProductID = s.ProductID
+          JOIN inventory i ON p.ProductID = i.ProductID
+          ORDER BY p.ProductID ASC
+          LIMIT 5;
+        ";
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingshoes1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Shoes
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+        if ($result = $conn->query($sql)) {
+            echo '<div class="hp-product-row">';
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['ProductID'];
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
+                $price = htmlspecialchars($row['Price']);
+                $quantity = (int)$row['Quantity'];
+                $soldOut = ($quantity <= 0);
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingshoes1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Shoes
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingshoes1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Shoes
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingshoes1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Shoes
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-      </div>
+                echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
+                echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+                if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
+                echo '  <h5 class="hp-product-name">' . $name . '</h5>';
+                echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+      ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
-          View More
-        </button>
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
       </div>
     </div>
 
+    <!-- Bowling Bags -->
     <div class="bowling-bag-section">
       <h2>Bowling Bag</h2>
-      <div class="hp-product-row">
-        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingbag1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Bag
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+      <?php
+        $sql = "
+          SELECT DISTINCT
+              p.ProductID,
+              p.ImageID,
+              g.Name,
+              p.Price,
+              i.Quantity
+          FROM product p
+          JOIN bowlingbag g ON p.ProductID = g.ProductID
+          JOIN inventory i ON p.ProductID = i.ProductID
+          ORDER BY p.ProductID ASC
+          LIMIT 5;
+        ";
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingbag1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Bag
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+        if ($result = $conn->query($sql)) {
+            echo '<div class="hp-product-row">';
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['ProductID'];
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
+                $price = htmlspecialchars($row['Price']);
+                $quantity = (int)$row['Quantity'];
+                $soldOut = ($quantity <= 0);
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingbag1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Bag
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingbag1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Bag
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/bowlingbag1.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Bowling Bag
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-      </div>
+                echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
+                echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+                if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
+                echo '  <h5 class="hp-product-name">' . $name . '</h5>';
+                echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+      ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
-          View More
-        </button>
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
       </div>
     </div>
 
+    <!-- Bowling Accessories -->
     <div class="bowling-accessories-section">
       <h2>Bowling Accessories</h2>
-      <div class="hp-product-row">
-        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/wristsupport.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Wrist Support
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+      <?php
+        $sql = "
+          SELECT DISTINCT
+              p.ProductID,
+              p.ImageID,
+              a.Name,
+              p.Price,
+              i.Quantity
+          FROM product p
+          JOIN bowlingaccessories a ON p.ProductID = a.ProductID
+          JOIN inventory i ON p.ProductID = i.ProductID
+          ORDER BY p.ProductID ASC
+          LIMIT 5;
+        ";
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/wristsupport.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Wrist Support
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+        if ($result = $conn->query($sql)) {
+            echo '<div class="hp-product-row">';
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['ProductID'];
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
+                $price = htmlspecialchars($row['Price']);
+                $quantity = (int)$row['Quantity'];
+                $soldOut = ($quantity <= 0);
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/wristsupport.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Wrist Support
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/gloves.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Gloves
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/gloves.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Gloves
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-      </div>
+                echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
+                echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+                if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
+                echo '  <h5 class="hp-product-name">' . $name . '</h5>';
+                echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+      ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
-          View More
-        </button>
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
       </div>
     </div>
 
+    <!-- Cleaning Supplies -->
     <div class="cleaning-supplies-section">
       <h2>Cleaning Supplies</h2>
-      <div class="hp-product-row">
-        <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/cleaningsupplies.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Cleaning Supplies
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+      <?php
+        $sql = "
+          SELECT DISTINCT
+              p.ProductID,
+              p.ImageID,
+              c.Name,
+              p.Price,
+              i.Quantity
+          FROM product p
+          JOIN cleaningsupplies c ON p.ProductID = c.ProductID
+          JOIN inventory i ON p.ProductID = i.ProductID
+          ORDER BY p.ProductID ASC
+          LIMIT 5;
+        ";
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/cleaningsupplies.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Cleaning Supplies
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
+        if ($result = $conn->query($sql)) {
+            echo '<div class="hp-product-row">';
+            while ($row = $result->fetch_assoc()) {
+                $id = (int)$row['ProductID'];
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
+                $price = htmlspecialchars($row['Price']);
+                $quantity = (int)$row['Quantity'];
+                $soldOut = ($quantity <= 0);
 
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/cleaningsupplies.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Cleaning Supplies
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/cleaningsupplies.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Cleaning Supplies
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-
-         <div class="hp-product-container" onclick="location.href= 'product-page.php'">
-          <img class="hp-product-image" src="./images/cleaningsupplies.png">
-           <div class="sold-out">SOLD OUT</div>
-          <h5 class="hp-product-name">
-            Cleaning Supplies
-          </h5>
-          <h2 class="hp-product-price">
-            P1159.99
-          </h2>
-        </div>
-      </div>
+                echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
+                echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+                if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
+                echo '  <h5 class="hp-product-name">' . $name . '</h5>';
+                echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
+                echo '</div>';
+            }
+            echo '</div>';
+        }
+      ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">
-          View More
-        </button>
+        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
       </div>
     </div>
-
 
   </div>
 </body>
-
 </html>
-
-<?php include("footer.html");?>
+<?php include("footer.html"); ?>

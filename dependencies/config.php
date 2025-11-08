@@ -10,8 +10,6 @@ try {
 
     if ($conn->connect_error) {
         throw new Exception("Connection failed: " . $conn->connect_error);
-    } else {
-        echo "Connected successfully";
     }
 } catch (Exception $e) {
     die("ERROR: Could not connect to the database. " . $e->getMessage());
