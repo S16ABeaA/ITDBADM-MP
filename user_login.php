@@ -57,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
     }
 
     if ($login_successful) {
+        session_start();
         $_SESSION['login_attempts'] = 0;
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_name'] = $user['FirstName'];

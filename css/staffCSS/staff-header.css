@@ -1,0 +1,154 @@
+:root {
+  --primary: #2c3e50;
+  --secondary: #e74c3c;
+  --accent: #3498db;
+  --light: #ecf0f1;
+  --dark: #2c3e50;
+  --text: #333;
+  --text-light: #7f8c8d;
+  --white: #ffffff;
+  --border: #ddd;
+  --success: #2ecc71;
+}
+
+.header{
+  height: 100px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgb(240, 240, 240);
+  background-color: var(--primary);
+  z-index: 100; /* Ensure header is above other content */
+}
+
+.header-format{
+  display: flex;
+  flex-direction: row;
+  gap:40px;
+  color: white;
+}
+
+.header-format div:hover{
+  color: var(--secondary);
+  cursor: pointer;
+}
+
+/* left section */
+.left-section {
+  display: flex;
+  align-items: center;
+  margin-left: 36px;
+  gap:20px;
+}
+
+.logo-icon{
+  color: white;
+  font-size: 24px;
+}
+
+.shop-name {
+  color: var(--light);
+  font-size: 24px;
+  font-family: 'Bungee', cursive;
+}
+
+
+.middle-section {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-row {
+  display: flex;
+  justify-content: center;
+}
+
+.nav-item {
+  color: var(--light);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  color: var(--secondary);
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.bottom-row{
+  margin-left: -30px;
+}
+
+
+/*right section*/
+.right-section {
+  margin-right: 40px;
+  display: flex;
+  align-items: center;
+  gap:20px;
+  color: var(--light);
+}
+
+.right-section p{
+  font-size: 14px;
+  margin: 0;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.profile-icon{
+  font-size: 24px;
+  text-align: center;
+  color: var(--light);
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  cursor: pointer;
+  background-color: var(--primary);
+  transition: background-color 0.3s;
+  width:40px;
+  height:40px;
+  border-radius: 100%;
+}
+
+.icon-button:hover {
+  background-color: var(--light);
+  border-color: var(--secondary);
+}
+
+.right-section button:hover .profile-icon{
+  color: var(--primary);
+}
+
+.icon-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap:6px;
+}
+
+.right-section .icon-container:hover p {
+  color: var(--secondary);
+}
