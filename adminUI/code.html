@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Staff Dashboard - Product Management</title>
+  <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link href="../css/adminCSS/admin-homepage.css" rel="stylesheet">
+</head>
+<body>
+<!-- modal for adding and editing currency -->
+<div class="modal currency-modal" id="currencyModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New Currency</h2>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="currencyForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="currencyCode" class="required">Currency Code</label>
+            <input type="text" id="currencyCode" name="currencyCode" placeholder="e.g., USD, EUR, JPY" maxlength="3" required>
+          </div>
+          <div class="form-group">
+            <label for="exchangeRate" class="required">Rate</label>
+            <input type="number" id="exchangeRate" name="exchangeRate" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="currencyModalCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="currencyModalSubmitBtn">Add Currency</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- modal for adding and editing branch -->
+<div class="modal branch-modal" id="branchModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New Branch</h2>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="branchForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="branchName" class="required">Branch Name</label>
+            <input type="text" id="branchName" name="branchName" placeholder="e.g., Downtown, West Mall, East Side" required>
+          </div>
+          <div class="form-group">
+            <label for="branchCity" class="required">City</label>
+            <input type="text" id="branchCity" name="branchCity" placeholder="e.g., Manila, Quezon City" required>
+          </div>
+          <div class="form-group">
+            <label for="branchStreet" class="required">Street</label>
+            <input type="text" id="branchStreet" name="branchStreet" placeholder="e.g., Taft Ave, Main Street" required>
+          </div>
+          <div class="form-group">
+            <label for="branchZipCode" class="required">Zip Code</label>
+            <input type="text" id="branchZipCode" name="branchZipCode" placeholder="e.g., 1000" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="branchModalCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="branchModalSubmitBtn">Add Branch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- modal for adding and editing address -->
+<div class="modal address-modal" id="addressModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New Address</h2>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="addressForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="addressCity" class="required">City</label>
+            <input type="text" id="addressCity" name="addressCity" placeholder="e.g., Manila, Quezon City" required>
+          </div>
+          <div class="form-group">
+            <label for="addressStreet" class="required">Street</label>
+            <input type="text" id="addressStreet" name="addressStreet" placeholder="e.g., Taft Ave, Main Street" required>
+          </div>
+          <div class="form-group">
+            <label for="addressZipCode" class="required">Zip Code</label>
+            <input type="text" id="addressZipCode" name="addressZipCode" placeholder="e.g., 1000" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="addressModalCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="addressModalSubmitBtn">Add Address</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- modal for adding and editing services -->
+<div class="modal services-modal" id="servicesModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New Service</h2>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="servicesForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="serviceName" class="required">Service ID</label>
+            <input type="text" id="serviceName" name="serviceName" placeholder="e.g., Ball Drilling, Ball Polishing, Lane Maintenance" required>
+          </div>
+          <div class="form-group">
+            <label for="serviceType" class="required">Service Type</label>
+            <select id="serviceType" name="serviceType" required>
+              <option value="">Select Type</option>
+              <option value="Drilling">Drilling</option>
+              <option value="Polishing">Polishing</option>
+              <option value="Repair">Repair</option>
+              
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="servicePrice" class="required">Price (₱)</label>
+            <input type="number" id="servicePrice" name="servicePrice" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="serviceStaff" class="required">Assigned Staff</label>
+            <select id="serviceStaff" name="serviceStaff" required>
+              <option value="">Select Staff</option>
+              <option value="Made">Made</option>
+              <option value="Juan">Juan</option>
+              <option value="Maria">Maria</option>
+              <option value="Pedro">Pedro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="serviceAvailability" class="required">Availability</label>
+            <select id="serviceAvailability" name="serviceAvailability" required>
+              <option value="">Select Availability</option>
+              <option value="Available">Available</option>
+              <option value="Unavailable">Unavailable</option>
+              <option value="Limited">Limited</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="serviceDescription" class="required">Service Description</label>
+            <textarea id="serviceDescription" name="serviceDescription" placeholder="Describe the service in detail, what it includes, requirements, etc..." required></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="servicesModalCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="servicesModalSubmitBtn">Add Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- modal for adding and editing users -->
+<div class="modal users-modal" id="usersModal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New User</h2>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="usersForm">
+        <div class="form-grid">
+          <!-- Personal Information -->
+          <div class="form-group">
+            <label for="userFirstName" class="required">First Name</label>
+            <input type="text" id="userFirstName" name="userFirstName" placeholder="e.g., John" required>
+          </div>
+          <div class="form-group">
+            <label for="userLastName" class="required">Last Name</label>
+            <input type="text" id="userLastName" name="userLastName" placeholder="e.g., Smith" required>
+          </div>
+          <div class="form-group">
+            <label for="userEmail" class="required">Email</label>
+            <input type="email" id="userEmail" name="userEmail" placeholder="e.g., john.smith@email.com" required>
+          </div>
+          <div class="form-group">
+            <label for="userPhone" class="required">Phone Number</label>
+            <input type="tel" id="userPhone" name="userPhone" placeholder="e.g., +63 912 345 6789" required>
+          </div>
+          
+          <!-- Account Information -->
+          <div class="form-group">
+            <label for="userRole" class="required">Role</label>
+            <select id="userRole" name="userRole" required>
+              <option value="">Select Role</option>
+              <option value="Administrator">Administrator</option>
+              <option value="Staff">Staff</option>
+              <option value="Manager">Manager</option>
+              <option value="Customer">Customer</option>
+            </select>
+          </div>
+          
+          <!-- Address Information -->
+          <div class="form-group">
+            <label for="userCity" class="required">City</label>
+            <input type="text" id="userCity" name="userCity" placeholder="e.g., Manila" required>
+          </div>
+          <div class="form-group">
+            <label for="userStreet" class="required">Street</label>
+            <input type="text" id="userStreet" name="userStreet" placeholder="e.g., 123 Main Street" required>
+          </div>
+          <div class="form-group">
+            <label for="userZipCode" class="required">Zip Code</label>
+            <input type="text" id="userZipCode" name="userZipCode" placeholder="e.g., 1000" required>
+          </div>     
+          <div class="form-group">
+            <label for="userStatus" class="required">Status</label>
+            <select id="userStatus" name="userStatus" required>
+              <option value="">Select Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="usersModalCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="usersModalSubmitBtn">Add User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>
