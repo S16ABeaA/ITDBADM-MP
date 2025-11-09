@@ -4,6 +4,11 @@ require_once 'dependencies/config.php';
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $productID = (int)$_GET['id'];
+    
+    // debugging log - delete this later
+    echo "<script>
+            console.log('productID fetched: ', " . json_encode($productID) . ");
+          </script>";
 } else {
     die("<script>alert('Invalid product ID.'); window.location.href='homepage.php';</script>");
 }
@@ -29,6 +34,12 @@ foreach ($tables as $tableName => $sqlCheck) {
         $productCategory = $tableName;
         $categoryData = $result->fetch_assoc();
         $stmt->close();
+
+        // debugging log - delete this later
+        echo "<script>
+                console.log('categoryData fetched: ', " . json_encode($categoryData) . ");
+              </script>";
+
         break;
     }
     $stmt->close();
@@ -46,7 +57,8 @@ $sql = "
         p.ImageID,
         IFNULL(SUM(i.Quantity), 0) AS Quantity
     FROM product p
-    LEFT JOIN inventory i ON p.ProductID = i.ProductID
+    JOIN product_variant pv ON p.ProductID = pv.ProductID
+    JOIN inventory i ON pv.VariantID = i.VariantID
     WHERE p.ProductID = ?
     GROUP BY p.ProductID
     LIMIT 1
