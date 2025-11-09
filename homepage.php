@@ -31,9 +31,10 @@ include("header.html");
                 b.Name,
                 p.Price,
                 i.Quantity
-            FROM product p
-            JOIN bowlingball b ON p.ProductID = b.ProductID
-            JOIN inventory i ON p.ProductID = i.ProductID
+            FROM bowlingball b
+            JOIN product p ON b.ProductID = p.ProductID
+            JOIN product_variant pv ON p.ProductID = pv.ProductID 
+            JOIN inventory i ON pv.VariantID = i.VariantID
             ORDER BY p.ProductID ASC
             LIMIT 5;
         ";
@@ -71,14 +72,15 @@ include("header.html");
           SELECT DISTINCT
               p.ProductID,
               p.ImageID,
-              s.Name,
+              bs.Name,
               p.Price,
               i.Quantity
-          FROM product p
-          JOIN bowlingshoes s ON p.ProductID = s.ProductID
-          JOIN inventory i ON p.ProductID = i.ProductID
-          ORDER BY p.ProductID ASC
-          LIMIT 5;
+          FROM bowlingshoes bs
+            JOIN product p ON bs.ProductID = p.ProductID
+            JOIN product_variant pv ON p.ProductID = pv.ProductID 
+            JOIN inventory i ON pv.VariantID = i.VariantID
+            ORDER BY p.ProductID ASC
+            LIMIT 5;
         ";
 
         if ($result = $conn->query($sql)) {
@@ -114,21 +116,22 @@ include("header.html");
           SELECT DISTINCT
               p.ProductID,
               p.ImageID,
-              g.Name,
+              bb.Name,
               p.Price,
               i.Quantity
-          FROM product p
-          JOIN bowlingbag g ON p.ProductID = g.ProductID
-          JOIN inventory i ON p.ProductID = i.ProductID
-          ORDER BY p.ProductID ASC
-          LIMIT 5;
+          FROM bowlingbag bb
+            JOIN product p ON bb.ProductID = p.ProductID
+            JOIN product_variant pv ON p.ProductID = pv.ProductID 
+            JOIN inventory i ON pv.VariantID = i.VariantID
+            ORDER BY p.ProductID ASC
+            LIMIT 5;
         ";
 
         if ($result = $conn->query($sql)) {
             echo '<div class="hp-product-row">';
             while ($row = $result->fetch_assoc()) {
                 $id = (int)$row['ProductID'];
-                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
+                $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.jpg');
                 $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
                 $price = htmlspecialchars($row['Price']);
                 $quantity = (int)$row['Quantity'];
@@ -157,14 +160,15 @@ include("header.html");
           SELECT DISTINCT
               p.ProductID,
               p.ImageID,
-              a.Name,
+              ba.Name,
               p.Price,
               i.Quantity
-          FROM product p
-          JOIN bowlingaccessories a ON p.ProductID = a.ProductID
-          JOIN inventory i ON p.ProductID = i.ProductID
-          ORDER BY p.ProductID ASC
-          LIMIT 5;
+          FROM bowlingaccessories ba
+            JOIN product p ON ba.ProductID = p.ProductID
+            JOIN product_variant pv ON p.ProductID = pv.ProductID 
+            JOIN inventory i ON pv.VariantID = i.VariantID
+            ORDER BY p.ProductID ASC
+            LIMIT 5;
         ";
 
         if ($result = $conn->query($sql)) {
@@ -203,11 +207,12 @@ include("header.html");
               c.Name,
               p.Price,
               i.Quantity
-          FROM product p
-          JOIN cleaningsupplies c ON p.ProductID = c.ProductID
-          JOIN inventory i ON p.ProductID = i.ProductID
-          ORDER BY p.ProductID ASC
-          LIMIT 5;
+          FROM cleaningsupplies c
+            JOIN product p ON c.ProductID = p.ProductID
+            JOIN product_variant pv ON p.ProductID = pv.ProductID 
+            JOIN inventory i ON pv.VariantID = i.VariantID
+            ORDER BY p.ProductID ASC
+            LIMIT 5;
         ";
 
         if ($result = $conn->query($sql)) {
