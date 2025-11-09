@@ -1,4 +1,7 @@
-<?php include('staff-header.html')?>
+<?php 
+require_once '../dependencies/config.php';
+include('staff-header.html');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +26,7 @@
       </div>
     </div>
 
+  
     <!-- Stats Overview -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -32,6 +36,9 @@
         <div class="stat-number">156</div>
         <div class="stat-label">Total Products</div>
       </div>
+      <?php
+      $lowstockquery; 
+      ?>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-check-circle"></i>
@@ -136,22 +143,47 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Sample Data Row 1 -->
+          <?php
+          $query = "SELECT DISTINCT bb.Name AS bbname, br.Name AS brandname, bb.Type AS bbtype, bb.Quality AS bbquality, w.weight AS weight, bb.CoreName AS corename, bb.CoreType AS coretype, w.RG AS rg, w.DIFF AS diff, w.INTDIFF AS intdiff, bb.Coverstock AS coverstock, bb.CoverstockType AS coverstocktype, pr.Price AS price, SUM(i.Quantity) AS quantity
+                    FROM weight w JOIN bowlingball bb ON w.ProductID = bb.ProductID
+                    JOIN product pr ON bb.ProductID = pr.ProductID
+                    JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                    JOIN brand br ON pr.BrandID = br.BrandID
+                    JOIN inventory i ON pv.VariantID = i.VariantID
+                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, w.weight, bb.CoreName, bb.CoreType, w.RG, w.DIFF, w.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pv.VariantID;";
+          $result = $conn->query($query);
+          while ($row = $result->fetch_assoc()){
+            $bbName = $row['bbname'];
+            $brand = $row['brandname'];
+            $type = $row['bbtype'];
+            $quality = $row['bbquality'];
+            $weight = $row['weight'];
+            $coreName = $row['corename'];
+            $coreType = $row['coretype'];
+            $rg = $row['rg'];
+            $diff = $row['diff'];
+            $intDiff = $row['intdiff'];
+            $coverstock = $row['coverstock'];
+            $coverstockType = $row['coverstocktype'];
+            $price = $row['price'];
+            $quantity = $row['quantity'];
+          ?>
+  
           <tr>
-            <td>Phantom</td>
-            <td>Storm</td>
-            <td>Reactive</td>
-            <td>Professional</td>
-            <td>15 lbs</td>
-            <td>Radial Core</td>
-            <td>Asymmetric</td>
-            <td>2.48</td>
-            <td>0.050</td>
-            <td>0.015</td>
-            <td>NRG Hybrid</td>
-            <td>Hybrid</td>
-            <td>₱8,129.99</td>
-            <td>15</td>
+            <td><?php echo $bbName;?></td>
+            <td><?php echo $brand;?></td>
+            <td><?php echo $type;?></td>
+            <td><?php echo $quality;?></td>
+            <td><?php echo $weight;?></td>
+            <td><?php echo $coreName;?></td>
+            <td><?php echo $coreType;?></td>
+            <td><?php echo $rg;?></td>
+            <td><?php echo $diff;?></td>
+            <td><?php echo $intDiff;?></td>
+            <td><?php echo $coverstock;?></td>
+            <td><?php echo $coverstockType;?></td>
+            <td><?php echo $price;?></td>
+            <td><?php echo $quantity;?></td>
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
@@ -160,163 +192,7 @@
                 </button>
               </div>
             </td>
-          </tr>
-          
-          <!-- Sample Data Row 2 -->
-          <tr>
-            <td>Game Breaker 4</td>
-            <td>Ebonite</td>
-            <td>Reactive</td>
-            <td>Performance</td>
-            <td>15 lbs</td>
-            <td>GB4 Core</td>
-            <td>Symmetric</td>
-            <td>2.50</td>
-            <td>0.045</td>
-            <td>0.010</td>
-            <td>GB 4.0</td>
-            <td>Pearl</td>
-            <td>₱7,899.99</td>
-            <td>8</td>
-            <td><span class="tstatus-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="2">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          
-          <!-- Sample Data Row 3 -->
-          <tr>
-            <td>Black Widow 2.0</td>
-            <td>Hammer</td>
-            <td>Reactive</td>
-            <td>Professional</td>
-            <td>16 lbs</td>
-            <td>Gas Mask Core</td>
-            <td>Asymmetric</td>
-            <td>2.53</td>
-            <td>0.052</td>
-            <td>0.018</td>
-            <td>Aggression Solid</td>
-            <td>Solid</td>
-            <td>₱8,499.99</td>
-            <td>3</td>
-            <td><span class="tstatus-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="3">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          
-          <!-- Sample Data Row 4 -->
-          <tr>
-            <td>Kingpin Rule</td>
-            <td>Brunswick</td>
-            <td>Reactive</td>
-            <td>Performance</td>
-            <td>14 lbs</td>
-            <td>Ultimate Rule</td>
-            <td>Symmetric</td>
-            <td>2.51</td>
-            <td>0.040</td>
-            <td>0.008</td>
-            <td>Momentum Pearl</td>
-            <td>Pearl</td>
-            <td>₱7,299.99</td>
-            <td>0</td>
-            <td><span class="tstatus-badge status-inactive">Out of Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="4">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          
-          <!-- Sample Data Row 5 -->
-          <tr>
-            <td>Hyped Hybrid</td>
-            <td>Storm</td>
-            <td>Reactive</td>
-            <td>Entry</td>
-            <td>13 lbs</td>
-            <td>Centripetal Core</td>
-            <td>Symmetric</td>
-            <td>2.56</td>
-            <td>0.035</td>
-            <td>0.005</td>
-            <td>FE2 Hybrid</td>
-            <td>Hybrid</td>
-            <td>₱5,999.99</td>
-            <td>22</td>
-            <td><span class="tstatus-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="5">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Sample Data Row 6 -->
-          <tr>
-            <td>Rhino Pro</td>
-            <td>Hammer</td>
-            <td>Urethane</td>
-            <td>Performance</td>
-            <td>15 lbs</td>
-            <td>Gas Mask Core</td>
-            <td>Symmetric</td>
-            <td>2.55</td>
-            <td>0.030</td>
-            <td>0.006</td>
-            <td>Urethane</td>
-            <td>Solid</td>
-            <td>₱6,499.99</td>
-            <td>12</td>
-            <td><span class="tstatus-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="6">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Sample Data Row 7 -->
-          <tr>
-            <td>Tropical Surge</td>
-            <td>Storm</td>
-            <td>Pearl</td>
-            <td>Entry</td>
-            <td>12 lbs</td>
-            <td>Centripetal Core</td>
-            <td>Symmetric</td>
-            <td>2.58</td>
-            <td>0.025</td>
-            <td>0.004</td>
-            <td>FE2 Pearl</td>
-            <td>Pearl</td>
-            <td>₱4,999.99</td>
-            <td>7</td>
-            <td><span class="tstatus-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="7">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+          </tr><?php }?>
         </tbody>
       </table>
     </div>
@@ -337,15 +213,32 @@
           </tr>
         </thead>
         <tbody>
-          
+          <?php
+          $bgquery = "SELECT DISTINCT bg.Name as bgname, br.Name as brandname, c.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM color c JOIN bowlingbag bg ON c.ProductID = bg.ProductID
+                      JOIN product pr ON bg.ProductID = pr.ProductID
+                      JOIN brand br ON pr.BrandID = br.BrandID
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY bg.Name, br.Name, c.color, bg.Size, bg.Type, pr.Price, pv.VariantID";
+          $bgresult = $conn->query($bgquery);
+          while($bgrow = $bgresult->fetch_assoc()){
+            $bgname = $bgrow['bgname'];
+            $brname = $bgrow['brandname'];
+            $bgcolor = $bgrow['color'];
+            $bgsize = $bgrow['size'];
+            $bgtype = $bgrow['bgtype'];
+            $bgprice = $bgrow['price'];
+            $bgquantity = $bgrow['quantity'];
+          ?>
           <tr>
-            <td>Tournament Roller Pro</td>
-            <td>Storm</td>
-            <td>Black/Red</td>
-            <td>Roller Bag</td>
-            <td>3-Ball</td>
-            <td>₱4,299.99</td>
-            <td>12</td>
+            <td><?php echo $bgname;?></td>
+            <td><?php echo $brname;?></td>
+            <td><?php echo $bgcolor;?></td>
+            <td><?php echo $bgtype;?></td>
+            <td><?php echo $bgsize;?></td>
+            <td><?php echo $bgprice;?></td>
+            <td><?php echo $bgquantity;?></td>
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
@@ -354,43 +247,7 @@
                 </button>
               </div>
             </td>
-          </tr>
-
-          <tr>
-            <td>Elite Tote Deluxe</td>
-            <td>Brunswick</td>
-            <td>Navy Blue/Silver</td>
-            <td>Tote Bag</td>
-            <td>2-Ball</td>
-            <td>₱2,899.99</td>
-            <td>8</td>
-            <td><span class="tstatus-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="102">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Compact Single Bag</td>
-            <td>Motiv</td>
-            <td>Charcoal Gray</td>
-            <td>Single Bag</td>
-            <td>1-Ball</td>
-            <td>₱1,499.99</td>
-            <td>3</td>
-            <td><span class="tstatus-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="103">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+          </tr><?php }?>
         </tbody>
       </table>
     </div>
@@ -410,13 +267,30 @@
           </tr>
         </thead>
         <tbody>
+          <?php
+          $bsquery = "SELECT DISTINCT bs.Name as bsname, br.Name as brandname, s.size as size, s.sex as sex, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM size s JOIN bowlingshoes bs ON s.ProductID = bs.ProductID
+                      JOIN product pr ON bs.ProductID = pr.ProductID
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN brand br ON pr.BrandID = br.BrandID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY bs.Name, br.Name, s.size, s.sex, pr.Price, pv.VariantID";   
+          $bsresult = $conn->query($bsquery);
+          while($bsrow = $bsresult->fetch_assoc()){
+            $bsname = $bsrow['bsname'];
+            $brname = $bsrow['brandname'];
+            $bssize = $bsrow['size'];
+            $bssex = $bsrow['sex'];
+            $bsprice = $bsrow['price'];
+            $bsquantity = $bsrow['quantity'];
+          ?> 
            <tr>
-            <td>Tournament Roller Pro</td>
-            <td>Storm</td>
-            <td>S</td>
-            <td>Male</td>
-            <td>₱4,299.99</td>
-            <td>12</td>
+            <td><?php echo $bsname;?></td>
+            <td><?php echo $brname;?></td>
+            <td><?php echo $bssize;?></td>
+            <td><?php echo $bssex;?></td>
+            <td><?php echo $bsprice;?></td>
+            <td><?php echo $bsquantity;?></td>
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
@@ -425,41 +299,7 @@
                 </button>
               </div>
             </td>
-          </tr>
-
-          <tr>
-            <td>Elite Tote Deluxe</td>
-            <td>Brunswick</td>
-            <td>L</td>
-            <td>Male</td>
-            <td>₱2,899.99</td>
-            <td>8</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="102">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Compact Single Bag</td>
-            <td>Motiv</td>
-            <td>XL</td>
-            <td>Male</td>
-            <td>₱1,499.99</td>
-            <td>3</td>
-            <td><span class="status-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="103">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+          </tr> <?php } ?>
         </tbody>
       </table>
     </div>
@@ -479,13 +319,30 @@
           </tr>
         </thead>
         <tbody>
+          <?php
+          $baquery = "SELECT DISTINCT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
+                      JOIN brand br ON pr.BrandID = br.BrandID
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pv.VariantID";
+
+          $baresult = $conn->query($baquery);
+          while($barow = $baresult->fetch_assoc()){
+            $baname = $barow['baname'];
+            $brname = $barow['brandname'];
+            $batype = $barow['batype'];
+            $bahandedness = $barow['bahandedness'];
+            $baprice = $barow['price'];
+            $baquantity = $barow['quantity'];
+          ?>
            <tr>
-            <td>Grip</td>
-            <td>Storm</td>
-            <td>Grip</td>
-            <td>Right</td>
-            <td>₱1,299.99</td>
-            <td>12</td>
+            <td><?php echo $baname;?></td>
+            <td><?php echo $brname;?></td>
+            <td><?php echo $batype;?></td>
+            <td><?php echo $bahandedness;?></td>
+            <td><?php echo $baprice;?></td>
+            <td><?php echo $baquantity;?></td>
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
@@ -494,41 +351,7 @@
                 </button>
               </div>
             </td>
-          </tr>
-
-          <tr>
-            <td>Elite Tote Deluxe</td>
-            <td>Brunswick</td>
-            <td>Grip</td>
-            <td>Right</td>
-            <td>₱2,899.99</td>
-            <td>8</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="102">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Compact Single Bag</td>
-            <td>Motiv</td>
-            <td>Grip</td>
-            <td>Left</td>
-            <td>₱1,499.99</td>
-            <td>3</td>
-            <td><span class="status-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="103">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+          </tr><?php }?>
         </tbody>
       </table>
     </div>
@@ -547,12 +370,27 @@
           </tr>
         </thead>
         <tbody>
+          <?php
+          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
+                      JOIN brand br ON pr.BrandID = br.BrandID
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pv.VariantID";
+          $csresult = $conn->query($csquery);
+          while($csrow = $csresult->fetch_assoc()){
+            $csname = $csrow['csname'];
+            $brname = $csrow['brandname'];
+            $cstype = $csrow['cstype'];
+            $csprice = $csrow['price'];
+            $csquantity = $csrow['quantity'];
+          ?>
            <tr>
-            <td>Towel</td>
-            <td>Storm</td>
-            <td>Towel</td>
-            <td>₱299.99</td>
-            <td>12</td>
+            <td><?php echo $csname;?></td>
+            <td><?php echo $brname;?></td>
+            <td><?php echo $cstype;?></td>
+            <td><?php echo $csprice;?></td>
+            <td><?php echo $csquantity;?></td>
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
@@ -561,39 +399,7 @@
                 </button>
               </div>
             </td>
-          </tr>
-
-          <tr>
-            <td>Pads</td>
-            <td>Brunswick</td>
-            <td>Pads</td>
-            <td>₱2,899.99</td>
-            <td>8</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="102">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td>Cleaner</td>
-            <td>Motiv</td>
-            <td>Cleaner</td>
-            <td>₱1,499.99</td>
-            <td>3</td>
-            <td><span class="status-badge status-low-stock">Low Stock</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="103">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+          </tr><?php }?>
         </tbody>
       </table>
     </div>
