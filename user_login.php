@@ -57,11 +57,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
     }
 
     if ($login_successful) {
-        session_start();
         $_SESSION['login_attempts'] = 0;
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
+        $_SESSION['user_role'] = $user['role'];
+        if (isset($user['role']) && strtolower($user['role']) === 'staff') {
+            header("Location: staffUI/staff-homepage.php");
+        } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
+            header("Location: admin-homepage.php");
+        } else {
+            header("Location: homepage.php");
+        }
         exit();
     }
 
