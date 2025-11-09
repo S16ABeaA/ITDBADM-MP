@@ -1,4 +1,8 @@
-<?php include("header.html")?>
+<?php 
+require_once 'dependencies/session.php';
+require_once 'dependencies/config.php';
+include("header.html")
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +23,7 @@
       <div class="user-info">
         <div class="name">User 1</div>
         <div class="email">user.one@example.com</div>
+        <button id="logoutBtn" class="btn-logout">Logout</button>
       </div>
     </div>
 
@@ -362,6 +367,10 @@
   </div>
 
   <script>
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        window.location.href = 'user_logout.php';
+    });
+
     // Tab functionality
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {

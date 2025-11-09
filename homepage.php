@@ -60,7 +60,7 @@ include("header.html");
         }
       ?>
       <div class="display-view-btn">
-        <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
+        <button class="view-more-btn" onclick="location.href='view-all-bowlingball.php'">View More</button>
       </div>
     </div>
 
