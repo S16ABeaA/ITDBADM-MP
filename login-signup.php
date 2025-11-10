@@ -1,6 +1,6 @@
 <?php 
-include("header.html");
 require_once 'dependencies/config.php'; 
+include("header.html");
 ?>
 
 <!DOCTYPE html>

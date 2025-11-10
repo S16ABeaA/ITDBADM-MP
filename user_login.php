@@ -62,16 +62,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
         $_SESSION['user_role'] = $user['role'];
-        if (isset($user['role']) && strtolower($user['role']) === 'staff') {
-            header("Location: staffUI/staff-homepage.php");
-        } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
-            header("Location: admin-homepage.php");
+        
+        // Check if user already has a selected branch
+        if (isset($_SESSION['selected_branch_id']) && !empty($_SESSION['selected_branch_id'])) {
+            // User already has a branch selected, redirect to homepage
+            if (isset($user['role']) && strtolower($user['role']) === 'staff') {
+                header("Location: staffUI/staff-homepage.php");
+            } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
+                header("Location: adminUI/admin-homepage.php");
+            } else {
+                header("Location: homepage.php");
+            }
         } else {
-            header("Location: homepage.php");
+            // No branch selected, redirect to branch selection
+            if (isset($user['role']) && strtolower($user['role']) === 'staff') {
+                header("Location: staffUI/staff-homepage.php");
+            } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
+                header("Location: adminUI/admin-homepage.php");
+            } else {
+                header("Location: select-branch.php");
+            }
         }
         exit();
     }
-
 
     $stmt->close();
     header("Location: login-signup.php?error=invalid");

@@ -1,6 +1,7 @@
 <?php 
-include("header.html");
+require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
+include("header.html");
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $productID = (int)$_GET['id'];
@@ -52,13 +53,11 @@ if (!$productCategory) {
 // Fetch main product + inventory details
 $sql = "
     SELECT 
-        p.ProductID,
-        p.Price,
-        p.ImageID,
-        IFNULL(SUM(i.Quantity), 0) AS Quantity
+      p.ProductID,
+      p.Price,
+      p.ImageID,
     FROM product p
-    JOIN product_variant pv ON p.ProductID = pv.ProductID
-    JOIN inventory i ON pv.VariantID = i.VariantID
+
     WHERE p.ProductID = ?
     GROUP BY p.ProductID
     LIMIT 1
