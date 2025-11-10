@@ -1551,7 +1551,7 @@
     </div>
   </div>
 
-  <!-- modal for adding and editing services -->
+  <!-- modal for editing services -->
   <div class="modal services-modal" id="servicesModal" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -1563,11 +1563,11 @@
           <div class="form-grid">
             <div class="form-group">
               <label for="serviceName" class="required">Service ID</label>
-              <input type="text" id="serviceName" name="serviceName" placeholder="e.g., Ball Drilling, Ball Polishing, Lane Maintenance" required>
+              <input type="text" id="serviceName" name="serviceName" readonly>
             </div>
             <div class="form-group">
               <label for="serviceType" class="required">Service Type</label>
-              <select id="serviceType" name="serviceType" required>
+              <select id="serviceType" name="serviceType" readonly>
                 <option value="">Select Type</option>
                 <option value="Drilling">Drilling</option>
                 <option value="Polishing">Polishing</option>
@@ -1779,7 +1779,7 @@
           },
           'branch': {
               table: '.branch-info-container',
-              title: 'Branch Management',
+              title: 'Branches',
               searchPlaceholder: 'Search branches...',
               hasAddButton: false,
               hasStats: false,
