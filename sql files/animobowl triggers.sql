@@ -402,15 +402,17 @@ CREATE TABLE currency_changes_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     currency VARCHAR(3),
     previous_rate double(8,3),
-    new_rate double(8,3)
+    new_rate double(8,3),
+    date_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+DELIMITER $$
 CREATE TRIGGER CurrencyChanges
 AFTER UPDATE ON currency
 FOR EACH ROW
 BEGIN
     INSERT INTO currency_changes_log(currency,previous_rate,new_rate)
-    VALUES (OLD.Currency_Name,OLD.Currency_Rate,NEW.Currency_rate)
+    VALUES (OLD.Currency_Name,OLD.Currency_Rate,NEW.Currency_rate);
 END $$
 DELIMITER ;
 
@@ -435,4 +437,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-
