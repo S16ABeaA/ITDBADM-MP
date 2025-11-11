@@ -1,47 +1,137 @@
-<?php include("header.html");
+<?php
+require_once 'dependencies/session.php';
+require_once 'dependencies/config.php';
+include("header.html");
 
-$products = array(
-  array('id' => 1, 'name' => 'Pro Performance', 'price' => '1159.99'),
-  array('id' => 1, 'name' => 'Elite Striker', 'price' => '1259.99'),
-  array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99'),
-  array('id' => 1, 'name' => 'Precision Master', 'price' => '1559.99'),
-  array('id' => 1, 'name' => 'Pro Performance', 'price' => '1159.99'),
-  array('id' => 1, 'name' => 'Elite Striker', 'price' => '1259.99'),
-  array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99'),
-  array('id' => 1, 'name' => 'Precision Master', 'price' => '1559.99'),
-  array('id' => 1, 'name' => 'Pro Performance', 'price' => '1159.99'),
-  array('id' => 1, 'name' => 'Elite Striker', 'price' => '1259.99'),
-  array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99'),
-  array('id' => 1, 'name' => 'Precision Master', 'price' => '1559.99'),
-  array('id' => 1, 'name' => 'Pro Performance', 'price' => '1159.99'),
-  array('id' => 1, 'name' => 'Elite Striker', 'price' => '1259.99'),
-  array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99'),
-  array('id' => 1, 'name' => 'Precision Master', 'price' => '1559.99'),
-  array('id' => 1, 'name' => 'Pro Performance', 'price' => '1159.99'),
-  array('id' => 1, 'name' => 'Elite Striker', 'price' => '1259.99'),
-  array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99'),
-  array('id' => 1, 'name' => 'Precision Master', 'price' => '1559.99'),
-   array('id' => 1, 'name' => 'Turbo Hook', 'price' => '1359.99'),
-  array('id' => 1, 'name' => 'Power Curve', 'price' => '1459.99')
-);
+// Check if branch is selected
+if (!isset($_SESSION['selected_branch_id']) || empty($_SESSION['selected_branch_id'])) {
+    header('Location: select-branch.php');
+    exit();
+}
+
+$branchId = $_SESSION['selected_branch_id'];
+
+// Get product type from query string
+$type = $_GET['type'];
+$valid_types = ['bowlingball', 'bowlingbag', 'bowlingaccessories', 'cleaningsupplies', 'bowlingshoes'];
+if (!in_array($type, $valid_types)) {
+    die("Invalid product type.");
+}
+
+// Map type to table, extra column, and label
+$productTables = [
+    'bowlingball' => ['table' => 'bowlingball', 'extra_column' => 'weight', 'label' => 'Bowling Balls'],
+    'bowlingbag' => ['table' => 'bowlingbag', 'extra_column' => 'size', 'label' => 'Bowling Bags'],
+    'bowlingaccessories' => ['table' => 'bowlingaccessories', 'extra_column' => 'type', 'label' => 'Accessories'],
+    'cleaningsupplies' => ['table' => 'cleaningsupplies', 'extra_column' => 'type', 'label' => 'Cleaning Supplies'],
+    'bowlingshoes' => ['table' => 'bowlingshoes', 'extra_column' => 'size', 'label' => 'Bowling Shoes'],
+];
+
+$table = $productTables[$type]['table'];
+$extra_column = $productTables[$type]['extra_column'];
+$label = $productTables[$type]['label'];
 
 // Pagination settings
-$items_per_page = 25;
-$total_products = count($products);
+$items_per_page = 20;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $items_per_page;
+
+// Get filter values
+$availability = $_GET['availability'] ?? '';
+$price = $_GET['price'] ?? '';
+$brand = $_GET['brand'] ?? '';
+
+// Build SQL WHERE clause
+$where = ["p.BranchID = ?"];
+$params = [$branchId];
+$param_types = "i";
+
+if ($availability === 'in') {
+    $where[] = 'p.quantity > 0';
+} elseif ($availability === 'out') {
+    $where[] = 'p.quantity <= 0';
+}
+
+if ($price === 'under1k') {
+    $where[] = 'p.Price < 1000';
+} elseif ($price === '1k-3k') {
+    $where[] = 'p.Price >= 1000 AND p.Price < 3000';
+} elseif ($price === '3k-5k') {
+    $where[] = 'p.Price >= 3000 AND p.Price < 5000';
+} elseif ($price === 'over5k') {
+    $where[] = 'p.Price >= 5000';
+}
+
+if ($brand !== '' && $brand !== 'all') {
+    $where[] = "brand.Name = ?";
+    $params[] = $brand;
+    $param_types .= "s";
+}
+
+$whereSQL = count($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+// Fetch all brands for filter dropdown
+$brands = [];
+$brandSql = "SELECT DISTINCT brand.Name 
+             FROM brand 
+             JOIN product ON brand.BrandID = product.BrandID 
+             JOIN $table ON product.ProductID = $table.ProductID 
+             WHERE product.BranchID = ?
+             ORDER BY brand.Name ASC";
+$brandStmt = $conn->prepare($brandSql);
+$brandStmt->bind_param('i', $branchId);
+$brandStmt->execute();
+$brandRes = $brandStmt->get_result();
+while ($row = $brandRes->fetch_assoc()) {
+    $brands[] = $row['Name'];
+}
+$brandStmt->close();
+
+// Count total products with filters
+$countSql = "SELECT COUNT(DISTINCT b.ProductID) as cnt 
+             FROM $table b
+             JOIN product p ON b.ProductID = p.ProductID
+             JOIN brand ON brand.BrandID = p.BrandID
+             $whereSQL";
+
+$countStmt = $conn->prepare($countSql);
+if ($params) $countStmt->bind_param($param_types, ...$params);
+$countStmt->execute();
+$countRes = $countStmt->get_result();
+$total_products = ($countRes) ? (int)$countRes->fetch_assoc()['cnt'] : 0;
+$countStmt->close();
+
 $total_pages = ceil($total_products / $items_per_page);
 
-// Get current page from URL, default to page 1
-$current_page = isset($_GET['page']) ? max(1, min($total_pages, intval($_GET['page']))) : 1;
+// Fetch products for current page
+$sql = "SELECT DISTINCT
+            p.ProductID,
+            p.ImageID,
+            b.Name,
+            b.$extra_column,
+            p.Price,
+            p.quantity,
+            brand.Name AS BrandName
+        FROM $table b
+        JOIN product p ON b.ProductID = p.ProductID
+        JOIN brand ON brand.BrandID = p.BrandID
+        $whereSQL
+        ORDER BY p.ProductID ASC
+        LIMIT ? OFFSET ?";
 
-// Calculate products to show for current page
-$start_index = ($current_page - 1) * $items_per_page;
-$current_products = array_slice($products, $start_index, $items_per_page);
+$stmt = $conn->prepare($sql);
+$params[] = $items_per_page;
+$params[] = $offset;
+$param_types .= "ii";
+$stmt->bind_param($param_types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 
+$current_products = [];
+while ($row = $result->fetch_assoc()) {
+    $current_products[] = $row;
+}
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -51,324 +141,84 @@ $current_products = array_slice($products, $start_index, $items_per_page);
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" href="./css/view-all-products.css?v=1.1">
-  <title>Bowling Balls - Page <?php echo $current_page; ?></title>
+  <title><?php echo $label; ?> - Page <?php echo $page; ?></title>
 </head>
 <body>
-  <div class="content-section">
+<div class="content-section">
     <div class="bowling-ball-section">
-      <h1>Bowling Balls</h1>
-      <div class="filter-section">
+        <h1><?php echo $label; ?></h1>
+
+        <form method="get" class="filter-section" style="margin-bottom: 1em;">
+            <input type="hidden" name="type" value="<?php echo htmlspecialchars($type); ?>">
             <span>Filter by:</span>
-            <div class="filter-dropdown">
-              <button class="filter-button" id="availabilityBtn">
-                  Availability
-                  <span>▼</span>
-              </button>
-              <div class="dropdown-content" id="availabilityDropdown">
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          In Stock
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Out of Stock
-                      </label>
-                  </div>
-              </div>
+            <?php include("dependencies/filter_dropdowns.php"); ?>
+            <button type="submit" class="filter-apply-btn">Apply Filters</button>
+        </form>
+
+        <!-- Page Info -->
+        <?php if ($total_pages > 1): ?>
+        <div class="page-info">
+            Showing <?php echo $offset + 1; ?>-<?php echo min($offset + $items_per_page, $total_products); ?> of <?php echo $total_products; ?> products
+            (Page <?php echo $page; ?> of <?php echo $total_pages; ?>)
+        </div>
+        <?php endif; ?>
+
+        <div class="product-grid">
+            <?php foreach ($current_products as $product): 
+                $id = (int)$product['ProductID'];
+                $img = htmlspecialchars($product['ImageID'] ?: 'images/placeholder.png');
+                $name = htmlspecialchars($product['Name'] ?? 'Unnamed');
+                $extra = $product[$extra_column] ?? '';
+                $priceVal = htmlspecialchars($product['Price']);
+                $quantity = (int)$product['quantity'];
+                $soldOut = ($quantity <= 0);
+                $displayName = $extra ? ($name . ' - ' . $extra) : $name;
+            ?>
+            <div class="hp-product-container" onclick="location.href='product-page.php?id=<?php echo $id; ?>'">
+                <img class="hp-product-image" src="./images/<?php echo $img; ?>" alt="<?php echo $displayName; ?>">
+                <?php if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>'; ?>
+                <h5 class="hp-product-name"><?php echo $displayName; ?></h5>
+                <h2 class="hp-product-price">₱<?php echo number_format($priceVal, 2); ?></h2>
             </div>
-          
-            <div class="filter-dropdown">
-              <button class="filter-button" id="priceBtn">
-                  Price (₱)
-                  <span>▼</span>
-              </button>
-              <div class="dropdown-content" id="priceDropdown">
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Under 1k
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          1k - 3k 
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          3k - 5k
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Over 5k
-                      </label>
-                  </div>
-              </div>
-            </div>
+            <?php endforeach; ?>
+        </div>
 
-            <div class="filter-dropdown">
-              <button class="filter-button" id="brandBtn">
-                  Brand
-                  <span>▼</span>
-              </button>
-              <div class="dropdown-content" id="brandDropdown">
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Brand 1
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Brand 2
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Brand 3
-                      </label>
-                  </div>
-                  <div class="dropdown-option">
-                      <label>
-                          <input type="checkbox" class="checkbox">
-                          Brand 4
-                      </label>
-                  </div>
-              </div>
-            </div>
-            <span>Sort by:</span>
-                <div class="filter-dropdown sorting-section">
-                    <button class="filter-button" id="sortBtn">
-                        Sort
-                        <span>▼</span>
-                    </button>
-                    <div class="dropdown-content" style="right:0; left:auto;" id="sortDropdown">
-                        <div class="dropdown-option" data-value="featured">Featured</div>
-                        <div class="dropdown-option" data-value="bestselling">Best Selling</div>
-                        <div class="dropdown-option" data-value="newest">Latest</div>
-                        <div class="dropdown-option" data-value="price-low">Price: Low to High</div>
-                        <div class="dropdown-option" data-value="price-high">Price: High to Low</div>
-                        <div class="dropdown-option" data-value="name-asc">Name: A to Z</div>
-                        <div class="dropdown-option" data-value="name-desc">Name: Z to A</div>
-                    </div>
-                </div>
+        <!-- Pagination -->
+        <?php if ($total_pages > 1): ?>
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="?type=<?php echo $type; ?>&page=<?php echo $page - 1; ?><?php echo $availability ? '&availability=' . $availability : ''; ?><?php echo $price ? '&price=' . $price : ''; ?><?php echo $brand ? '&brand=' . $brand : ''; ?>" class="prev">Previous</a>
+            <?php else: ?>
+                <span class="disabled">Previous</span>
+            <?php endif; ?>
 
-      </div>
+            <?php
+            $start_page = max(1, $page - 2);
+            $end_page = min($total_pages, $page + 2);
+            if ($start_page > 1) {
+                echo '<a href="?type='.$type.'&page=1">1</a>';
+                if ($start_page > 2) echo '<span>...</span>';
+            }
+            for ($i = $start_page; $i <= $end_page; $i++) {
+                if ($i == $page) echo '<span class="current">' . $i . '</span>';
+                else echo '<a href="?type='.$type.'&page='.$i.'">' . $i . '</a>';
+            }
+            if ($end_page < $total_pages) {
+                if ($end_page < $total_pages - 1) echo '<span>...</span>';
+                echo '<a href="?type='.$type.'&page='.$total_pages.'">' . $total_pages . '</a>';
+            }
+            ?>
 
-      <!-- Page Info -->
-      <?php if ($total_pages > 1): ?>
-      <div class="page-info">
-        Showing <?php echo $start_index + 1; ?>-<?php echo min($start_index + $items_per_page, $total_products); ?> of <?php echo $total_products; ?> products
-        (Page <?php echo $current_page; ?> of <?php echo $total_pages; ?>)
-      </div>
-      <?php endif; ?>
+            <?php if ($page < $total_pages): ?>
+                <a href="?type=<?php echo $type; ?>&page=<?php echo $page + 1; ?>" class="next">Next</a>
+            <?php else: ?>
+                <span class="disabled">Next</span>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
 
-
-      <div class="product-grid">
-        <?php
-        // Loop through current page products only
-        foreach ($current_products as $product) {
-          echo '
-          <div class="hp-product-container" onclick="location.href= `product-page.php`">
-            <img class="hp-product-image" src="./images/bowlingball' . $product['id'] . '.png">
-            <div class="sold-out">SOLD OUT</div>
-            <h5 class="hp-product-name">' . $product['name'] . '</h5>
-            <h2 class="hp-product-price">P' . $product['price'] . '</h2>
-          </div>';
-        }
-        ?>
-      </div>
-
-      <!-- Pagination -->
-      <?php if ($total_pages > 1): ?>
-      <div class="pagination">
-          <!-- Previous Page -->
-          <?php if ($current_page > 1): ?>
-              <a href="?page=<?php echo $current_page - 1; ?>" class="prev">Previous</a>
-          <?php else: ?>
-              <span class="disabled">Previous</span>
-          <?php endif; ?>
-
-          <!-- Page Numbers -->
-          <?php
-          // Show page numbers with ellipsis for many pages
-          $start_page = max(1, $current_page - 2);
-          $end_page = min($total_pages, $current_page + 2);
-          
-          if ($start_page > 1) {
-              echo '<a href="?page=1">1</a>';
-              if ($start_page > 2) echo '<span>...</span>';
-          }
-          
-          for ($i = $start_page; $i <= $end_page; $i++) {
-              if ($i == $current_page) {
-                  echo '<span class="current">' . $i . '</span>';
-              } else {
-                  echo '<a href="?page=' . $i . '">' . $i . '</a>';
-              }
-          }
-          
-          if ($end_page < $total_pages) {
-              if ($end_page < $total_pages - 1) echo '<span>...</span>';
-              echo '<a href="?page=' . $total_pages . '">' . $total_pages . '</a>';
-          }
-          ?>
-
-          <!-- Next Page -->
-          <?php if ($current_page < $total_pages): ?>
-              <a href="?page=<?php echo $current_page + 1; ?>" class="next">Next</a>
-          <?php else: ?>
-              <span class="disabled">Next</span>
-          <?php endif; ?>
-      </div>
-      <?php endif; ?>
     </div>
-  </div>
-
-  <script>
-    // Dropdown functionality
-    const availabilityBtn = document.getElementById('availabilityBtn');
-    const availabilityDropdown = document.getElementById('availabilityDropdown');
-    const priceBtn = document.getElementById('priceBtn');
-    const priceDropdown = document.getElementById('priceDropdown');
-    const brandBtn = document.getElementById('brandBtn');
-    const brandDropdown = document.getElementById('brandDropdown');
-    
-    // Modal functionality
-    const showModalBtn = document.getElementById('showModalBtn');
-    const filterModal = document.getElementById('filterModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const applyBtn = document.getElementById('applyBtn');
-    
-    // Toggle dropdowns
-    function toggleDropdown(button, dropdown) {
-        // Close all other dropdowns
-        document.querySelectorAll('.dropdown-content').forEach(dd => {
-            if (dd !== dropdown) {
-                dd.classList.remove('show');
-            }
-        });
-        
-        // Remove active class from all buttons
-        document.querySelectorAll('.filter-button').forEach(btn => {
-            if (btn !== button) {
-                btn.classList.remove('active');
-            }
-        });
-        
-        // Toggle current dropdown
-        dropdown.classList.toggle('show');
-        button.classList.toggle('active');
-    }
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        // Close dropdowns if clicking outside
-        if (!event.target.matches('.filter-button') && !event.target.closest('.dropdown-content')) {
-            document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-                dropdown.classList.remove('show');
-            });
-            document.querySelectorAll('.filter-button').forEach(button => {
-                button.classList.remove('active');
-            });
-        }
-    });
-    
-    // Show modal
-    function showModal() {
-        if (filterModal) {
-            filterModal.classList.add('show');
-        }
-    }
-    
-    // Hide modal
-    function hideModal() {
-        if (filterModal) {
-            filterModal.classList.remove('show');
-        }
-    }
-    
-    // Event listeners for dropdowns
-    if (availabilityBtn && availabilityDropdown) {
-        availabilityBtn.addEventListener('click', () => toggleDropdown(availabilityBtn, availabilityDropdown));
-    }
-    
-    if (priceBtn && priceDropdown) {
-        priceBtn.addEventListener('click', () => toggleDropdown(priceBtn, priceDropdown));
-    }
-
-    if (brandBtn && brandDropdown) {
-        brandBtn.addEventListener('click', () => toggleDropdown(brandBtn, brandDropdown));
-    }
-    
-    // Event listeners for modal
-    if (showModalBtn) {
-        showModalBtn.addEventListener('click', showModal);
-    }
-    
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', hideModal);
-    }
-    
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', hideModal);
-    }
-    
-    if (applyBtn) {
-        applyBtn.addEventListener('click', hideModal);
-    }
-    
-    // Hide modal when clicking outside
-    if (filterModal) {
-        filterModal.addEventListener('click', function(event) {
-            if (event.target === filterModal) {
-                hideModal();
-            }
-        });
-    }
-
-    // Also close modal with Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && filterModal && filterModal.classList.contains('show')) {
-            hideModal();
-        }
-    });
-
-    // Add this to your existing JavaScript
-const sortBtn = document.getElementById('sortBtn');
-const sortDropdown = document.getElementById('sortDropdown');
-
-if (sortBtn && sortDropdown) {
-    sortBtn.addEventListener('click', () => toggleDropdown(sortBtn, sortDropdown));
-    
-    // Handle sort selection
-    sortDropdown.addEventListener('click', function(event) {
-        if (event.target.classList.contains('dropdown-option')) {
-            const selectedValue = event.target.getAttribute('data-value');
-            const selectedText = event.target.textContent;
-            
-            // Update button text to show selected sort option
-            sortBtn.innerHTML = `${selectedText} <span>▼</span>`;
-            
-            // Close dropdown
-            sortDropdown.classList.remove('show');
-            sortBtn.classList.remove('active');
-            
-            //check
-            console.log('Selected sort:', selectedValue);
-        }
-    });
-}
-  </script>
+</div>
+<script src="dependencies/filter-dropdown.js?v=1.1"></script>
 </body>
 </html>

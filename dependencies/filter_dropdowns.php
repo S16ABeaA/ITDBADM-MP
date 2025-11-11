@@ -1,14 +1,4 @@
 <?php
-/**
- * Render filter dropdowns: Availability, Price, Brand
- * 
- * Variables expected before including:
- * - $availability : string ('in', 'out', or '')
- * - $price : string ('under1k', '1k-3k', etc.)
- * - $brand : string (brand name or 'all')
- * - $brands : array of available brands
- */
-
 if (!isset($availability)) $availability = '';
 if (!isset($price)) $price = '';
 if (!isset($brand)) $brand = '';
