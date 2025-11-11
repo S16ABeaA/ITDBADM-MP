@@ -1,4 +1,6 @@
 -- Trigger 1 Users cannot purchase any product out of stock(i.e. User tries to checkout and buy an out of stock ball-- 
+
+USE AnimoBowl;
 DELIMITER $$
 
 CREATE TRIGGER InventoryAdjustmentManagement
@@ -9,7 +11,7 @@ BEGIN
 
 
     SELECT Quantity INTO current_stock
-    FROM inventory
+    FROM product
     WHERE ProductID = NEW.ProductID AND BranchID = NEW.BranchID
     LIMIT 1;
 
@@ -30,9 +32,8 @@ BEGIN
         SET MESSAGE_TEXT = 'Insufficient stock for this product in selected branch';
     END IF;
 
-END $$
-
-DELIMITER ;
+END 
+$$ DELIMITER ;
 -- Trigger 2 Updates inventory at checkout-- 
 DELIMITER $$
 
@@ -40,7 +41,7 @@ CREATE TRIGGER UpdateInventory
 AFTER INSERT ON orderdetails
 FOR EACH ROW
 BEGIN
-    UPDATE inventory
+    UPDATE product
     SET Quantity = Quantity - NEW.Quantity
     WHERE ProductID = NEW.ProductID AND BranchID = NEW.BranchID;
 END $$
@@ -228,10 +229,10 @@ BEGIN
     END IF;
      IF NEW.Status = 'Cancelled' AND OLD.Status <> 'Cancelled' THEN
 
-        UPDATE inventory i
+        UPDATE product p
         JOIN orderdetails od
-          ON i.ProductID = od.ProductID AND i.BranchID = od.BranchID
-        SET i.Quantity = i.Quantity + od.Quantity
+          ON p.ProductID = od.ProductID AND p.BranchID = od.BranchID
+        SET p.Quantity = p.Quantity + od.Quantity
         WHERE od.OrderID = OLD.OrderID;
 
         DELETE FROM orderdetails WHERE OrderID = OLD.OrderID;
@@ -309,7 +310,7 @@ BEGIN
     IF NEW.Quantity > OLD.Quantity THEN
 
         SELECT 
-		COALESCE(bb.Name, bs.Name, bag.Name, acc.Name, sup.Name)
+		COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name)
         INTO prod_name
          FROM product p
 		LEFT JOIN bowlingball bb ON p.ProductID = bb.ProductID
@@ -349,7 +350,7 @@ FOR EACH ROW
 BEGIN
         DECLARE prod_name VARCHAR(100);
         SELECT 
-		COALESCE(bb.Name, bs.Name, bag.Name, acc.Name, sup.Name)
+		COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name)
         INTO prod_name
          FROM product p
 		LEFT JOIN bowlingball bb ON p.ProductID = bb.ProductID
@@ -402,15 +403,17 @@ CREATE TABLE currency_changes_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     currency VARCHAR(3),
     previous_rate double(8,3),
-    new_rate double(8,3)
+    new_rate double(8,3),
+    date_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+DELIMITER $$
 CREATE TRIGGER CurrencyChanges
 AFTER UPDATE ON currency
 FOR EACH ROW
 BEGIN
     INSERT INTO currency_changes_log(currency,previous_rate,new_rate)
-    VALUES (OLD.Currency_Name,OLD.Currency_Rate,NEW.Currency_rate)
+    VALUES (OLD.Currency_Name,OLD.Currency_Rate,NEW.Currency_rate);
 END $$
 DELIMITER ;
 
@@ -435,4 +438,3 @@ BEGIN
 END $$
 
 DELIMITER ;
-

@@ -152,21 +152,6 @@ VALUES
 (17,'Brunswick Enamel Collar 4 Ball Roller Bag','Roller',4,2),
 (18,'Boss Double Tote','Tote',2,2);
 
-INSERT INTO color(ProductID, Color, BranchID, quantity)
-VALUES 
-	(13,'Black',1,1),
-	(14,'Black',1,1),
-    (15,'Orange',1,1),
-    (16,'Black',1,1),
-    (17,'Red',1,1),
-    (18,'Gray',1,1),
-     (13,'Black',1,2),
-	(14,'Black',1,2),
-    (15,'Orange',1,2),
-    (16,'Black',1,2),
-    (17,'Red',1,2),
-    (18,'Gray',1,2);
-
 
 
 
@@ -180,42 +165,12 @@ VALUES
 (21,'Dexter THE 8 Power Frame Boa (Mens)',2),
 (22,'3G Tour Black (Mens)',1),
 (23,'3G Tour Ultra / C (Womens) White/Mint ',1),
-(24,'3G Belmo Tour S (Mens)',1);
+(24,'3G Belmo Tour S (Mens)',1),
 (22,'3G Tour Black (Mens)',2),
 (23,'3G Tour Ultra / C (Womens) White/Mint ',2),
 (24,'3G Belmo Tour S (Mens)',2);
 
-SELECT *
-FROM product;
-INSERT INTO size
-VALUES
-(19,1,9,'M',1),
-(19,1,10,'M',1),
-(19,1,7,'M',1),
-(20,1,6,'F',1),
-(20,1,8,'F',1),
-(20,1,7,'F',1),
-(21,1,7,'M',1),
-(21,1,8,'M',1),
-(21,1,9,'M',1),
-(19,2,9,'M',1),
-(19,2,10,'M',1),
-(19,2,7,'M',1),
-(20,2,6,'F',1),
-(20,2,8,'F',1),
-(20,2,7,'F',1),
-(21,2,7,'M',1),
-(21,2,8,'M',1),
-(21,2,9,'M',1)
-(22,2,8,'M',1),
-(22,2,9,'M',1),
-(23,2,7,'F',1),
-(23,2,6,'F',1),
-(24,2,8,'M',1),
-(24,2,9,'M',1);
-   
 
-ALTER TABLE bowlingaccessories DELETE ImageID;
 -- User Addresses -- 
 INSERT INTO address
 VALUES 
