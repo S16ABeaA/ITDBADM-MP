@@ -29,9 +29,9 @@ INSERT INTO address
 VALUES (1,'Manila','Nagtahan',1015),
 (2,'Makati','Poblacion',1210);
 
+
 INSERT INTO branches
 VALUES (1,1), (2,2);
-
 
 
 INSERT INTO product 
@@ -64,111 +64,116 @@ VALUES
 (26,9,'ball',10000,NULL,1),
 (27,1,'supplies',350,NULL,1);
 
+SELECT *
+FROM bowlingshoes;
 
-INSERT INTO bowlingball
-(ProductID, ImageID, Quality, Name, Type, CoreType, CoreName, Coverstock, CoverstockType, BranchID)
-VALUES
-(1, NULL, 'New', 'Phaze II', 'Solid', 'Symetric', 'Velocity', 'TX-16', '3000 Abralon', 1),
-(2, NULL, 'New', 'Hyper Venom', 'Pearl', 'Symetric', 'Gear', 'Propulsion MXR', '5500 LSP', 1),
-(3, NULL, 'New', 'Purple Solid Urethane', 'Urethane', 'Asymetric', 'FAB', 'Hammer', '500/1000 Siaair Micro Pad', 1),
-(4, NULL, 'New', 'Ice Storm', 'Plastic', 'Symetric', 'Storm Traditional 3-piece', 'Polyester', '3500 Polished', 1),
-(5, NULL, 'Second Hand', 'Xponent', 'Solid', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 701', '4000 Abralon', 1),
-(25, NULL, 'New', 'Xponent Pearl', 'Pearl', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 702', '4000 Abralon', 1),
-(26, NULL, 'New', 'Magic Gem', 'Hybrid', 'Asymetric', 'Defiant LRG', 'MicroTrax', '2000 Abralon', 1),
-(1, NULL, 'New', 'Phaze II', 'Solid', 'Symetric', 'Velocity', 'TX-16', '3000 Abralon', 2),
-(2, NULL, 'New', 'Hyper Venom', 'Pearl', 'Symetric', 'Gear', 'Propulsion MXR', '5500 LSP', 2),
-(3, NULL, 'New', 'Purple Solid Urethane', 'Urethane', 'Asymetric', 'FAB', 'Hammer', '500/1000 Siaair Micro Pad', 2),
-(4, NULL, 'New', 'Ice Storm', 'Plastic', 'Symetric', 'Storm Traditional 3-piece', 'Polyester', '3500 Polished', 2),
-(5, NULL, 'Second Hand', 'Xponent', 'Solid', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 701', '4000 Abralon', 2),
-(25, NULL, 'New', 'Xponent Pearl', 'Pearl', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 702', '4000 Abralon', 2),
-(26, NULL, 'New', 'Magic Gem', 'Hybrid', 'Asymetric', 'Defiant LRG', 'MicroTrax', '2000 Abralon', 2);
-
-
-INSERT INTO weight
-VALUES 
-(1,1,2.48,0.051,NULL,15,2),
-(1,1,2.53,0.050,NULL,14,2),
-(2,1,2.48,0.034,NULL,15,2),
-(3,1,2.55,0.051,0.014,15,2),
-(4,1,2.69,0.006,NULL,15,2),
-(4,1,2.74,0.006,NULL,12,1),
-(5,1,2.48,0.042,NULL,15,1),
-(25,1,2.48,0.042,NULL,15,1),
-(26,1,2.470,0.053,0.016,15,1),
-(1,2,2.48,0.051,NULL,15,2),
-(1,2,2.53,0.050,NULL,14,2),
-(2,2,2.48,0.034,NULL,15,2),
-(3,2,2.55,0.051,0.014,15,2),
-(4,2,2.69,0.006,NULL,15,2),
-(4,2,2.74,0.006,NULL,12,1),
-(5,2,2.48,0.042,NULL,15,1),
-(25,2,2.48,0.042,NULL,15,1),
-(26,2,2.470,0.053,0.016,15,1);
+CALL AddBowlingBall(1,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
+CALL AddBowlingBall(2,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
+CALL AddBowlingBall(1,2,'Hyper Venom',10000, NULL,'New','Pearl',15,'Symetric','Gear','Propulsion MXR','5500 LSP',2.48,0.048,0.000,1);
+CALL AddBowlingBall(2,2,'Hyper Venom',10000, NULL,'New','Pearl',14,'Symetric','Gear','Propulsion MXR','5500 LSP',2.55,0.048,0.000,1);
+Call AddBowlingAccessories(1,11,'Vise Grip Inserts(Set of 3)',750,NULL,'Grips',NULL,100);
+Call AddBowlingAccessories(2,11,'Vise Grip Inserts(Set of 3)',750,NULL,'Grips',NULL,100);
+Call AddBowlingAccessories(1,15,'Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)',9000,NULL,'Wrister','Right',100);
+Call AddBowlingAccessories(2,15,'Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)',9000,NULL,'Wrister','Right',100);
+Call AddBowlingAccessories(1,2,'Motiv Flex Tape',750,NULL,'Tape',NULL,5);
+Call AddBowlingAccessories(2,2,'Motiv Flex Tape',750,NULL,'Tape',NULL,4);
+Call AddBowlingBag(1,1,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold',6000,NULL,'Roller',2,'Black/Gold',1);
+Call AddBowlingBag(2,1,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold',6000,NULL,'Roller',2,'Black/Gold',1);
+Call AddBowlingBag(1,3,'Hammer Premium 3 Ball Roller Orange Bowling Bag',9500,NULL,'Roller',3,'Black/Orange',1);
+Call AddBowlingBag(2,5,'Columbia 300 OGIO Monolithic Bowling Backpack',1500,NULL,'Backpack',1,'Gray',1);
+CALL AddBowlingShoes(1,13,'Dexter C9 Knit Boa (Mens) Black/Gold',12000,NULL,9,'M',1);
+CALL AddBowlingShoes(1,13,'Dexter C9 Knit Boa (Mens) Black/Gold',12000,NULL,10,'M',1);
+CALL AddBowlingShoes(2,13,'Dexter C9 Knit Boa (Mens) Black/Gold',12000,NULL,9,'M',1);
+CALL AddBowlingShoes(1,14,'3G Tour Ultra / C (Womens) White/Mint',10000,NULL,7,'F',1);
+CALL AddBowlingShoes(2,14,'3G Tour Ultra / C (Womens) White/Mint',10000,NULL,7,'F',1);
+CALL AddCleaningSupplies(1,3,'Hammer Premium Towel',500,NULL,'Towel',3);
+CALL AddCleaningSupplies(2,3,'Hammer Premium Towel',500,NULL,'Towel',3);
+CALL AddCleaningSupplies(1,4,'Track Bowling Ball Spray Cleaner',500,NULL,'Cleaner',5);
+CALL AddCleaningSupplies(2,4,'Track Bowling Ball Spray Cleaner',500,NULL,'Cleaner',2);
+CALL AddCleaningSupplies(1,11,'Abralon Pads(Set of 3)',350,NULL,'Pads',50);
+CALL AddCleaningSupplies(2,11,'Abralon Pads(Set of 3)',350,NULL,'Pads',100);
+-- INSERT INTO bowlingball
+-- (ProductID, ImageID, Quality, Name, Type, CoreType, CoreName, Coverstock, CoverstockType, BranchID)
+-- VALUES
+-- (1, NULL, 'New', 'Phaze II', 'Solid', 'Symetric', 'Velocity', 'TX-16', '3000 Abralon', 1),
+-- (2, NULL, 'New', 'Hyper Venom', 'Pearl', 'Symetric', 'Gear', 'Propulsion MXR', '5500 LSP', 1),
+-- (3, NULL, 'New', 'Purple Solid Urethane', 'Urethane', 'Asymetric', 'FAB', 'Hammer', '500/1000 Siaair Micro Pad', 1),
+-- (4, NULL, 'New', 'Ice Storm', 'Plastic', 'Symetric', 'Storm Traditional 3-piece', 'Polyester', '3500 Polished', 1),
+-- (5, NULL, 'Second Hand', 'Xponent', 'Solid', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 701', '4000 Abralon', 1),
+-- (25, NULL, 'New', 'Xponent Pearl', 'Pearl', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 702', '4000 Abralon', 1),
+-- (26, NULL, 'New', 'Magic Gem', 'Hybrid', 'Asymetric', 'Defiant LRG', 'MicroTrax', '2000 Abralon', 1),
+-- (1, NULL, 'New', 'Phaze II', 'Solid', 'Symetric', 'Velocity', 'TX-16', '3000 Abralon', 2),
+-- (2, NULL, 'New', 'Hyper Venom', 'Pearl', 'Symetric', 'Gear', 'Propulsion MXR', '5500 LSP', 2),
+-- (3, NULL, 'New', 'Purple Solid Urethane', 'Urethane', 'Asymetric', 'FAB', 'Hammer', '500/1000 Siaair Micro Pad', 2),
+-- (4, NULL, 'New', 'Ice Storm', 'Plastic', 'Symetric', 'Storm Traditional 3-piece', 'Polyester', '3500 Polished', 2),
+-- (5, NULL, 'Second Hand', 'Xponent', 'Solid', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 701', '4000 Abralon', 2),
+-- (25, NULL, 'New', 'Xponent Pearl', 'Pearl', 'Symetric', 'Shrapnel 2.0', 'Reserve Blend 702', '4000 Abralon', 2),
+-- (26, NULL, 'New', 'Magic Gem', 'Hybrid', 'Asymetric', 'Defiant LRG', 'MicroTrax', '2000 Abralon', 2);
 
 -- Bowling balls
-ALTER TABLE cleaningsupplies DROP COLUMN ImageID;
+-- ALTER TABLE cleaningsupplies DROP COLUMN ImageID;
 
 
-INSERT INTO bowlingaccessories
-VALUES
-(6,'accessories/ViseGrps.jpg','Vise Grip Inserts(Set of 3)','Grips',NULL,1,100),
-(6,'accessories/ViseGrps.jpg','Vise Grip Inserts(Set of 3)','Grips',NULL,2,100),
-(7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Left',1,1),
-(7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Right',2,1),
-(7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Left',1,1),
-(7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Right',2,1),
-(8,'accessories/MotivTape.jpg','Motiv Flex Tape','Tape',NULL,1,10),
-(8,'accessories/MotivTape.jpg','Motiv Flex Tape','Tape',NULL,2,10)
-;
+-- INSERT INTO bowlingaccessories
+-- VALUES
+-- (6,'accessories/ViseGrps.jpg','Vise Grip Inserts(Set of 3)','Grips',NULL,1,100),
+-- (6,'accessories/ViseGrps.jpg','Vise Grip Inserts(Set of 3)','Grips',NULL,2,100),
+-- (7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Left',1,1),
+-- (7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Right',2,1),
+-- (7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Left',1,1),
+-- (7,'accessories/Wrister.jpg','Robby Revs 2 Bowling Wrister(KR Strikeforce Edition)','Wrister','Right',2,1),
+-- (8,'accessories/MotivTape.jpg','Motiv Flex Tape','Tape',NULL,1,10),
+-- (8,'accessories/MotivTape.jpg','Motiv Flex Tape','Tape',NULL,2,10)
+-- ;
 
-SELECT *
-FROM bowlingaccessories;
+-- SELECT *
+-- FROM bowlingshoes;
 
-INSERT INTO cleaningsupplies (ProductID,Name,Type,BranchID,quantity)
-VALUES 
-(9,'Hammer Premium Towel','Towel',1,2),
-(10,'Track Bowling Ball Spray Cleaner','Cleaner',1,5),
-(11,'Brunswick Reactive Shammy','Towel',1,2),
-(12,'Abralon Pads','Pads',1,100),
-(27,'Storm Puff Ball','Puff',1,3),
-(9,'Hammer Premium Towel','Towel',2,2),
-(10,'Track Bowling Ball Spray Cleaner','Cleaner',2,5),
-(11,'Brunswick Reactive Shammy','Towel',2,2),
-(12,'Abralon Pads','Pads',2,100),
-(27,'Storm Puff Ball','Puff',2,3);
+-- INSERT INTO cleaningsupplies (ProductID,Name,Type,BranchID,quantity)
+-- VALUES 
+-- (9,'Hammer Premium Towel','Towel',1,2),
+-- (10,'Track Bowling Ball Spray Cleaner','Cleaner',1,5),
+-- (11,'Brunswick Reactive Shammy','Towel',1,2),
+-- (12,'Abralon Pads','Pads',1,100),
+-- (27,'Storm Puff Ball','Puff',1,3),
+-- (9,'Hammer Premium Towel','Towel',2,2),
+-- (10,'Track Bowling Ball Spray Cleaner','Cleaner',2,5),
+-- (11,'Brunswick Reactive Shammy','Towel',2,2),
+-- (12,'Abralon Pads','Pads',2,100),
+-- (27,'Storm Puff Ball','Puff',2,3);
        
-INSERT INTO bowlingbag (ProductID,Name,Type,Size,BranchID)
-VALUES
-(13,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold','Roller',2,1),
-(14,'Storm Solo 1 Ball Bowling Bag','Tote',1,1),
-(15,'Hammer Premium 3 Ball Roller Orange Bowling Bag','Roller',3,1),
-(16,'Columbia 300 OGIO Monolithic Bowling Backpack','Backpack',1,1),
-(17,'Brunswick Enamel Collar 4 Ball Roller Bag','Roller',4,1),
-(18,'Boss Double Tote','Tote',2,1),
-(13,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold','Roller',2,2),
-(14,'Storm Solo 1 Ball Bowling Bag','Tote',1,2),
-(15,'Hammer Premium 3 Ball Roller Orange Bowling Bag','Roller',3,2),
-(16,'Columbia 300 OGIO Monolithic Bowling Backpack','Backpack',1,2),
-(17,'Brunswick Enamel Collar 4 Ball Roller Bag','Roller',4,2),
-(18,'Boss Double Tote','Tote',2,2);
+-- INSERT INTO bowlingbag (ProductID,Name,Type,Size,BranchID)
+-- VALUES
+-- (13,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold','Roller',2,1),
+-- (14,'Storm Solo 1 Ball Bowling Bag','Tote',1,1),
+-- (15,'Hammer Premium 3 Ball Roller Orange Bowling Bag','Roller',3,1),
+-- (16,'Columbia 300 OGIO Monolithic Bowling Backpack','Backpack',1,1),
+-- (17,'Brunswick Enamel Collar 4 Ball Roller Bag','Roller',4,1),
+-- (18,'Boss Double Tote','Tote',2,1),
+-- (13,'Storm Rolling Thunder 2 Ball Roller Checkered Black/Gold','Roller',2,2),
+-- (14,'Storm Solo 1 Ball Bowling Bag','Tote',1,2),
+-- (15,'Hammer Premium 3 Ball Roller Orange Bowling Bag','Roller',3,2),
+-- (16,'Columbia 300 OGIO Monolithic Bowling Backpack','Backpack',1,2),
+-- (17,'Brunswick Enamel Collar 4 Ball Roller Bag','Roller',4,2),
+-- (18,'Boss Double Tote','Tote',2,2);
 
 
 
 
-INSERT INTO bowlingshoes (ProductID, Name, BranchID)
-VALUES
-(19,'Dexter C9 Knit Boa (Mens) Black/Gold',1),
-(20,'Dexter SST 8 Power Frame Boa (Womens) White/Blue',1),
-(21,'Dexter THE 8 Power Frame Boa (Mens)',1),
-(19,'Dexter C9 Knit Boa (Mens) Black/Gold',2),
-(20,'Dexter SST 8 Power Frame Boa (Womens) White/Blue',2),
-(21,'Dexter THE 8 Power Frame Boa (Mens)',2),
-(22,'3G Tour Black (Mens)',1),
-(23,'3G Tour Ultra / C (Womens) White/Mint ',1),
-(24,'3G Belmo Tour S (Mens)',1),
-(22,'3G Tour Black (Mens)',2),
-(23,'3G Tour Ultra / C (Womens) White/Mint ',2),
-(24,'3G Belmo Tour S (Mens)',2);
+-- INSERT INTO bowlingshoes (ProductID, Name, BranchID)
+-- VALUES
+-- (19,'Dexter C9 Knit Boa (Mens) Black/Gold',1),
+-- (20,'Dexter SST 8 Power Frame Boa (Womens) White/Blue',1),
+-- (21,'Dexter THE 8 Power Frame Boa (Mens)',1),
+-- (19,'Dexter C9 Knit Boa (Mens) Black/Gold',2),
+-- (20,'Dexter SST 8 Power Frame Boa (Womens) White/Blue',2),
+-- (21,'Dexter THE 8 Power Frame Boa (Mens)',2),
+-- (22,'3G Tour Black (Mens)',1),
+-- (23,'3G Tour Ultra / C (Womens) White/Mint ',1),
+-- (24,'3G Belmo Tour S (Mens)',1),
+-- (22,'3G Tour Black (Mens)',2),
+-- (23,'3G Tour Ultra / C (Womens) White/Mint ',2),
+-- (24,'3G Belmo Tour S (Mens)',2);
 
 
 -- User Addresses -- 
