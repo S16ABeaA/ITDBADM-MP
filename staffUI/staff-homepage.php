@@ -25,39 +25,65 @@ include('staff-header.html');
         <div class="nav-item" data-category="transaction">Transactions</div>
       </div>
     </div>
-
-  
+    
+    <?php
+    $productcount = 0;
+    $prodquery = "SELECT DISTINCT ProductID FROM product";
+    $prodresult = $conn->query($prodquery);
+    $productcount = $prodresult->num_rows;
+    ?>
     <!-- Stats Overview -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-bowling-ball"></i>
         </div>
-        <div class="stat-number">156</div>
+        <div class="stat-number"><?php echo $productcount; ?></div>
         <div class="stat-label">Total Products</div>
       </div>
       <?php
-      $lowstockquery; 
+      $instockproducts = 0;
+      $instockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                       GROUP BY ProductID
+                       HAVING SUM(quantity) >=10"; 
+      $instockresult = $conn->query($instockquery);
+      $instockproducts = $instockresult->num_rows;
       ?>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-check-circle"></i>
         </div>
-        <div class="stat-number">128</div>
+        <div class="stat-number"><?php echo $instockproducts;?></div>
         <div class="stat-label">In Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <div class="stat-number">18</div>
+        <?php
+        $lowstockproducts = 0;
+        $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                          GROUP BY ProductID
+                          HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
+        $lowstockresult = $conn->query($lowstockquery);
+        $lowstockproducts = $lowstockresult->num_rows;
+        ?>
+        <div class="stat-number"><?php echo $lowstockproducts; ?></div>
         <div class="stat-label">Low Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-times-circle"></i>
         </div>
-        <div class="stat-number">10</div>
+        <?php
+        $nostockproducts = 0;
+        $nostockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                         GROUP BY ProductID
+                         HAVING SUM(quantity) = 0";
+        $nostockresult = $conn->query($nostockquery);
+        $nostockproducts = $nostockresult->num_rows;
+        ?>
+        <div class="stat-number"><?php echo $nostockproducts; ?></div>
         <div class="stat-label">Out of Stock</div>
       </div>
     </div>
@@ -144,15 +170,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $query = "SELECT DISTINCT bb.Name AS bbname, br.Name AS brandname, bb.Type AS bbtype, bb.Quality AS bbquality, w.weight AS weight, bb.CoreName AS corename, bb.CoreType AS coretype, w.RG AS rg, w.DIFF AS diff, w.INTDIFF AS intdiff, bb.Coverstock AS coverstock, bb.CoverstockType AS coverstocktype, pr.Price AS price, SUM(i.Quantity) AS quantity
-                    FROM weight w JOIN bowlingball bb ON w.ProductID = bb.ProductID
-                    JOIN product pr ON bb.ProductID = pr.ProductID
-                    JOIN product_variant pv ON pr.ProductID = pv.ProductID
+          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity
+                    FROM bowlingball bb JOIN product pr ON bb.ProductID = pr.ProductID
                     JOIN brand br ON pr.BrandID = br.BrandID
-                    JOIN inventory i ON pv.VariantID = i.VariantID
-                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, w.weight, bb.CoreName, bb.CoreType, w.RG, w.DIFF, w.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pv.VariantID;";
+                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, bb.weight, bb.CoreName, bb.CoreType, bb.RG, bb.DIFF, bb.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pr.ProductID";
           $result = $conn->query($query);
           while ($row = $result->fetch_assoc()){
+            $bbproductID = $row['bbproductid'];
             $bbName = $row['bbname'];
             $brand = $row['brandname'];
             $type = $row['bbtype'];
@@ -187,7 +211,7 @@ include('staff-header.html');
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="1">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $bbproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -214,13 +238,10 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bgquery = "SELECT DISTINCT bg.Name as bgname, br.Name as brandname, c.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(i.Quantity) as quantity
-                      FROM color c JOIN bowlingbag bg ON c.ProductID = bg.ProductID
-                      JOIN product pr ON bg.ProductID = pr.ProductID
+          $bgquery = "SELECT bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity
+                      FROM bowlingbag bg JOIN product pr ON bg.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY bg.Name, br.Name, c.color, bg.Size, bg.Type, pr.Price, pv.VariantID";
+                      GROUP BY bg.Name, br.Name, bg.color, bg.Size, bg.Type, pr.Price, pr.ProductID";
           $bgresult = $conn->query($bgquery);
           while($bgrow = $bgresult->fetch_assoc()){
             $bgname = $bgrow['bgname'];
@@ -268,13 +289,10 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bsquery = "SELECT DISTINCT bs.Name as bsname, br.Name as brandname, s.size as size, s.sex as sex, pr.Price as price, SUM(i.Quantity) as quantity
-                      FROM size s JOIN bowlingshoes bs ON s.ProductID = bs.ProductID
-                      JOIN product pr ON bs.ProductID = pr.ProductID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+          $bsquery = "SELECT bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity
+                      FROM bowlingshoes bs JOIN product pr ON bs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY bs.Name, br.Name, s.size, s.sex, pr.Price, pv.VariantID";   
+                      GROUP BY bs.Name, br.Name, bs.Size, bs.sex, pr.Price, pr.ProductID";   
           $bsresult = $conn->query($bsquery);
           while($bsrow = $bsresult->fetch_assoc()){
             $bsname = $bsrow['bsname'];
@@ -320,12 +338,10 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $baquery = "SELECT DISTINCT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(i.Quantity) as quantity
+          $baquery = "SELECT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity
                       FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pv.VariantID";
+                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pr.ProductID";
 
           $baresult = $conn->query($baquery);
           while($barow = $baresult->fetch_assoc()){
@@ -371,12 +387,10 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(i.Quantity) as quantity
+          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity
                       FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pv.VariantID";
+                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pr.ProductID";
           $csresult = $conn->query($csquery);
           while($csrow = $csresult->fetch_assoc()){
             $csname = $csrow['csname'];
@@ -630,6 +644,7 @@ include('staff-header.html');
       <form id="bowlingBagForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="ballID" name="ballID" value="<?php echo $bbproductID;?>">
           <div class="form-group">
             <label for="ballName" class="required">Ball Name</label>
             <input type="text" id="ballName" name="ballName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -638,14 +653,14 @@ include('staff-header.html');
             <label for="ballBrand" class="required">Brand</label>
             <select id="ballBrand" name="ballBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
           <div class="form-group">
@@ -751,14 +766,12 @@ include('staff-header.html');
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
+          <button type="submit" name="insertedit_bb" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
         </div>
       </form>
     </div>
-    
   </div>
 </div>
-
 <!-- modal for adding and editing bowling shoes-->
 <div class="modal bowling-shoes-modal" id="bowlingShoesModal" style="display: none;">
   <div class="modal-content">
@@ -1750,8 +1763,9 @@ include('staff-header.html');
           $form.find('#supplyStock').val(cells.eq(4).text());
       }
 
-          // Handle form submission  
-      function handleFormSubmit($form) {
+          // Handle form submission
+          
+          function handleFormSubmit($form) {
           const modalId = '#' + $form.closest('.modal').attr('id');
           const isEdit = $form.find('button[type="submit"]').text().includes('Update');
           
@@ -1768,9 +1782,50 @@ include('staff-header.html');
           // Show success message (you can implement this)
           alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
       }
-  });
+      /*function handleFormSubmit($form) {
+          <?php echo "<script>alert('It works!')</script>"; ?>
+          const modalId = '#' + $form.closest('.modal').attr('id');
+          const isEdit = $form.find('button[type="submit"]').text().includes('Update');
+          const category = currentCategory;
+          const formData = new FormData($form[0]);
+          let targetURL = '';
+          switch (category) {
+              case 'bowling-balls': 
+                targetURL = isEdit ? 'update_bowlingball.php' : 'insert_bowlingball.php';
+                break;
+              case 'shoes':
+                  // Update the table row or add new row logic here
+                  break;
+              case 'bags':
+                  // Update the table row or add new row logic here
+                  break;
+              case 'accessories':
+                  // Update the table row or add new row logic here
+                  break;
+              case 'cleaning':
+                  // Update the table row or add new row logic here
+                  break;
+              case 'transaction': 
+                  break;
+          }
+          $.ajax({
+            url: targetURL,
+            method: POST,
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response){
+              console.log(response);
+              closeModal(modalId);
+              alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
+              location.reload();
+            },
+            error: function(xhr, status, error){
+              console.error(error);
+            }
+          });          
+      }
+  */});
 </script>
-
-
 </body>
 </html>
