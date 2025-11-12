@@ -1,0 +1,70 @@
+Admin User
+
+CREATE USER ‘student1’@'127.0.0.1' IDENTIFIED BY ‘Dlsu1234!’;
+GRANT ALL PRIVILEGES ON *.* TO 'student1'@'127.0.0.1' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+Staff User
+
+
+CREATE USER 'student2'@'127.0.0.1' IDENTIFIED BY 'Dlsu1234!';
+
+GRANT SELECT ON AnimoBowl.branches TO 'student2'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.brand TO 'student2'@'127.0.0.1';
+
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.product TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.bowlingball TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.bowlingbag TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.bowlingaccessories TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.cleaningsupplies TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.bowlingshoes TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.services TO 'student2'@'127.0.0.1';
+
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.inventory_log TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.order_log TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.currency TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.currency_changes_log TO 'student2'@'127.0.0.1';
+
+GRANT SELECT, UPDATE ON AnimoBowl.orderdetails TO 'student2'@'127.0.0.1';
+GRANT SELECT, UPDATE ON AnimoBowl.servicedetails TO 'student2'@'127.0.0.1';
+GRANT SELECT, UPDATE ON AnimoBowl.orders TO 'student2'@'127.0.0.1';
+FLUSH PRIVILEGES;
+
+Customers
+CREATE USER 'student3'@'127.0.0.1' IDENTIFIED BY 'Dlsu1234!';
+
+GRANT SELECT ON AnimoBowl.branches TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.brand TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.product TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingball TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingbag TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingaccessories TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.cleaningsupplies TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingshoes TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.services TO 'student3'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.currency TO 'student3'@'127.0.0.1';
+
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orderdetails TO 'student3'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.servicedetails TO 'student3'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orders TO 'student3'@'127.0.0.1';
+
+FLUSH PRIVILEGES; 
+
+CREATE USER 'student4'@'127.0.0.1' IDENTIFIED BY 'Dlsu1234!';
+
+GRANT SELECT ON AnimoBowl.branches TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.brand TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.product TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingball TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingbag TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingaccessories TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.cleaningsupplies TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.bowlingshoes TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.services TO 'student4'@'127.0.0.1';
+GRANT SELECT ON AnimoBowl.currency TO 'student4'@'127.0.0.1';
+
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orderdetails TO 'student4'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.servicedetails TO 'student4'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orders TO 'student4'@'127.0.0.1';
+
+FLUSH PRIVILEGES; 
