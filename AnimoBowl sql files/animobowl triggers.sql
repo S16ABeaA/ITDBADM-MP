@@ -8,32 +8,37 @@ BEFORE INSERT ON orderdetails
 FOR EACH ROW
 BEGIN
     DECLARE current_stock INT;
+    DECLARE order_branch INT;
+
+   
+    SELECT BranchID INTO order_branch
+    FROM orders
+    WHERE OrderID = NEW.OrderID
+    LIMIT 1;
 
 
     SELECT Quantity INTO current_stock
     FROM product
-    WHERE ProductID = NEW.ProductID AND BranchID = NEW.BranchID
+    WHERE ProductID = NEW.ProductID AND BranchID = order_branch
     LIMIT 1;
 
-    -- Product Not found -- 
-   IF current_stock IS NULL THEN
+    IF current_stock IS NULL THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Product not found';
+        SET MESSAGE_TEXT = 'Product not found in branch';
     END IF;
-    -- If no matching inventory found, block the transaction
+
     IF current_stock = 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Product is out of stock';
     END IF;
 
-    -- If insufficient stock, block the transaction
     IF current_stock < NEW.Quantity THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Insufficient stock for this product in selected branch';
     END IF;
+END $$
 
-END 
-$$ DELIMITER ;
+DELIMITER ;
 -- Trigger 2 Updates inventory at checkout-- 
 DELIMITER $$
 
@@ -41,12 +46,29 @@ CREATE TRIGGER UpdateInventory
 AFTER INSERT ON orderdetails
 FOR EACH ROW
 BEGIN
+    DECLARE current_stock INT;
+    DECLARE order_branch INT;
+
+   
+    SELECT BranchID INTO order_branch
+    FROM orders
+    WHERE OrderID = NEW.OrderID
+    LIMIT 1;
+
+  
+    SELECT Quantity INTO current_stock
+    FROM product
+    WHERE ProductID = NEW.ProductID AND BranchID = order_branch
+    LIMIT 1;
+
+   
     UPDATE product
     SET Quantity = Quantity - NEW.Quantity
-    WHERE ProductID = NEW.ProductID AND BranchID = NEW.BranchID;
+    WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
 END $$
 
 DELIMITER ;
+
 
 -- Trigger 3 Users cannot avail of any unavailable service-- 
 DELIMITER $$
@@ -123,30 +145,7 @@ END $$
 
 DELIMITER ;
 
-DELIMITER $$
 
-CREATE TRIGGER UpdateTotalAfterOrder
-AFTER INSERT ON orderdetails
-FOR EACH ROW
-BEGIN
-    DECLARE new_total DECIMAL(10,2);
-
-    SELECT SUM(Price * Quantity) INTO new_total
-    FROM orderdetails
-    WHERE OrderID = NEW.OrderID;
-
-    SELECT IFNULL(SUM(Price),0) INTO @servicetotal
-    FROM servicedetails
-    WHERE OrderID = NEW.OrderID;
-
-    SET new_total = new_total + @servicetotal;
-
-    UPDATE orders
-    SET Total = new_total
-    WHERE OrderID = NEW.OrderID;
-END $$
-
-DELIMITER ;
 -- Trigger 6,7,8 All orders are logged and updated from checkout to completion - 
 
 CREATE TABLE order_log (
@@ -165,7 +164,7 @@ CREATE TABLE order_log (
 DELIMITER $$
 
 CREATE TRIGGER OrderInsertLog
-AFTER INSERT ON orders
+BEFORE INSERT ON orders
 FOR EACH ROW
 BEGIN
     INSERT INTO order_log (
@@ -211,8 +210,7 @@ BEGIN
             NEW.Total,
             NEW.PaymentMode,
             NEW.DeliveryMethod,
-            'Status Updated'
-        );
+            'Status Updated');
     END IF;
 END $$
 
@@ -224,30 +222,28 @@ CREATE TRIGGER UpdateOrderStatus
 BEFORE UPDATE ON orders
 FOR EACH ROW
 BEGIN
+    -- Automatically set completion date when order is marked completed
     IF NEW.Status = 'Completed' AND OLD.Status <> 'Completed' THEN
         SET NEW.DateCompleted = NOW();
     END IF;
-     IF NEW.Status = 'Cancelled' AND OLD.Status <> 'Cancelled' THEN
 
+    -- Handle cancellation logic
+    IF NEW.Status = 'Cancelled' AND OLD.Status <> 'Cancelled' THEN
+        -- Return stock to inventory
         UPDATE product p
         JOIN orderdetails od
-          ON p.ProductID = od.ProductID AND p.BranchID = od.BranchID
+            ON p.ProductID = od.ProductID AND p.BranchID = od.BranchID
         SET p.Quantity = p.Quantity + od.Quantity
         WHERE od.OrderID = OLD.OrderID;
 
+        -- Delete related details (not the order itself)
         DELETE FROM orderdetails WHERE OrderID = OLD.OrderID;
         DELETE FROM servicedetails WHERE OrderID = OLD.OrderID;
-
-        DELETE FROM orders WHERE OrderID = OLD.OrderID;
-
-        ALTER TABLE orders AUTO_INCREMENT = 1;
-        ALTER TABLE orderdetails AUTO_INCREMENT = 1;
-        ALTER TABLE servicedetails AUTO_INCREMENT = 1;
-
     END IF;
 END $$
 
 DELIMITER ;
+
 
 -- Trigger 9-11 All inventory restocks/new products added are logged(ex. Stock is added to a ball, a new product is introduced) --
 CREATE TABLE inventory_log (
@@ -264,7 +260,7 @@ CREATE TABLE inventory_log (
 DELIMITER $$
 
 CREATE TRIGGER InventoryInsertLog
-AFTER INSERT ON product
+BEFORE INSERT ON product
 FOR EACH ROW
 BEGIN
     DECLARE prod_name VARCHAR(100);
@@ -345,7 +341,7 @@ DELIMITER ;
 DELIMITER $$
 
 CREATE TRIGGER InventoryDeleteLog
-AFTER DELETE ON product
+BEFORE DELETE ON product
 FOR EACH ROW
 BEGIN
         DECLARE prod_name VARCHAR(100);
@@ -370,13 +366,14 @@ BEGIN
         )
         VALUES (
             prod_name,
-            NEW.BranchID,
+            OLD.BranchID,
 			NULL,
             NULL,
-            NEW.Price,
-            'Restock'
+            OLD.Price,
+            'Deleted Producted'
         );
 END $$
+
 
 DELIMITER ;
 -- Trigger 12 User delete-- 
@@ -394,7 +391,7 @@ AFTER DELETE ON users
 FOR EACH ROW
 BEGIN
     INSERT INTO user_deletion_log (UserID, Username,Role)
-    VALUES (OLD.UserID, OLD.Username,Role);
+    VALUES (OLD.UserID, CONCAT(OLD.FirstName,' ',OLD.LastName),Role);
 END $$
 DELIMITER ;
 

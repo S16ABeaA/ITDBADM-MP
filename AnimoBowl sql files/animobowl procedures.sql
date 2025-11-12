@@ -113,6 +113,7 @@ DELIMITER ;
 CALL GetProductInventory(13,2);
 
 -- Procedure 4 Service Availability -- 
+DELIMITER $$
 CREATE PROCEDURE GetServiceAvailability(
     INOUT p_serviceid INT
 )
@@ -380,24 +381,26 @@ END $$
 DELIMITER ;
 
 CALL AddBowlingBall(
-    2,                -- BranchID
+    1,                -- BranchID
     1,                -- BrandID
-    'Phaze III',      -- Name
+    'Phaze II',      -- Name
     8500,             -- Price
     NULL,             -- ImageID
     'New',            -- Quality
-    'Hybrid',         -- Type
+    'Solid',         -- Type
     15,               -- Weight
     'Symetric',       -- CoreType
     'Velocity',       -- CoreName
-    'R2S Hybrid',     -- Coverstock
-    '1500 Polish',    -- CoverstockType
+    'TX-16',     -- Coverstock
+    '3000 Abralon',    -- CoverstockType
     2.48,             -- RG
     0.051,            -- DIFF
     0.000,            -- INTDIFF
     1              -- Quantity
 );
 
+SELECT *
+FROM bowlingball;
 -- Procedure 14 Add a Bowling Accessory --
 DELIMITER $$
 
@@ -733,12 +736,28 @@ CREATE PROCEDURE UpdateOrderStatus(
     IN p_Status enum('Pending','Processing','Completed','Cancelled')
 )
 BEGIN
-    IF EXISTS (SELECT 1 FROM orders WHERE OrderID = p_OrderID) THEN
-        UPDATE orders
-        SET Status = p_Status
-        WHERE OrderID = p_OrderID;
-	END IF;
+    DECLARE current_status ENUM('Pending','Processing','Completed','Cancelled');
+
+    START TRANSACTION;
+
+    SELECT Status INTO current_status
+    FROM orders
+    WHERE OrderID = p_OrderID
+    FOR UPDATE;
+
+    IF current_status = p_NewStatus THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Status is already the same';
+    END IF;
+
+    UPDATE orders
+    SET Status = p_NewStatus
+    WHERE OrderID = p_OrderID;
+
+    COMMIT;
 END $$ DELIMITER ;
+
+
 
 -- Procedure 22 updates currency rates -- 
 DELIMITER $$

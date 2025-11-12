@@ -164,7 +164,7 @@ price double(10,2),
 FOREIGN KEY (OrderID) REFERENCES orders(OrderID) ON DELETE CASCADE
 );
 
-
+DROP TABLE orderdetails;
 CREATE TABLE servicedetails
 (
 ServiceOrderID INT PRIMARY KEY NOT NULL UNIQUE AUTO_INCREMENT,

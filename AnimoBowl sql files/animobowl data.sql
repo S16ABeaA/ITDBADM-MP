@@ -34,39 +34,8 @@ INSERT INTO branches
 VALUES (1,1), (2,2);
 
 
-INSERT INTO product 
-VALUES
-(1,1,'ball',9500.25,NULL,1), 
-(2,2,'ball',10000,NULL,1), 
-(3,3,'ball',12000,NULL,1),
-(4,1,'ball',7000,NULL,1),
-(5,7,'ball',9000,NULL,1), 
-(6,11,'accessories',750,NULL,1),
-(7,15,'accessories',8000,NULL,1),
-(8,2,'accessories',750,NULL,1),
-(9,3,'supplies',500,NULL,1),
-(10,4,'supplies',500,NULL,1),
-(11,6,'supplies',250,NULL,1),
-(12,11,'supplies',300,NULL,1), 
-(13,1,'bag',6000,NULL,1),
-(14,2,'bag',3000,NULL,1),
-(15,3,'bag',9500,NULL,1),
-(16,5,'bag',1500,NULL,1),
-(17,6,'bag',8500,NULL,1),
-(18,5,'bag',6000,NULL,1),
-(19,13,'shoes',12000,NULL,1),
-(20,13,'shoes',12000,NULL,1),
-(21,13,'shoes',12000,NULL,1),
-(22,14,'shoes',10000,NULL,1),
-(23,14,'shoes',10000,NULL,1),
-(24,14,'shoes',9500,NULL,1),
-(25,7,'ball',12000,NULL,1),
-(26,9,'ball',10000,NULL,1),
-(27,1,'supplies',350,NULL,1);
 
-SELECT *
-FROM bowlingshoes;
-
+-- Add products -- 
 CALL AddBowlingBall(1,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
 CALL AddBowlingBall(2,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
 CALL AddBowlingBall(1,2,'Hyper Venom',10000, NULL,'New','Pearl',15,'Symetric','Gear','Propulsion MXR','5500 LSP',2.48,0.048,0.000,1);
