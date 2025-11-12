@@ -69,10 +69,61 @@ END $$
 
 DELIMITER ;
 
-
--- Trigger 3 Users cannot avail of any unavailable service-- 
 DELIMITER $$
 
+CREATE TRIGGER ChangeCartDetails
+BEFORE UPDATE ON orderdetails
+FOR EACH ROW
+BEGIN
+	DECLARE current_stock INT;
+    DECLARE order_branch INT;
+
+   
+    SELECT BranchID INTO order_branch
+    FROM orders
+    WHERE OrderID = NEW.OrderID
+    LIMIT 1;
+    
+    IF OLD.quantity < NEW.quantity
+    THEN
+	UPDATE product
+    SET Quantity = Quantity - (NEW.Quantity - OLD.quantity)
+    WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
+    END IF;
+    
+    IF OLD.quantity > NEW.quantity
+    THEN
+	UPDATE product
+    SET Quantity = Quantity + (OLD.Quantity - NEW.quantity)
+    WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
+    END IF;
+    
+    IF OLD.quantity = NEW.quantity
+    THEN
+	SIGNAL SQLSTATE '45000'
+	SET MESSAGE_TEXT = 'No Inventory changes';
+    END IF;
+    
+END $$
+
+DELIMITER ;
+
+-- Trigger No Negative Inventory
+DELIMITER $$
+
+CREATE TRIGGER NoNegativeInventory
+BEFORE UPDATE ON product
+FOR EACH ROW
+BEGIN
+		IF NEW.quantity < 0 
+        THEN SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = 'Inventory Cannot be negative ';
+        END IF;
+END $$ DELIMITER ;
+
+DELIMITER $$
+
+-- Trigger 3 Users cannot avail of any unavailable service-- 
 CREATE TRIGGER ServiceAvailabilityManagement
 BEFORE INSERT ON servicedetails
 FOR EACH ROW
@@ -341,7 +392,7 @@ DELIMITER ;
 DELIMITER $$
 
 CREATE TRIGGER InventoryDeleteLog
-BEFORE DELETE ON product
+AFTER DELETE ON product
 FOR EACH ROW
 BEGIN
         DECLARE prod_name VARCHAR(100);
@@ -373,7 +424,6 @@ BEGIN
             'Deleted Producted'
         );
 END $$
-
 
 DELIMITER ;
 -- Trigger 12 User delete-- 
