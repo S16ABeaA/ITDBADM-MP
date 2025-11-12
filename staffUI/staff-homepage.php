@@ -713,8 +713,8 @@ include('staff-header.html');
             <label for="coreType">Core Type</label>
             <select id="coreType" name="coreType">
               <option value="">Select Core Type</option>
-              <option value="Symmetric">Symmetric</option>
-              <option value="Asymmetric">Asymmetric</option>
+              <option value="Symetric">Symmetric</option>
+              <option value="Asymetric">Asymmetric</option>
             </select>
           </div>
           <div class="form-group">
@@ -1178,6 +1178,50 @@ include('staff-header.html');
       
       let currentCategory = 'bowling-balls';
       
+      // ===== Image Upload Handlers =====
+      // Handle image upload for all product types
+      $('#ballImageUpload').on('click', function() {
+          $('#ballImage').click();
+      });
+      
+      $('#ballImage').on('change', function() {
+          const file = this.files[0];
+          if(file) {
+              const fileName = file.name;
+              $('#ballImageUpload').find('p').text(fileName);
+              $('#ballImageUpload').addClass('has-file');
+              console.log('Image selected:', fileName);
+          }
+      });
+      
+      // Handle drag and drop for image upload
+      $('#ballImageUpload').on('dragover', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).addClass('dragover');
+      });
+      
+      $('#ballImageUpload').on('dragleave', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).removeClass('dragover');
+      });
+      
+      $('#ballImageUpload').on('drop', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).removeClass('dragover');
+          
+          const files = e.originalEvent.dataTransfer.files;
+          if(files.length > 0) {
+              $('#ballImage')[0].files = files;
+              const fileName = files[0].name;
+              $('#ballImageUpload').find('p').text(fileName);
+              $('#ballImageUpload').addClass('has-file');
+              console.log('Image dropped:', fileName);
+          }
+      });
+      
       // Category configuration (edit)
       const categoryConfig = {
           'bowling-balls': {
@@ -1573,6 +1617,11 @@ include('staff-header.html');
         const $form = $(modalId).find('form');
         $form[0].reset();
         
+        // Reset image upload display
+        const $imageUpload = $(modalId).find('.image-upload');
+        $imageUpload.find('p').text('Click to upload product images');
+        $imageUpload.removeClass('has-file');
+        
         // Update modal title for adding
         $(modalId).find('.modal-title').text($(modalId).find('.modal-title').text().replace('Edit', 'Add'));
         
@@ -1764,50 +1813,176 @@ include('staff-header.html');
       }
 
     function handleFormSubmit($form) {
-      // Debug helper removed: avoid echoing a <script> tag here because
-      // it would prematurely close the surrounding <script> block and
-      // cause JS to be rendered as page content.
-      const modalId = '#' + $form.closest('.modal').attr('id');
-      const isEdit = $form.find('button[type="submit"]').text().includes('Update');
-      const category = currentCategory;
-      const formData = new FormData($form[0]);
-      let targetURL = '';
-      switch (category) {
-        case 'bowling-balls': 
-        targetURL = isEdit ? 'update_bowlingball.php' : 'insert_bowlingball.php';
-        break;
-        case 'shoes':
-          // Update the table row or add new row logic here
-          break;
-        case 'bags':
-          // Update the table row or add new row logic here
-          break;
-        case 'accessories':
-          // Update the table row or add new row logic here
-          break;
-        case 'cleaning':
-          // Update the table row or add new row logic here
-          break;
-        case 'transaction': 
-          break;
-      }
-      $.ajax({
-      url: targetURL,
-      method: POST,
-      data: formData,
-      processData: false,
-      contentType: false,
-      success: function(response){
-        console.log(response);
-        closeModal(modalId);
-        alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
-        location.reload();
-      },
-      error: function(xhr, status, error){
-        console.error(error);
-      }
-      });          
-      }
+        const modalId = '#' + $form.closest('.modal').attr('id');
+        const isEdit = $form.find('button[type="submit"]').text().includes('Update');
+        const category = currentCategory;
+        const formData = new FormData($form[0]);
+        
+        // Add required flag for backend
+        formData.append('insertedit_bb', '1');
+        
+        let targetURL = '';
+        switch (category) {
+            case 'bowling-balls': 
+                targetURL = isEdit ? '../update_bowlingball.php' : '../insert_bowlingball.php';
+                break;
+            case 'shoes':
+                // TODO: Implement shoes endpoints
+                console.warn('Shoes implementation pending');
+                return;
+            case 'bags':
+                // TODO: Implement bags endpoints
+                console.warn('Bags implementation pending');
+                return;
+            case 'accessories':
+                // TODO: Implement accessories endpoints
+                console.warn('Accessories implementation pending');
+                return;
+            case 'cleaning':
+                // TODO: Implement cleaning endpoints
+                console.warn('Cleaning implementation pending');
+                return;
+            default:
+                console.error('Unknown category:', category);
+                return;
+        }
+        
+        // Show loading state
+        const $submitBtn = $form.find('button[type="submit"]');
+        const originalBtnText = $submitBtn.text();
+        $submitBtn.prop('disabled', true).text('Processing...');
+        
+        $.ajax({
+            url: targetURL,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response){
+                console.log('Server response:', response);
+                
+                if(response.success){
+                    // Close modal
+                    closeModal(modalId);
+                    
+                    // Update DOM - add or update table row
+                    if(isEdit){
+                        updateTableRow(response.data, category);
+                        showNotification('Success', response.message, 'success');
+                    } else {
+                        addTableRow(response.data, category);
+                        showNotification('Success', response.message, 'success');
+                    }
+                    
+                    // Reset form
+                    $form[0].reset();
+                } else {
+                    showNotification('Error', response.message, 'error');
+                }
+            },
+            error: function(xhr, status, error){
+                console.error('AJAX Error:', {status: xhr.status, error: error, response: xhr.responseText});
+                let errorMsg = 'An error occurred while processing your request.';
+                
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    errorMsg = errorResponse.message || errorMsg;
+                } catch(e) {
+                    // Response is not JSON
+                }
+                
+                showNotification('Error', errorMsg, 'error');
+            },
+            complete: function(){
+                // Restore button state
+                $submitBtn.prop('disabled', false).text(originalBtnText);
+            }
+        });
+    }
+    
+    // Helper function to add a new row to the table
+    function addTableRow(data, category) {
+        let newRow = '';
+        const visibleTable = getVisibleTable();
+        
+        switch(category) {
+            case 'bowling-balls':
+                newRow = `
+                    <tr data-id="${data.productId}">
+                        <td>${data.ballName}</td>
+                        <td>${data.ballBrand}</td>
+                        <td>${data.ballType}</td>
+                        <td>${data.ballQuality}</td>
+                        <td>${data.ballWeight}</td>
+                        <td>${data.coreName}</td>
+                        <td>${data.coreType}</td>
+                        <td>${data.rgValue}</td>
+                        <td>${data.diffValue}</td>
+                        <td>${data.intDiffValue}</td>
+                        <td>${data.coverstockName}</td>
+                        <td>${data.coverstockType}</td>
+                        <td>${data.ballPrice}</td>
+                        <td>${data.ballStock}</td>
+                        <td>
+                            <span class="status-badge status-active">In Stock</span>
+                        </td>
+                        <td>
+                            <button class="edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn" data-id="${data.productId}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+                break;
+            // Add other categories as needed
+        }
+        
+        if(newRow) {
+            visibleTable.find('tbody').append(newRow);
+            initializeTableFunctionality();
+            initializeModalHandlers();
+        }
+    }
+    
+    // Helper function to update an existing row in the table
+    function updateTableRow(data, category) {
+        const $row = $(`[data-id="${data.productId}"]`).closest('tr');
+        
+        if($row.length === 0) {
+            console.warn('Row not found for product ID:', data.productId);
+            return;
+        }
+        
+        switch(category) {
+            case 'bowling-balls':
+                $row.find('td:eq(0)').text(data.ballName);
+                $row.find('td:eq(1)').text(data.ballBrand);
+                $row.find('td:eq(2)').text(data.ballType);
+                $row.find('td:eq(3)').text(data.ballQuality);
+                $row.find('td:eq(4)').text(data.ballWeight);
+                $row.find('td:eq(5)').text(data.coreName);
+                $row.find('td:eq(6)').text(data.coreType);
+                $row.find('td:eq(7)').text(data.rgValue);
+                $row.find('td:eq(8)').text(data.diffValue);
+                $row.find('td:eq(9)').text(data.intDiffValue);
+                $row.find('td:eq(10)').text(data.coverstockName);
+                $row.find('td:eq(11)').text(data.coverstockType);
+                $row.find('td:eq(12)').text(data.ballPrice);
+                $row.find('td:eq(13)').text(data.ballStock);
+                break;
+            // Add other categories as needed
+        }
+        
+        updateStockStatus();
+    }
+    
+    // Helper function to show notifications (toast/alert)
+    function showNotification(title, message, type) {
+        // Simple implementation using alert; can be replaced with a toast library
+        const prefix = type === 'error' ? '❌' : '✅';
+        alert(`${prefix} ${title}\n\n${message}`);
+        console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+    }
   });
 </script>
 </body>
