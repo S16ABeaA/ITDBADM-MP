@@ -1763,69 +1763,52 @@ include('staff-header.html');
           $form.find('#supplyStock').val(cells.eq(4).text());
       }
 
-          // Handle form submission
-          
-          function handleFormSubmit($form) {
-          const modalId = '#' + $form.closest('.modal').attr('id');
-          const isEdit = $form.find('button[type="submit"]').text().includes('Update');
-          
-          // Here you would typically send data to your backend
-          console.log('Form submitted:', {
-              category: currentCategory,
-              isEdit: isEdit,
-              formData: new FormData($form[0])
-          });
-          
-          // For demo purposes, just close the modal
-          closeModal(modalId);
-          
-          // Show success message (you can implement this)
-          alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
+    function handleFormSubmit($form) {
+      // Debug helper removed: avoid echoing a <script> tag here because
+      // it would prematurely close the surrounding <script> block and
+      // cause JS to be rendered as page content.
+      const modalId = '#' + $form.closest('.modal').attr('id');
+      const isEdit = $form.find('button[type="submit"]').text().includes('Update');
+      const category = currentCategory;
+      const formData = new FormData($form[0]);
+      let targetURL = '';
+      switch (category) {
+        case 'bowling-balls': 
+        targetURL = isEdit ? 'update_bowlingball.php' : 'insert_bowlingball.php';
+        break;
+        case 'shoes':
+          // Update the table row or add new row logic here
+          break;
+        case 'bags':
+          // Update the table row or add new row logic here
+          break;
+        case 'accessories':
+          // Update the table row or add new row logic here
+          break;
+        case 'cleaning':
+          // Update the table row or add new row logic here
+          break;
+        case 'transaction': 
+          break;
       }
-      /*function handleFormSubmit($form) {
-          <?php echo "<script>alert('It works!')</script>"; ?>
-          const modalId = '#' + $form.closest('.modal').attr('id');
-          const isEdit = $form.find('button[type="submit"]').text().includes('Update');
-          const category = currentCategory;
-          const formData = new FormData($form[0]);
-          let targetURL = '';
-          switch (category) {
-              case 'bowling-balls': 
-                targetURL = isEdit ? 'update_bowlingball.php' : 'insert_bowlingball.php';
-                break;
-              case 'shoes':
-                  // Update the table row or add new row logic here
-                  break;
-              case 'bags':
-                  // Update the table row or add new row logic here
-                  break;
-              case 'accessories':
-                  // Update the table row or add new row logic here
-                  break;
-              case 'cleaning':
-                  // Update the table row or add new row logic here
-                  break;
-              case 'transaction': 
-                  break;
-          }
-          $.ajax({
-            url: targetURL,
-            method: POST,
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response){
-              console.log(response);
-              closeModal(modalId);
-              alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
-              location.reload();
-            },
-            error: function(xhr, status, error){
-              console.error(error);
-            }
-          });          
+      $.ajax({
+      url: targetURL,
+      method: POST,
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(response){
+        console.log(response);
+        closeModal(modalId);
+        alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
+        location.reload();
+      },
+      error: function(xhr, status, error){
+        console.error(error);
       }
-  */});
+      });          
+      }
+  });
 </script>
 </body>
 </html>
