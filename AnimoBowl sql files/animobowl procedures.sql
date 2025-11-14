@@ -630,9 +630,16 @@ BEGIN
     DECLARE checkOrder INT;
     DECLARE converted_price DECIMAL(10,2);
 
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    START TRANSACTION;
 
 
-    -- Check if order already exists
     SELECT COUNT(*) INTO checkOrder
     FROM orders
     WHERE OrderID = p_OrderID;
@@ -648,13 +655,19 @@ BEGIN
         );
     END IF;
 
+
     CALL GetPriceInEachCurrency(p_ProductID, p_CurrencyID, converted_price);
+
 
     INSERT INTO orderdetails (OrderID, ProductID, Quantity, Price)
     VALUES (p_OrderID, p_ProductID, p_Quantity, converted_price);
+
+    COMMIT;
+
 END $$
 
 DELIMITER ;
+
 
 DELIMITER $$
 
@@ -671,7 +684,14 @@ BEGIN
     DECLARE converted_price DECIMAL(10,2);
 
 
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
 
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+
+    START TRANSACTION;
     -- Check if order already exists
     SELECT COUNT(*) INTO checkOrder
     FROM orders
@@ -696,9 +716,12 @@ BEGIN
     END IF;
     INSERT INTO servicedetails (OrderID, ServiceID, isFromStore, Price)
     VALUES (p_OrderID, p_ServiceID, p_isFromStore, converted_price);
+    
+    COMMIT;
 END $$
 
 DELIMITER ;
+
 
 
 -- Edit/Update Details -- 
@@ -711,51 +734,88 @@ CREATE PROCEDURE CheckOutPage(
     IN p_DeliveryMethod ENUM('Pickup','Delivery')
 )
 BEGIN
-    -- Make sure the order exists
-    IF EXISTS (SELECT 1 FROM orders WHERE OrderID = p_OrderID) THEN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
 
-        UPDATE orders
-        SET PaymentMode = p_PaymentMode,
-            DeliveryMethod = p_DeliveryMethod,
-            Status = 'Processing',
-            DatePurchased = NOW()
-        WHERE OrderID = p_OrderID;
+   
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
 
-    ELSE
+    
+    SELECT OrderID 
+    FROM orders
+    WHERE OrderID = p_OrderID
+    FOR UPDATE;
+
+    
+    IF NOT EXISTS (SELECT 1 FROM orders WHERE OrderID = p_OrderID) THEN
+        ROLLBACK;
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Order ID does not exist.';
     END IF;
+
+    
+    UPDATE orders
+    SET PaymentMode = p_PaymentMode,
+        DeliveryMethod = p_DeliveryMethod,
+        Status = 'Processing',
+        DatePurchased = NOW()
+    WHERE OrderID = p_OrderID;
+
+    COMMIT;
 END $$
 
 DELIMITER ;
 
+
 -- Procedure 21 updates order status -- 
 DELIMITER $$
+
 CREATE PROCEDURE UpdateOrderStatus(
     IN p_OrderID INT,
-    IN p_Status enum('Pending','Processing','Completed','Cancelled')
+    IN p_Status ENUM('Pending','Processing','Completed','Cancelled')
 )
 BEGIN
     DECLARE current_status ENUM('Pending','Processing','Completed','Cancelled');
 
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     START TRANSACTION;
 
+  
     SELECT Status INTO current_status
     FROM orders
     WHERE OrderID = p_OrderID
     FOR UPDATE;
 
-    IF current_status = p_NewStatus THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Status is already the same';
+    
+    IF current_status IS NULL THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Order does not exist.';
+    END IF;
+
+    
+    IF current_status = p_Status THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Status is already the same.';
     END IF;
 
     UPDATE orders
-    SET Status = p_NewStatus
+    SET Status = p_Status
     WHERE OrderID = p_OrderID;
 
     COMMIT;
-END $$ DELIMITER ;
+END $$
+
+DELIMITER ;
 
 
 
@@ -780,11 +840,20 @@ CREATE PROCEDURE RestockInventory(
     IN addedquantity INT
 )
 BEGIN
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
     UPDATE product
     SET quantity = quantity + addedquantity
     WHERE p_ProductID = ProductID AND p_BranchID = BranchID;
     
+    COMMIT;
 END $$ DELIMITER ;
+
 
 -- Product 24 Change Product Price -- 
 DELIMITER $$
@@ -793,10 +862,17 @@ CREATE PROCEDURE ChangeProductPrice(
     IN NewPrice FLOAT
 )
 BEGIN
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
     UPDATE product
     SET price = NewPrice
     WHERE p_ProductID = ProductID;
-    
+    COMMIT;
 END $$ DELIMITER ;
 
 -- Procedure 25 Change User Information -- 
@@ -824,8 +900,6 @@ END $$
 DELIMITER ;
 -- Procedure 26 Delete a product -- 
 DELIMITER $$
-
-
 CREATE PROCEDURE DeleteProduct(
     IN p_ProductID INT,
     IN p_BranchID INT
