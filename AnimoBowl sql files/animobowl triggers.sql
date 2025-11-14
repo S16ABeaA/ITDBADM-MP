@@ -10,7 +10,8 @@ BEGIN
     DECLARE current_stock INT;
     DECLARE order_branch INT;
 
-   
+
+
     SELECT BranchID INTO order_branch
     FROM orders
     WHERE OrderID = NEW.OrderID
@@ -36,9 +37,11 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Insufficient stock for this product in selected branch';
     END IF;
+	COMMIT;
 END $$
 
 DELIMITER ;
+
 -- Trigger 2 Updates inventory at checkout-- 
 DELIMITER $$
 
@@ -61,7 +64,6 @@ BEGIN
     WHERE ProductID = NEW.ProductID AND BranchID = order_branch
     LIMIT 1;
 
-   
     UPDATE product
     SET Quantity = Quantity - NEW.Quantity
     WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
@@ -69,6 +71,8 @@ END $$
 
 DELIMITER ;
 
+DROP TRIGGER UpdateInventory
+-- Trigger 3 Editing cart details(Concurrency is practiced)
 DELIMITER $$
 
 CREATE TRIGGER ChangeCartDetails
@@ -108,7 +112,7 @@ END $$
 
 DELIMITER ;
 
--- Trigger No Negative Inventory
+-- Trigger 4 No Negative Inventory
 DELIMITER $$
 
 CREATE TRIGGER NoNegativeInventory
@@ -123,7 +127,7 @@ END $$ DELIMITER ;
 
 DELIMITER $$
 
--- Trigger 3 Users cannot avail of any unavailable service-- 
+-- Trigger 5 Users cannot avail of any unavailable service-- 
 CREATE TRIGGER ServiceAvailabilityManagement
 BEFORE INSERT ON servicedetails
 FOR EACH ROW
@@ -144,7 +148,7 @@ END $$
 
 DELIMITER ;
 
--- Trigger 4,5 Update total after adding a product/service to cart -- 
+-- Trigger 6,7 Update total after adding a product/service to cart -- 
 DELIMITER $$
 
 CREATE TRIGGER UpdateTotalAfterService
@@ -197,7 +201,7 @@ END $$
 DELIMITER ;
 
 
--- Trigger 6,7,8 All orders are logged and updated from checkout to completion - 
+-- Trigger 8,9,10 All orders are logged and updated from checkout to completion - 
 
 CREATE TABLE order_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
@@ -296,7 +300,7 @@ END $$
 DELIMITER ;
 
 
--- Trigger 9-11 All inventory restocks/new products added are logged(ex. Stock is added to a ball, a new product is introduced) --
+-- Trigger 11-13 All inventory restocks/new products added are logged(ex. Stock is added to a ball, a new product is introduced) --
 CREATE TABLE inventory_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(100),
@@ -426,7 +430,7 @@ BEGIN
 END $$
 
 DELIMITER ;
--- Trigger 12 User delete-- 
+-- Trigger 14 User delete-- 
 CREATE TABLE user_deletion_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NOT NULL,
@@ -445,7 +449,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Trigger 13 Log Currency Changes -- 
+-- Trigger 15 Log Currency Changes -- 
 CREATE TABLE currency_changes_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     currency VARCHAR(3),
@@ -464,7 +468,7 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Trigger 14 User Information Changes
+-- Trigger 16 User Information Changes
 DELIMITER $$
 
 CREATE TRIGGER UserChangeChecker
