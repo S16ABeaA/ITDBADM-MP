@@ -724,6 +724,7 @@ DELIMITER ;
 
 
 
+
 -- Edit/Update Details -- 
 -- Procedure 20 updates details on order page 
 DELIMITER $$
@@ -875,7 +876,50 @@ BEGIN
     COMMIT;
 END $$ DELIMITER ;
 
--- Procedure 25 Change User Information -- 
+-- Procedure 25-29 CRUD User Information -- 
+DELIMITER $$
+
+CREATE PROCEDURE AddUser(
+    IN p_AddressID INT,
+    IN p_FirstName VARCHAR(50),
+    IN p_LastName VARCHAR(50),
+    IN p_Number VARCHAR(20),
+    IN p_Email VARCHAR(100),
+    IN p_Pass VARCHAR(255)
+)
+BEGIN
+    DECLARE existingUser INT;
+
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    -- Highest safety level
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
+
+    -- Check if email exists
+    SELECT COUNT(*) INTO existingUser
+    FROM users
+    WHERE Email = p_Email
+    FOR UPDATE;
+
+    IF existingUser > 0 THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Email already registered.';
+    END IF;
+
+    INSERT INTO users (AddressID, FirstName, LastName, PhoneNumber, Email, Password)
+    VALUES (p_AddressID, p_FirstName, p_LastName, p_Number, p_Email, p_Pass);
+
+    COMMIT;
+END $$
+
+DELIMITER ;
+
+
 DELIMITER $$
 
 CREATE PROCEDURE ChangeUserInformation(
@@ -898,7 +942,48 @@ BEGIN
 END $$
 
 DELIMITER ;
--- Procedure 26 Delete a product -- 
+
+
+DELIMITER $$
+CREATE PROCEDURE DeleteUser(
+    IN p_UserID INT
+)
+BEGIN
+    DELETE FROM users
+    WHERE UserID = p_UserID;
+    ALTER TABLE users AUTO_INCREMENT = 1;
+END $$ DELIMITER ;
+
+
+DELIMITER $$
+CREATE PROCEDURE AddAddress(
+    IN p_City varchar(100),
+    IN p_Street varchar(255),
+    IN p_zip_code varchar(10)
+)
+BEGIN
+    INSERT INTO address(City,Street,zip_code)
+    VALUES(p_City,p_Street,p_zip_code);
+END $$ DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE EditAddress(
+	IN p_AddressID INT,
+    IN p_City varchar(100),
+    IN p_Street varchar(255),
+    IN p_zip_code varchar(10)
+)
+BEGIN
+    UPDATE address
+    SET City = p_city,
+		Street = p_Street,
+        zip_code = p_zip_code
+	WHERE AddressID = p_AddressID;
+END $$ DELIMITER ;
+
+
+-- Procedure 30 Delete a product -- 
 DELIMITER $$
 CREATE PROCEDURE DeleteProduct(
     IN p_ProductID INT,
@@ -911,18 +996,9 @@ BEGIN
     ALTER TABLE product AUTO_INCREMENT = 1;
 END $$ DELIMITER ;
 
--- Procedure 27 Delete a user 
-DELIMITER $$
-CREATE PROCEDURE DeleteUser(
-    IN p_UserID INT
-)
-BEGIN
-    DELETE FROM users
-    WHERE UserID = p_UserID;
-    ALTER TABLE users AUTO_INCREMENT = 1;
-END $$ DELIMITER ;
 
--- Procedure 28 Delete an order(Completed or cancelled) Done after adding to the logs
+
+-- Procedure 31 delete an order
 DELIMITER $$
 CREATE PROCEDURE DeleteOrders()
 BEGIN
