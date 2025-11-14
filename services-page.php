@@ -1,4 +1,4 @@
-<?php include("header.html")?>
+<!-- <?php include("header.html")?> -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,6 +65,147 @@
       </div>
     </div>
   </div>
+
+  <div class="modal-overlay" id="cartModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Service to Cart</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="service-info">
+          <div class="service-name" id="modalServiceName">Custom Drilling</div>
+          <div class="service-price-modal" id="modalServicePrice">₱1,200</div>
+        </div>
+        <p class="modal-question">Is the bowling ball from our shop?</p>
+        <div class="ball-origin-options">
+          <div class="origin-option" data-origin="yes">
+            <span class="option-label">Yes</span>
+            <span class="option-description">Purchased from our store</span>
+          </div>
+          <div class="origin-option" data-origin="no">
+            <span class="option-label">No</span>
+            <span class="option-description">From another store</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-cancel" id="cancelBtn">Cancel</button>
+        <button class="modal-btn btn-confirm" id="confirmBtn" disabled>Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM Elements
+    const modal = document.getElementById('cartModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cartNotification = document.getElementById('cartNotification');
+    const serviceCards = document.querySelectorAll('.service-card');
+    const originOptions = document.querySelectorAll('.origin-option');
+    
+    // Service information elements
+    const modalServiceName = document.getElementById('modalServiceName');
+    const modalServicePrice = document.getElementById('modalServicePrice');
+    
+    // Current selected service and origin
+    let currentService = null;
+    let selectedOrigin = null;
+    
+    // Service data
+    const services = {
+      drilling: {
+        name: 'Custom Drilling',
+        price: '₱1,200'
+      },
+      polishing: {
+        name: 'Professional Polishing',
+        price: '₱800'
+      },
+      sanding: {
+        name: 'Surface Sanding',
+        price: '₱600'
+      },
+      replacement: {
+        name: 'Parts Replacement',
+        price: '₱ depends'
+      }
+    };
+    
+    // Event Listeners for service cards
+    serviceCards.forEach(card => {
+      const serviceBtn = card.querySelector('.select-service-btn');
+      const serviceType = card.getAttribute('data-service');
+      
+      serviceBtn.addEventListener('click', () => {
+        currentService = serviceType;
+        openModal(serviceType);
+      });
+    });
+    
+    // Event Listeners for origin options
+    originOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        // Remove selected class from all options
+        originOptions.forEach(opt => opt.classList.remove('selected'));
+        
+        // Add selected class to clicked option
+        option.classList.add('selected');
+        
+        // Enable confirm button
+        confirmBtn.disabled = false;
+        
+        // Store selected origin
+        selectedOrigin = option.getAttribute('data-origin');
+      });
+    });
+    
+    // Modal event listeners
+    closeModal.addEventListener('click', closeModalFunc);
+    cancelBtn.addEventListener('click', closeModalFunc);
+    
+    // Confirm button event listener
+    confirmBtn.addEventListener('click', () => {
+      if (currentService && selectedOrigin) {
+        // addToCart(currentService, selectedOrigin);
+        closeModalFunc();
+      }
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModalFunc();
+      }
+    });
+    
+    // Functions
+    function openModal(serviceType) {
+      // Update modal with service information
+      modalServiceName.textContent = services[serviceType].name;
+      modalServicePrice.textContent = services[serviceType].price;
+      
+      // Reset origin selection
+      originOptions.forEach(opt => opt.classList.remove('selected'));
+      confirmBtn.disabled = true;
+      selectedOrigin = null;
+      
+      // Show modal
+      modal.classList.add('active');
+    }
+    
+    function closeModalFunc() {
+      modal.classList.remove('active');
+    }
+    
+    function addToCart(serviceType, origin) {
+     
+    }
+
+  </script>
+
 </body>
 </html>
-<?php include("footer.html")?>
+<!-- <?php include("footer.html")?> -->

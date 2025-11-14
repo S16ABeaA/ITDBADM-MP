@@ -25,65 +25,39 @@ include('staff-header.html');
         <div class="nav-item" data-category="transaction">Transactions</div>
       </div>
     </div>
-    
-    <?php
-    $productcount = 0;
-    $prodquery = "SELECT DISTINCT ProductID FROM product";
-    $prodresult = $conn->query($prodquery);
-    $productcount = $prodresult->num_rows;
-    ?>
+
+  
     <!-- Stats Overview -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-bowling-ball"></i>
         </div>
-        <div class="stat-number"><?php echo $productcount; ?></div>
+        <div class="stat-number">156</div>
         <div class="stat-label">Total Products</div>
       </div>
       <?php
-      $instockproducts = 0;
-      $instockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                       GROUP BY ProductID
-                       HAVING SUM(quantity) >=10"; 
-      $instockresult = $conn->query($instockquery);
-      $instockproducts = $instockresult->num_rows;
+      $lowstockquery; 
       ?>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-check-circle"></i>
         </div>
-        <div class="stat-number"><?php echo $instockproducts;?></div>
+        <div class="stat-number">128</div>
         <div class="stat-label">In Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <?php
-        $lowstockproducts = 0;
-        $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                          GROUP BY ProductID
-                          HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
-        $lowstockresult = $conn->query($lowstockquery);
-        $lowstockproducts = $lowstockresult->num_rows;
-        ?>
-        <div class="stat-number"><?php echo $lowstockproducts; ?></div>
+        <div class="stat-number">18</div>
         <div class="stat-label">Low Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-times-circle"></i>
         </div>
-        <?php
-        $nostockproducts = 0;
-        $nostockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                         GROUP BY ProductID
-                         HAVING SUM(quantity) = 0";
-        $nostockresult = $conn->query($nostockquery);
-        $nostockproducts = $nostockresult->num_rows;
-        ?>
-        <div class="stat-number"><?php echo $nostockproducts; ?></div>
+        <div class="stat-number">10</div>
         <div class="stat-label">Out of Stock</div>
       </div>
     </div>
@@ -170,13 +144,15 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity
-                    FROM bowlingball bb JOIN product pr ON bb.ProductID = pr.ProductID
+          $query = "SELECT DISTINCT bb.Name AS bbname, br.Name AS brandname, bb.Type AS bbtype, bb.Quality AS bbquality, w.weight AS weight, bb.CoreName AS corename, bb.CoreType AS coretype, w.RG AS rg, w.DIFF AS diff, w.INTDIFF AS intdiff, bb.Coverstock AS coverstock, bb.CoverstockType AS coverstocktype, pr.Price AS price, SUM(i.Quantity) AS quantity
+                    FROM weight w JOIN bowlingball bb ON w.ProductID = bb.ProductID
+                    JOIN product pr ON bb.ProductID = pr.ProductID
+                    JOIN product_variant pv ON pr.ProductID = pv.ProductID
                     JOIN brand br ON pr.BrandID = br.BrandID
-                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, bb.weight, bb.CoreName, bb.CoreType, bb.RG, bb.DIFF, bb.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pr.ProductID";
+                    JOIN inventory i ON pv.VariantID = i.VariantID
+                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, w.weight, bb.CoreName, bb.CoreType, w.RG, w.DIFF, w.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pv.VariantID;";
           $result = $conn->query($query);
           while ($row = $result->fetch_assoc()){
-            $bbproductID = $row['bbproductid'];
             $bbName = $row['bbname'];
             $brand = $row['brandname'];
             $type = $row['bbtype'];
@@ -211,7 +187,7 @@ include('staff-header.html');
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $bbproductID;?>">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="1">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -238,10 +214,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bgquery = "SELECT bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity
-                      FROM bowlingbag bg JOIN product pr ON bg.ProductID = pr.ProductID
+          $bgquery = "SELECT DISTINCT bg.Name as bgname, br.Name as brandname, c.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM color c JOIN bowlingbag bg ON c.ProductID = bg.ProductID
+                      JOIN product pr ON bg.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY bg.Name, br.Name, bg.color, bg.Size, bg.Type, pr.Price, pr.ProductID";
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY bg.Name, br.Name, c.color, bg.Size, bg.Type, pr.Price, pv.VariantID";
           $bgresult = $conn->query($bgquery);
           while($bgrow = $bgresult->fetch_assoc()){
             $bgname = $bgrow['bgname'];
@@ -289,10 +268,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bsquery = "SELECT bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity
-                      FROM bowlingshoes bs JOIN product pr ON bs.ProductID = pr.ProductID
+          $bsquery = "SELECT DISTINCT bs.Name as bsname, br.Name as brandname, s.size as size, s.sex as sex, pr.Price as price, SUM(i.Quantity) as quantity
+                      FROM size s JOIN bowlingshoes bs ON s.ProductID = bs.ProductID
+                      JOIN product pr ON bs.ProductID = pr.ProductID
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY bs.Name, br.Name, bs.Size, bs.sex, pr.Price, pr.ProductID";   
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY bs.Name, br.Name, s.size, s.sex, pr.Price, pv.VariantID";   
           $bsresult = $conn->query($bsquery);
           while($bsrow = $bsresult->fetch_assoc()){
             $bsname = $bsrow['bsname'];
@@ -338,10 +320,12 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $baquery = "SELECT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity
+          $baquery = "SELECT DISTINCT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(i.Quantity) as quantity
                       FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pr.ProductID";
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pv.VariantID";
 
           $baresult = $conn->query($baquery);
           while($barow = $baresult->fetch_assoc()){
@@ -387,10 +371,12 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity
+          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(i.Quantity) as quantity
                       FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pr.ProductID";
+                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+                      JOIN inventory i ON pv.VariantID = i.VariantID
+                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pv.VariantID";
           $csresult = $conn->query($csquery);
           while($csrow = $csresult->fetch_assoc()){
             $csname = $csrow['csname'];
@@ -644,7 +630,6 @@ include('staff-header.html');
       <form id="bowlingBagForm">
         <div class="form-grid">
           <!-- Basic Information -->
-          <input type="hidden" id="ballID" name="ballID" value="<?php echo $bbproductID;?>">
           <div class="form-group">
             <label for="ballName" class="required">Ball Name</label>
             <input type="text" id="ballName" name="ballName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -653,14 +638,14 @@ include('staff-header.html');
             <label for="ballBrand" class="required">Brand</label>
             <select id="ballBrand" name="ballBrand" required>
               <option value="">Select Brand</option>
-              <option value="1">Storm</option>
-              <option value="6">Brunswick</option>
-              <option value="8">Ebonite</option>
-              <option value="3">Hammer</option>
-              <option value="9">Roto Grip</option>
-              <option value="2">Motiv</option>
-              <option value="4">Track</option>
-              <option value="7">900 Global</option>
+              <option value="Storm">Storm</option>
+              <option value="Brunswick">Brunswick</option>
+              <option value="Ebonite">Ebonite</option>
+              <option value="Hammer">Hammer</option>
+              <option value="Roto Grip">Roto Grip</option>
+              <option value="Motiv">Motiv</option>
+              <option value="Track">Track</option>
+              <option value="900 Global">900 Global</option>
             </select>
           </div>
           <div class="form-group">
@@ -713,8 +698,8 @@ include('staff-header.html');
             <label for="coreType">Core Type</label>
             <select id="coreType" name="coreType">
               <option value="">Select Core Type</option>
-              <option value="Symetric">Symmetric</option>
-              <option value="Asymetric">Asymmetric</option>
+              <option value="Symmetric">Symmetric</option>
+              <option value="Asymmetric">Asymmetric</option>
             </select>
           </div>
           <div class="form-group">
@@ -753,25 +738,20 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="ballImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="ballImageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="ballImage" name="ballImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="ballImage" name="ballImage">
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-          <button type="submit" name="insertedit_bb" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
         </div>
       </form>
     </div>
+    
   </div>
 </div>
+
 <!-- modal for adding and editing bowling shoes-->
 <div class="modal bowling-shoes-modal" id="bowlingShoesModal" style="display: none;">
   <div class="modal-content">
@@ -828,14 +808,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="shoeImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="shoeImage" name="shoeImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="shoeImage" name="shoeImage">
           </div>
         </div>
 
@@ -910,14 +883,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="bagImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="bagImage" name="bagImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="bagImage" name="bagImage">
           </div>
         </div>
 
@@ -996,14 +962,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="accessoryImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="accessoryImage" name="accessoryImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="accessoryImage" name="accessoryImage">
           </div>
         </div>
 
@@ -1072,16 +1031,9 @@ include('staff-header.html');
             <textarea id="supplyDescription" name="supplyDescription" placeholder="Describe the product..." required></textarea>
           </div>
 
-          <div class="form-group full-width">
+           <div class="form-group full-width">
             <label for="supplyImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="supplyImage" name="supplyImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="supplyImage" name="supplyImage">
           </div>
         </div>
 
@@ -1177,50 +1129,6 @@ include('staff-header.html');
       const $statusFilter = $('#statusFilter');
       
       let currentCategory = 'bowling-balls';
-      
-      // ===== Image Upload Handlers =====
-      // Handle image upload for all product types
-      $('#ballImageUpload').on('click', function() {
-          $('#ballImage').click();
-      });
-      
-      $('#ballImage').on('change', function() {
-          const file = this.files[0];
-          if(file) {
-              const fileName = file.name;
-              $('#ballImageUpload').find('p').text(fileName);
-              $('#ballImageUpload').addClass('has-file');
-              console.log('Image selected:', fileName);
-          }
-      });
-      
-      // Handle drag and drop for image upload
-      $('#ballImageUpload').on('dragover', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          $(this).addClass('dragover');
-      });
-      
-      $('#ballImageUpload').on('dragleave', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          $(this).removeClass('dragover');
-      });
-      
-      $('#ballImageUpload').on('drop', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          $(this).removeClass('dragover');
-          
-          const files = e.originalEvent.dataTransfer.files;
-          if(files.length > 0) {
-              $('#ballImage')[0].files = files;
-              const fileName = files[0].name;
-              $('#ballImageUpload').find('p').text(fileName);
-              $('#ballImageUpload').addClass('has-file');
-              console.log('Image dropped:', fileName);
-          }
-      });
       
       // Category configuration (edit)
       const categoryConfig = {
@@ -1617,11 +1525,6 @@ include('staff-header.html');
         const $form = $(modalId).find('form');
         $form[0].reset();
         
-        // Reset image upload display
-        const $imageUpload = $(modalId).find('.image-upload');
-        $imageUpload.find('p').text('Click to upload product images');
-        $imageUpload.removeClass('has-file');
-        
         // Update modal title for adding
         $(modalId).find('.modal-title').text($(modalId).find('.modal-title').text().replace('Edit', 'Add'));
         
@@ -1812,178 +1715,27 @@ include('staff-header.html');
           $form.find('#supplyStock').val(cells.eq(4).text());
       }
 
-    function handleFormSubmit($form) {
-        const modalId = '#' + $form.closest('.modal').attr('id');
-        const isEdit = $form.find('button[type="submit"]').text().includes('Update');
-        const category = currentCategory;
-        const formData = new FormData($form[0]);
-        
-        // Add required flag for backend
-        formData.append('insertedit_bb', '1');
-        
-        let targetURL = '';
-        switch (category) {
-            case 'bowling-balls': 
-                targetURL = isEdit ? '../update_bowlingball.php' : '../insert_bowlingball.php';
-                break;
-            case 'shoes':
-                // TODO: Implement shoes endpoints
-                console.warn('Shoes implementation pending');
-                return;
-            case 'bags':
-                // TODO: Implement bags endpoints
-                console.warn('Bags implementation pending');
-                return;
-            case 'accessories':
-                // TODO: Implement accessories endpoints
-                console.warn('Accessories implementation pending');
-                return;
-            case 'cleaning':
-                // TODO: Implement cleaning endpoints
-                console.warn('Cleaning implementation pending');
-                return;
-            default:
-                console.error('Unknown category:', category);
-                return;
-        }
-        
-        // Show loading state
-        const $submitBtn = $form.find('button[type="submit"]');
-        const originalBtnText = $submitBtn.text();
-        $submitBtn.prop('disabled', true).text('Processing...');
-        
-        $.ajax({
-            url: targetURL,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function(response){
-                console.log('Server response:', response);
-                
-                if(response.success){
-                    // Close modal
-                    closeModal(modalId);
-                    
-                    // Update DOM - add or update table row
-                    if(isEdit){
-                        updateTableRow(response.data, category);
-                        showNotification('Success', response.message, 'success');
-                    } else {
-                        addTableRow(response.data, category);
-                        showNotification('Success', response.message, 'success');
-                    }
-                    
-                    // Reset form
-                    $form[0].reset();
-                } else {
-                    showNotification('Error', response.message, 'error');
-                }
-            },
-            error: function(xhr, status, error){
-                console.error('AJAX Error:', {status: xhr.status, error: error, response: xhr.responseText});
-                let errorMsg = 'An error occurred while processing your request.';
-                
-                try {
-                    const errorResponse = JSON.parse(xhr.responseText);
-                    errorMsg = errorResponse.message || errorMsg;
-                } catch(e) {
-                    // Response is not JSON
-                }
-                
-                showNotification('Error', errorMsg, 'error');
-            },
-            complete: function(){
-                // Restore button state
-                $submitBtn.prop('disabled', false).text(originalBtnText);
-            }
-        });
-    }
-    
-    // Helper function to add a new row to the table
-    function addTableRow(data, category) {
-        let newRow = '';
-        const visibleTable = getVisibleTable();
-        
-        switch(category) {
-            case 'bowling-balls':
-                newRow = `
-                    <tr data-id="${data.productId}">
-                        <td>${data.ballName}</td>
-                        <td>${data.ballBrand}</td>
-                        <td>${data.ballType}</td>
-                        <td>${data.ballQuality}</td>
-                        <td>${data.ballWeight}</td>
-                        <td>${data.coreName}</td>
-                        <td>${data.coreType}</td>
-                        <td>${data.rgValue}</td>
-                        <td>${data.diffValue}</td>
-                        <td>${data.intDiffValue}</td>
-                        <td>${data.coverstockName}</td>
-                        <td>${data.coverstockType}</td>
-                        <td>${data.ballPrice}</td>
-                        <td>${data.ballStock}</td>
-                        <td>
-                            <span class="status-badge status-active">In Stock</span>
-                        </td>
-                        <td>
-                            <button class="edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button>
-                            <button class="delete-btn" data-id="${data.productId}"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-                break;
-            // Add other categories as needed
-        }
-        
-        if(newRow) {
-            visibleTable.find('tbody').append(newRow);
-            initializeTableFunctionality();
-            initializeModalHandlers();
-        }
-    }
-    
-    // Helper function to update an existing row in the table
-    function updateTableRow(data, category) {
-        const $row = $(`[data-id="${data.productId}"]`).closest('tr');
-        
-        if($row.length === 0) {
-            console.warn('Row not found for product ID:', data.productId);
-            return;
-        }
-        
-        switch(category) {
-            case 'bowling-balls':
-                $row.find('td:eq(0)').text(data.ballName);
-                $row.find('td:eq(1)').text(data.ballBrand);
-                $row.find('td:eq(2)').text(data.ballType);
-                $row.find('td:eq(3)').text(data.ballQuality);
-                $row.find('td:eq(4)').text(data.ballWeight);
-                $row.find('td:eq(5)').text(data.coreName);
-                $row.find('td:eq(6)').text(data.coreType);
-                $row.find('td:eq(7)').text(data.rgValue);
-                $row.find('td:eq(8)').text(data.diffValue);
-                $row.find('td:eq(9)').text(data.intDiffValue);
-                $row.find('td:eq(10)').text(data.coverstockName);
-                $row.find('td:eq(11)').text(data.coverstockType);
-                $row.find('td:eq(12)').text(data.ballPrice);
-                $row.find('td:eq(13)').text(data.ballStock);
-                break;
-            // Add other categories as needed
-        }
-        
-        updateStockStatus();
-    }
-    
-    // Helper function to show notifications (toast/alert)
-    function showNotification(title, message, type) {
-        // Simple implementation using alert; can be replaced with a toast library
-        const prefix = type === 'error' ? '❌' : '✅';
-        alert(`${prefix} ${title}\n\n${message}`);
-        console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
-    }
+          // Handle form submission  
+      function handleFormSubmit($form) {
+          const modalId = '#' + $form.closest('.modal').attr('id');
+          const isEdit = $form.find('button[type="submit"]').text().includes('Update');
+          
+          // Here you would typically send data to your backend
+          console.log('Form submitted:', {
+              category: currentCategory,
+              isEdit: isEdit,
+              formData: new FormData($form[0])
+          });
+          
+          // For demo purposes, just close the modal
+          closeModal(modalId);
+          
+          // Show success message (you can implement this)
+          alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
+      }
   });
 </script>
+
+
 </body>
 </html>

@@ -10,7 +10,7 @@ include('staff-header.html');
   <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <link href="../css/staffCSS/staff-homepage.css" rel="stylesheet">
+  <link href="./staff-homepage.css" rel="stylesheet">
 </head>
 <body>
   <div class="content-section">
@@ -753,14 +753,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="ballImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="ballImageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="ballImage" name="ballImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="ballImage" name="ballImage">
           </div>
         </div>
 
@@ -828,14 +821,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="shoeImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="shoeImage" name="shoeImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="shoeImage" name="shoeImage">
           </div>
         </div>
 
@@ -910,14 +896,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="bagImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="bagImage" name="bagImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="bagImage" name="bagImage">
           </div>
         </div>
 
@@ -993,17 +972,9 @@ include('staff-header.html');
             <label for="accessoryDescription" class="required">Product Description</label>
             <textarea id="accessoryDescription" name="accessoryDescription" placeholder="Describe the product..." required></textarea>
           </div>
-
           <div class="form-group full-width">
             <label for="accessoryImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="accessoryImage" name="accessoryImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="accessoryImage" name="accessoryImage">
           </div>
         </div>
 
@@ -1074,14 +1045,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="supplyImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="supplyImage" name="supplyImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="supplyImage" name="supplyImage">
           </div>
         </div>
 
