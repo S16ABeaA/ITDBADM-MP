@@ -1,8 +1,47 @@
 <?php 
   require_once 'dependencies/session.php';
   require_once 'dependencies/config.php';
-  include("header.html")
+  include("header.html");
+
+  $userID = $_SESSION['user_id'];
+
+  // Call stored procedure GetUserProfile
+  $stmt = $conn->prepare("CALL GetUserProfile(?)");
+  $stmt->bind_param("i", $userID);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $user = $result->fetch_assoc();
+
+  //debugging
+  echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
+
+
+  // Must close procedure before another call
+  $stmt->close();
+  $conn->next_result();
+
+  // Handle Save Changes POST
+  if (isset($_POST['saveChanges'])) {
+    $firstname = $_POST['firstname'];
+    $lastname = $_POST['lastname'];
+    $email = $_POST['email'];
+    $mobile = $_POST['mobile'];
+    $city = $_POST['city'];
+    $street = $_POST['street'];
+    $zip = $_POST['zip'];
+
+    $stmt = $conn->prepare("CALL ChangeUserInformation(?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssss", $userID, $firstname, $lastname, $mobile, $email, $city, $street, $zip);
+    $stmt->execute();
+    $stmt->close();
+    $conn->next_result();
+
+    echo "<script>alert('Profile updated successfully!'); window.location.href='profile-page.php';</script>";
+    exit;
+  }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -174,57 +213,57 @@
           <i class="fas fa-user"></i>
           Account Details
         </div>
-        
-        <div class="details-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="firstName">First Name</label>
-              <input type="text" id="firstName" value="User">
+
+        <!-- Form to update account details -->
+        <form method="POST">
+          <div class="details-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" name="firstname" value="<?php echo htmlspecialchars($user['FirstName']); ?>" required>
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" name="lastname" value="<?php echo htmlspecialchars($user['LastName']); ?>" required>
+              </div>
             </div>
+
             <div class="form-group">
-              <label for="lastName">Last Name</label>
-              <input type="text" id="lastName" value="One">
+              <label for="email">Email Address</label>
+              <input type="email" name="email" value="<?php echo htmlspecialchars($user['Email']); ?>" required>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="text" name="mobile" value="<?php echo htmlspecialchars($user['MobileNumber']); ?>" required>
+            </div>
+
+            <div class="form-group">
+              <br><label for="address">Address</label>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" name="city" value="<?php echo htmlspecialchars($user['City']); ?>">
+              </div>
+              <div class="form-group">
+                <label for="street">Street</label>
+                <input type="text" name="street" value="<?php echo htmlspecialchars($user['Street']); ?>">
+              </div>
+              <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" name="zip" value="<?php echo htmlspecialchars($user['zip_code']); ?>">
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-change-password" id="changePasswordBtn" type="button">Change Password</button>
+              <button class="btn btn-secondary" type="reset">Cancel</button>
+              <button class="btn btn-primary" type="submit" name="saveChanges">Save Changes</button>
             </div>
           </div>
-          
-          <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" value="user.one@example.com">
-          </div>
-          
-          <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" value="1234 567 8910">
-          
-          <div class="form-group">
-            <label for="birthdate">Date of Birth</label>
-            <input type="date" id="birthdate" value="2005-05-15">
-          </div>
-          
-          <div class="form-group">
-            <label for="address">Address</label>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="city">City</label>
-              <input type="text" id="city" value="Manila">
-            </div>
-            <div class="form-group">
-              <label for="state">State</label>
-              <input type="text" id="state" value="MNL">
-            </div>
-            <div class="form-group">
-              <label for="zip">ZIP Code</label>
-              <input type="text" id="zip" value="1000">
-            </div>
-          </div>
-          
-          <div class="form-actions">
-            <button class="btn btn-change-password" id="changePasswordBtn">Change Password</button>
-            <button class="btn btn-secondary">Cancel</button>
-            <button class="btn btn-primary">Save Changes</button>
-          </div>
+        </form>
 
          <div class="modal" id="changePasswordModal">
             <div class="modal-content">

@@ -921,27 +921,72 @@ DELIMITER ;
 
 
 DELIMITER $$
-
 CREATE PROCEDURE ChangeUserInformation(
     IN p_UserID INT,
     IN p_FirstName VARCHAR(100),
     IN p_LastName VARCHAR(100),
     IN p_MobileNumber VARCHAR(20),
     IN p_Email VARCHAR(255),
-    IN p_Password VARCHAR(255)
+    IN p_City VARCHAR(100),
+    IN p_Street VARCHAR(255),
+    IN p_ZipCode VARCHAR(20)
+)
+BEGIN
+    DECLARE v_AddressID INT;
+
+    SELECT AddressID INTO v_AddressID
+    FROM users
+    WHERE UserID = p_UserID;
+
+    UPDATE users
+    SET 
+        FirstName = p_FirstName,
+        LastName = p_LastName,
+        MobileNumber = p_MobileNumber,
+        Email = p_Email
+    WHERE UserID = p_UserID;
+
+    UPDATE address
+    SET
+        City = p_City,
+        Street = p_Street,
+        zip_code = p_ZipCode
+    WHERE AddressID = v_AddressID;
+END 
+$$ DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE GetUserProfile(IN p_userID INT)
+BEGIN
+    SELECT 
+        u.FirstName,
+        u.LastName,
+        u.Email,
+        u.MobileNumber,
+        u.AddressID,
+        a.City,
+        a.Street,
+        a.zip_code
+    FROM users u
+    LEFT JOIN address a ON u.AddressID = a.AddressID
+    WHERE u.UserID = p_userID;
+END
+$$ DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE UpdateUserPassword(
+    IN p_userID INT,
+    IN p_newPassword VARCHAR(255)
 )
 BEGIN
     UPDATE users
-    SET 
-        FirstName =  p_FirstName,
-        LastName =  p_LastName,
-        MobileNumber =  p_MobileNumber,
-        Email =  p_Email,
-        Password =  p_Password
-    WHERE UserID = p_UserID;
-END $$
+    SET Password = p_newPassword
+    WHERE UserID = p_userID;
+END
 
-DELIMITER ;
+$$ DELIMITER ;
+
 
 
 DELIMITER $$
