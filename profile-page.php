@@ -38,6 +38,18 @@
 
     echo "<script>alert('Profile updated successfully!'); window.location.href='profile-page.php';</script>";
     exit;
+  } elseif (isset($_POST['savePasswordChanges'])) {
+    $currentPassword = $_POST['currentPassword'];
+    $newPassword = $_POST['newPassword'];
+
+    $stmt = $conn->prepare("CALL UpdateUserPassword(?, ?)");
+    $stmt->bind_param("is", $userID, $newPassword);
+    $stmt->execute();
+    $stmt->close();
+    $conn->next_result();
+
+    echo "<script>alert('Password changed successfully!'); window.location.href='profile-page.php';</script>";
+    exit;
   }
 ?>
 
@@ -271,7 +283,7 @@
               <h3>Change Password</h3>
               <span class="close">&times;</span>
             </div>
-            <form id="changePasswordForm">
+            <form id="changePasswordForm" method="POST">
               <div class="modal-body">
                 <div class="form-group">
                   <label for="currentPassword">Current Password</label>
@@ -288,7 +300,7 @@
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelPasswordChange">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="savePasswordChange">Change Password</button>
+                <button type="submit" class="btn btn-primary" id="savePasswordChange" name="savePasswordChanges">Change Password</button>
               </div>
             </form>
           </div>
@@ -461,8 +473,6 @@
 
     // Handle form submission
     changePasswordForm.addEventListener('submit', (event) => {
-      event.preventDefault(); // Prevent default form submission
-      
       const currentPassword = document.getElementById('currentPassword').value;
       const newPassword = document.getElementById('newPassword').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
@@ -479,26 +489,20 @@
         return;
       }
       
-      console.log('Password change requested');
-      console.log('Current:', currentPassword);
-      console.log('New:', newPassword);
-      
-      
-      alert('Password changed successfully!');
-      closePasswordModal();
+      // After validation, submit the form to PHP
+      changePasswordForm.submit();
     });
 
 
-
-        // Payment method type selection
-        document.querySelectorAll('.payment-type-option').forEach(option => {
-          option.addEventListener('click', () => {
-            document.querySelectorAll('.payment-type-option').forEach(o => {
-              o.classList.remove('selected');
-            });
-            option.classList.add('selected');
-          });
+    // Payment method type selection
+    document.querySelectorAll('.payment-type-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.payment-type-option').forEach(o => {
+          o.classList.remove('selected');
         });
+        option.classList.add('selected');
+      });
+    });
 
         // Set default payment method
     function setupPaymentMethodListeners() {
