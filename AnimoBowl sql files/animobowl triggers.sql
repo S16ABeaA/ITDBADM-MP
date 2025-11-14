@@ -71,7 +71,7 @@ END $$
 
 DELIMITER ;
 
-DROP TRIGGER UpdateInventory
+
 -- Trigger 3 Editing cart details(Concurrency is practiced)
 DELIMITER $$
 
@@ -486,6 +486,68 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'No fields were changed. Update aborted.';
     END IF;
+END $$
+
+DELIMITER ;
+
+-- trigger 17,18 removal of item from cart -- 
+DELIMITER $$
+CREATE TRIGGER UpdateTotalAfterServiceRemoval
+AFTER DELETE ON servicedetails
+FOR EACH ROW
+BEGIN
+    DECLARE new_total DECIMAL(10,2);
+
+    SELECT SUM(Price) INTO new_total
+    FROM servicedetails
+    WHERE OrderID = OLD.OrderID;
+
+ 
+    SELECT IFNULL(SUM(Price * Quantity), 0) INTO @Total
+    FROM orderdetails
+    WHERE OrderID = OLD.OrderID;
+
+    SET new_total = new_total + @Total;
+
+    UPDATE orders
+    SET Total = new_total
+    WHERE OrderID = OLD.OrderID;
+END $$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER UpdateTotalAfterProductRemoval
+AFTER DELETE ON orderdetails
+FOR EACH ROW
+BEGIN
+    DECLARE new_total DECIMAL(10,2);
+    DECLARE order_branch INT;
+    
+    SELECT SUM(Price * Quantity) INTO new_total
+    FROM orderdetails
+    WHERE OrderID = OLD.OrderID;
+
+    SELECT IFNULL(SUM(Price),0) INTO @servicetotal
+    FROM servicedetails
+    WHERE OrderID = OLD.OrderID;
+
+    SET new_total = new_total + @servicetotal;
+
+
+    SELECT BranchID INTO order_branch
+    FROM orders
+    WHERE OrderID = OLD.OrderID
+    LIMIT 1;
+    
+	UPDATE product
+    SET quantity = quantity + OLD.quantity
+    WHERE ProductID = OLD.ProductID AND order_branch = OLDBranchID;
+    
+    UPDATE orders
+    SET Total = new_total
+    WHERE OrderID = OLD.OrderID;
 END $$
 
 DELIMITER ;

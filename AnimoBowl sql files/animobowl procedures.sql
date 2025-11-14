@@ -855,6 +855,25 @@ BEGIN
     COMMIT;
 END $$ DELIMITER ;
 
+DELIMITER $$
+CREATE PROCEDURE ChangeServiceStatus(
+    IN p_ServiceID INT,
+    IN p_availability BOOLEAN
+)
+BEGIN
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
+    UPDATE services
+    SET Availability = p_availability
+    WHERE p_ServiceID = ServiceID;
+    
+    COMMIT;
+END $$ DELIMITER ;
 
 -- Product 24 Change Product Price -- 
 DELIMITER $$
@@ -921,72 +940,27 @@ DELIMITER ;
 
 
 DELIMITER $$
+
 CREATE PROCEDURE ChangeUserInformation(
     IN p_UserID INT,
     IN p_FirstName VARCHAR(100),
     IN p_LastName VARCHAR(100),
     IN p_MobileNumber VARCHAR(20),
     IN p_Email VARCHAR(255),
-    IN p_City VARCHAR(100),
-    IN p_Street VARCHAR(255),
-    IN p_ZipCode VARCHAR(20)
+    IN p_Password VARCHAR(255)
 )
 BEGIN
-    DECLARE v_AddressID INT;
-
-    SELECT AddressID INTO v_AddressID
-    FROM users
-    WHERE UserID = p_UserID;
-
     UPDATE users
     SET 
-        FirstName = p_FirstName,
-        LastName = p_LastName,
-        MobileNumber = p_MobileNumber,
-        Email = p_Email
+        FirstName =  p_FirstName,
+        LastName =  p_LastName,
+        MobileNumber =  p_MobileNumber,
+        Email =  p_Email,
+        Password =  p_Password
     WHERE UserID = p_UserID;
+END $$
 
-    UPDATE address
-    SET
-        City = p_City,
-        Street = p_Street,
-        zip_code = p_ZipCode
-    WHERE AddressID = v_AddressID;
-END 
-$$ DELIMITER ;
-
-DELIMITER $$
-CREATE PROCEDURE GetUserProfile(IN p_userID INT)
-BEGIN
-    SELECT 
-        u.FirstName,
-        u.LastName,
-        u.Email,
-        u.MobileNumber,
-        u.AddressID,
-        a.City,
-        a.Street,
-        a.zip_code
-    FROM users u
-    LEFT JOIN address a ON u.AddressID = a.AddressID
-    WHERE u.UserID = p_userID;
-END
-$$ DELIMITER ;
-
-DELIMITER $$
-
-CREATE PROCEDURE UpdateUserPassword(
-    IN p_userID INT,
-    IN p_newPassword VARCHAR(255)
-)
-BEGIN
-    UPDATE users
-    SET Password = p_newPassword
-    WHERE UserID = p_userID;
-END
-
-$$ DELIMITER ;
-
+DELIMITER ;
 
 
 DELIMITER $$
@@ -1055,3 +1029,28 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE RemoveProductFromCart(
+IN p_OrderID INT,
+IN p_ProductID INT)
+BEGIN
+    DELETE FROM orderdetails
+    WHERE p_OrderID = OrderID AND p_ProductID = ProductID;
+    ALTER TABLE orderdetails AUTO_INCREMENT = 1;
+END $$
+
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE RemoveServicefromCart(
+IN p_OrderID INT,
+IN p_ServiceID INT)
+BEGIN
+    DELETE FROM servicedetails
+    WHERE p_ServiceID = ServiceID AND p_OrderID = OrderID;
+    ALTER TABLE orderdetails AUTO_INCREMENT = 1;
+END $$
+
+DELIMITER ;
+
