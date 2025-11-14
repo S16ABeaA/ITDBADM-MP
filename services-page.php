@@ -1,4 +1,4 @@
-<!-- <?php include("header.html")?> -->
+<?php include("header.html")?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -208,4 +208,4 @@
 
 </body>
 </html>
-<!-- <?php include("footer.html")?> -->
+<?php include("footer.html")?>

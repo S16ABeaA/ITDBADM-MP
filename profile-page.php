@@ -1,7 +1,7 @@
 <?php 
-require_once 'dependencies/session.php';
-require_once 'dependencies/config.php';
-include("header.html")
+  require_once 'dependencies/session.php';
+  require_once 'dependencies/config.php';
+  include("header.html")
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -203,7 +203,6 @@ include("header.html")
           
           <div class="form-group">
             <label for="address">Address</label>
-            <input type="text" id="address" value="123 Main Street">
           </div>
           
           <div class="form-row">
