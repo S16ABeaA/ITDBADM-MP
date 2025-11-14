@@ -60,8 +60,8 @@
       </div>
       
       <div class="user-info">
-        <div class="name">User 1</div>
-        <div class="email">user.one@example.com</div>
+        <div class="name"><?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?></div>
+        <div class="email"><?php echo htmlspecialchars($user['Email']); ?></div>
         <button id="logoutBtn" class="btn-logout">Logout</button>
       </div>
     </div>
@@ -265,37 +265,35 @@
           </div>
         </form>
 
-         <div class="modal" id="changePasswordModal">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h3>Change Password</h3>
-                <span class="close">&times;</span>
-              </div>
-              <form id="changePasswordForm">
-                <div class="modal-body">
-                  <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" required>
-                  </div>
-                  <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required minlength="8">
-                  </div>
-                  <div class="form-group">
-                    <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" id="cancelPasswordChange">Cancel</button>
-                  <button type="submit" class="btn btn-primary" id="savePasswordChange">Change Password</button>
-                </div>
-              </form>
+        <div class="modal" id="changePasswordModal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Change Password</h3>
+              <span class="close">&times;</span>
             </div>
+            <form id="changePasswordForm">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="currentPassword">Current Password</label>
+                  <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" required>
+                </div>
+                <div class="form-group">
+                  <label for="newPassword">New Password</label>
+                  <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required minlength="8">
+                </div>
+                <div class="form-group">
+                  <label for="confirmPassword">Confirm New Password</label>
+                  <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelPasswordChange">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="savePasswordChange">Change Password</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </div>
     </div>
 
      <!-- Payment Methods Tab -->
