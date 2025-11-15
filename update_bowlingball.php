@@ -31,7 +31,7 @@ if(isset($_POST['insertedit_bb'])){
     exit;
   }
 
-  // Handle image upload (optional for updates)
+  /* Handle image upload (optional for updates)
   $bb_image = $_POST['ballImage_existing'] ?? '';
   if(isset($_FILES['ballImage']) && $_FILES['ballImage']['error'] === UPLOAD_ERR_OK){
     $xt = pathinfo($_FILES['ballImage']['name'], PATHINFO_EXTENSION);
@@ -65,7 +65,7 @@ if(isset($_POST['insertedit_bb'])){
       'message' => 'Image file is required.'
     ]);
     exit;
-  }
+  }*/
 
   // Update bowling ball
   $updatebbquery = "UPDATE bowlingball SET Quality='$ballQuality', Name='$ballName', Type='$ballType', RG='$rgValue', DIFF='$diffValue', INTDIFF='$intDiffValue', weight='$ballWeight', CoreType='$coreType', CoreName='$coreName', Coverstock='$coverstockName', CoverstockType='$coverstockType' WHERE ProductID='$ballId'";

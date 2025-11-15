@@ -20,9 +20,10 @@ if(isset($_POST['insertedit_bb'])){
   $coverstockName = $_POST['coverstockName'] ?? '';
   $coverstockType = $_POST['coverstockType'] ?? '';
   $ballDescription = $_POST['ballDescription'] ?? '';
+  $bb_image = $_POST['ballImage'] ?? '';
   
   // Validate required fields
-  if(empty($ballName) || empty($ballBrand) || empty($ballPrice) || empty($ballStock) || empty($ballWeight) || empty($ballType) || empty($ballQuality) || empty($coreName) || empty($coreType) || empty($rgValue) || empty($diffValue) || empty($intDiffValue) || empty($coverstockName) || empty($coverstockType)){
+  if(empty($bb_image) || empty($ballName) || empty($ballBrand) || empty($ballPrice) || empty($ballStock) || empty($ballWeight) || empty($ballType) || empty($ballQuality) || empty($coreName) || empty($coreType) || empty($rgValue) || empty($diffValue) || empty($intDiffValue) || empty($coverstockName) || empty($coverstockType)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
@@ -31,7 +32,7 @@ if(isset($_POST['insertedit_bb'])){
     exit;
   }
 
-  // Handle image upload
+  /* Handle image upload
   $bb_image = '';
   if(isset($_FILES['ballImage']) && $_FILES['ballImage']['error'] === UPLOAD_ERR_OK){
     $xt = pathinfo($_FILES['ballImage']['name'], PATHINFO_EXTENSION);
@@ -65,7 +66,7 @@ if(isset($_POST['insertedit_bb'])){
       'message' => 'Image file is required.'
     ]);
     exit;
-  }
+  }*/
 
   // Check if bowling ball already exists
   $bbchecker = "SELECT * FROM bowlingball WHERE Quality = '$ballQuality' AND Name = '$ballName' AND Type = '$ballType' AND RG = '$rgValue' AND DIFF = '$diffValue' AND INTDIFF = '$intDiffValue' AND weight = '$ballWeight' AND CoreName = '$coreName' AND CoreType = '$coreType' AND Coverstock = '$coverstockName' AND CoverstockType = '$coverstockType'";
