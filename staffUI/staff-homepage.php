@@ -25,39 +25,65 @@ include('staff-header.html');
         <div class="nav-item" data-category="transaction">Transactions</div>
       </div>
     </div>
-
-  
+    
+    <?php
+    $productcount = 0;
+    $prodquery = "SELECT DISTINCT ProductID FROM product";
+    $prodresult = $conn->query($prodquery);
+    $productcount = $prodresult->num_rows;
+    ?>
     <!-- Stats Overview -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-bowling-ball"></i>
         </div>
-        <div class="stat-number">156</div>
+        <div class="stat-number"><?php echo $productcount; ?></div>
         <div class="stat-label">Total Products</div>
       </div>
       <?php
-      $lowstockquery; 
+      $instockproducts = 0;
+      $instockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                       GROUP BY ProductID
+                       HAVING SUM(quantity) >=10"; 
+      $instockresult = $conn->query($instockquery);
+      $instockproducts = $instockresult->num_rows;
       ?>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-check-circle"></i>
         </div>
-        <div class="stat-number">128</div>
+        <div class="stat-number"><?php echo $instockproducts;?></div>
         <div class="stat-label">In Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <div class="stat-number">18</div>
+        <?php
+        $lowstockproducts = 0;
+        $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                          GROUP BY ProductID
+                          HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
+        $lowstockresult = $conn->query($lowstockquery);
+        $lowstockproducts = $lowstockresult->num_rows;
+        ?>
+        <div class="stat-number"><?php echo $lowstockproducts; ?></div>
         <div class="stat-label">Low Stock</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">
           <i class="fas fa-times-circle"></i>
         </div>
-        <div class="stat-number">10</div>
+        <?php
+        $nostockproducts = 0;
+        $nostockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                         GROUP BY ProductID
+                         HAVING SUM(quantity) = 0";
+        $nostockresult = $conn->query($nostockquery);
+        $nostockproducts = $nostockresult->num_rows;
+        ?>
+        <div class="stat-number"><?php echo $nostockproducts; ?></div>
         <div class="stat-label">Out of Stock</div>
       </div>
     </div>
@@ -123,7 +149,7 @@ include('staff-header.html');
     <div class="bowling-ball-info-container">
       <table>
         <thead>
-          <tr>
+          <tr data-id="<?php echo $orderId;?>">
             <th>Product Name</th>
             <th>Brand</th> 
             <th>Type</th>
@@ -144,15 +170,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $query = "SELECT DISTINCT bb.Name AS bbname, br.Name AS brandname, bb.Type AS bbtype, bb.Quality AS bbquality, w.weight AS weight, bb.CoreName AS corename, bb.CoreType AS coretype, w.RG AS rg, w.DIFF AS diff, w.INTDIFF AS intdiff, bb.Coverstock AS coverstock, bb.CoverstockType AS coverstocktype, pr.Price AS price, SUM(i.Quantity) AS quantity
-                    FROM weight w JOIN bowlingball bb ON w.ProductID = bb.ProductID
-                    JOIN product pr ON bb.ProductID = pr.ProductID
-                    JOIN product_variant pv ON pr.ProductID = pv.ProductID
+          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity
+                    FROM bowlingball bb JOIN product pr ON bb.ProductID = pr.ProductID
                     JOIN brand br ON pr.BrandID = br.BrandID
-                    JOIN inventory i ON pv.VariantID = i.VariantID
-                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, w.weight, bb.CoreName, bb.CoreType, w.RG, w.DIFF, w.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pv.VariantID;";
+                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, bb.weight, bb.CoreName, bb.CoreType, bb.RG, bb.DIFF, bb.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pr.ProductID";
           $result = $conn->query($query);
           while ($row = $result->fetch_assoc()){
+            $bbproductID = $row['bbproductid'];
             $bbName = $row['bbname'];
             $brand = $row['brandname'];
             $type = $row['bbtype'];
@@ -169,7 +193,7 @@ include('staff-header.html');
             $quantity = $row['quantity'];
           ?>
   
-          <tr>
+          <tr data-id="<?php echo $bbproductID;?>">
             <td><?php echo $bbName;?></td>
             <td><?php echo $brand;?></td>
             <td><?php echo $type;?></td>
@@ -187,7 +211,7 @@ include('staff-header.html');
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="1">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $bbproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -214,15 +238,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bgquery = "SELECT DISTINCT bg.Name as bgname, br.Name as brandname, c.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(i.Quantity) as quantity
-                      FROM color c JOIN bowlingbag bg ON c.ProductID = bg.ProductID
-                      JOIN product pr ON bg.ProductID = pr.ProductID
+          $bgquery = "SELECT bg.ProductID as bgproductid, bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity
+                      FROM bowlingbag bg JOIN product pr ON bg.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY bg.Name, br.Name, c.color, bg.Size, bg.Type, pr.Price, pv.VariantID";
+                      GROUP BY bg.Name, br.Name, bg.color, bg.Size, bg.Type, pr.Price, pr.ProductID";
           $bgresult = $conn->query($bgquery);
           while($bgrow = $bgresult->fetch_assoc()){
+            $bgproductID = $bgrow['bgproductid'];
             $bgname = $bgrow['bgname'];
             $brname = $bgrow['brandname'];
             $bgcolor = $bgrow['color'];
@@ -231,7 +253,7 @@ include('staff-header.html');
             $bgprice = $bgrow['price'];
             $bgquantity = $bgrow['quantity'];
           ?>
-          <tr>
+          <tr data-id="<?php echo $bgproductID;?>">
             <td><?php echo $bgname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bgcolor;?></td>
@@ -242,7 +264,7 @@ include('staff-header.html');
             <td><span class="tstatus-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="101">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $bgproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -268,15 +290,13 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $bsquery = "SELECT DISTINCT bs.Name as bsname, br.Name as brandname, s.size as size, s.sex as sex, pr.Price as price, SUM(i.Quantity) as quantity
-                      FROM size s JOIN bowlingshoes bs ON s.ProductID = bs.ProductID
-                      JOIN product pr ON bs.ProductID = pr.ProductID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
+          $bsquery = "SELECT bs.ProductID as bsproductid, bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity
+                      FROM bowlingshoes bs JOIN product pr ON bs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY bs.Name, br.Name, s.size, s.sex, pr.Price, pv.VariantID";   
+                      GROUP BY bs.Name, br.Name, bs.Size, bs.sex, pr.Price, pr.ProductID";   
           $bsresult = $conn->query($bsquery);
           while($bsrow = $bsresult->fetch_assoc()){
+            $bsproductID = $bsrow['bsproductid'];
             $bsname = $bsrow['bsname'];
             $brname = $bsrow['brandname'];
             $bssize = $bsrow['size'];
@@ -284,7 +304,7 @@ include('staff-header.html');
             $bsprice = $bsrow['price'];
             $bsquantity = $bsrow['quantity'];
           ?> 
-           <tr>
+           <tr data-id="<?php echo $bsproductID;?>">
             <td><?php echo $bsname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bssize;?></td>
@@ -294,7 +314,7 @@ include('staff-header.html');
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="101">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $bsproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -320,15 +340,14 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $baquery = "SELECT DISTINCT ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(i.Quantity) as quantity
+          $baquery = "SELECT ba.ProductID as baproductid, ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity
                       FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pv.VariantID";
+                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pr.ProductID";
 
           $baresult = $conn->query($baquery);
           while($barow = $baresult->fetch_assoc()){
+            $baproductID = $barow['baproductid'];
             $baname = $barow['baname'];
             $brname = $barow['brandname'];
             $batype = $barow['batype'];
@@ -336,7 +355,7 @@ include('staff-header.html');
             $baprice = $barow['price'];
             $baquantity = $barow['quantity'];
           ?>
-           <tr>
+           <tr data-id="<?php echo $baproductID;?>">
             <td><?php echo $baname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $batype;?></td>
@@ -346,7 +365,7 @@ include('staff-header.html');
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="101">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $baproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -371,21 +390,20 @@ include('staff-header.html');
         </thead>
         <tbody>
           <?php
-          $csquery = "SELECT DISTINCT cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(i.Quantity) as quantity
+          $csquery = "SELECT DISTINCT cs.ProductID as csproductid, cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity
                       FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      JOIN product_variant pv ON pr.ProductID = pv.ProductID
-                      JOIN inventory i ON pv.VariantID = i.VariantID
-                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pv.VariantID";
+                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pr.ProductID";
           $csresult = $conn->query($csquery);
           while($csrow = $csresult->fetch_assoc()){
+            $csproductID = $csrow['csproductid'];
             $csname = $csrow['csname'];
             $brname = $csrow['brandname'];
             $cstype = $csrow['cstype'];
             $csprice = $csrow['price'];
             $csquantity = $csrow['quantity'];
           ?>
-           <tr>
+           <tr data-id="<?php echo $csproductID;?>">
             <td><?php echo $csname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $cstype;?></td>
@@ -394,7 +412,7 @@ include('staff-header.html');
             <td><span class="status-badge status-active">In Stock</span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-btn" data-id="101">
+                <button class="btn btn-warning btn-sm edit-btn" data-id="<?php echo $csproductID;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
@@ -423,197 +441,44 @@ include('staff-header.html');
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>ORD-001</td>
-            <td>John Smith</td>
-            <td>Downtown</td>
-            <td>2024-01-15</td>
-            <td>USD</td>
-            <td>$156.75</td>
-            <td>Credit Card</td>
-            <td>Home Delivery</td>
-            <td>2024-01-17</td>
-            <td><span class="transaction-status-badge status-completed">Completed</span></td>
+          <?php 
+          $orderquery = "SELECT o.OrderID as orderId, u.FirstName as firstname, u.LastName as lastname, CONCAT(u.FirstName, ' ', u.LastName) as customer, a.City as shopbranch, o.DatePurchased as datepurchased, cur.Currency_Name as currency, o.Total as total, o.PaymentMode as paymentmode, o.DeliveryMethod as deliverymethod, o.DateCompleted as datecompleted, o.Status as status
+                         FROM orders o JOIN users u ON o.CustomerID = u.UserID
+                         JOIN branches b ON o.BranchID = b.BranchID
+                         JOIN address a ON b.AddressID = a.AddressID
+                         JOIN currency cur ON o.CurrencyID = cur.CurrencyID";
+          $orderresult = $conn->query($orderquery);
+          while($orderrow = $orderresult->fetch_assoc()){ 
+            $orderId = $orderrow['orderId'];
+            $customer = $orderrow['customer'];
+            $shopbranch = $orderrow['shopbranch'];
+            $datepurchased = $orderrow['datepurchased'];
+            $currency = $orderrow['currency'];
+            $total = $orderrow['total'];
+            $paymentmode = $orderrow['paymentmode'];
+            $deliverymethod = $orderrow['deliverymethod'];
+            $datecompleted = $orderrow['datecompleted'];
+            $status = $orderrow['status'];
+            ?>
+          <tr data-id="<?php echo $orderId;?>">
+            <td><?php echo $orderId;?></td>
+            <td><?php echo $customer;?></td>
+            <td><?php echo $shopbranch;?></td>
+            <td><?php echo $datepurchased;?></td>
+            <td><?php echo $currency;?></td>
+            <td><?php echo $total;?></td>
+            <td><?php echo $paymentmode;?></td>
+            <td><?php echo $deliverymethod;?></td>
+            <td><?php echo $datecompleted;?></td>
+            <td><span class="transaction-status-badge status-completed"><?php echo $status;?></span></td>
             <td class="action-cell">
               <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-001">
+                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="<?php echo $orderId;?>">
                   <i class="fas fa-edit"></i>
                 </button>
               </div>
             </td>
-          </tr>
-          <tr>
-            <td>ORD-002</td>
-            <td>Sarah Johnson</td>
-            <td>West Mall</td>
-            <td>2024-01-16</td>
-            <td>USD</td>
-            <td>$89.99</td>
-            <td>PayPal</td>
-            <td>Store Pickup</td>
-            <td>2024-01-16</td>
-            <td><span class="transaction-status-badge status-completed">Completed</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-002">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-003</td>
-            <td>Mike Chen</td>
-            <td>East Side</td>
-            <td>2024-01-17</td>
-            <td>USD</td>
-            <td>$234.50</td>
-            <td>Credit Card</td>
-            <td>Home Delivery</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-processing">Processing</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-003">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-004</td>
-            <td>Emily Davis</td>
-            <td>Downtown</td>
-            <td>2024-01-18</td>
-            <td>EUR</td>
-            <td>€145.00</td>
-            <td>Bank Transfer</td>
-            <td>Home Delivery</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-pending">Pending</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-004">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-005</td>
-            <td>Robert Brown</td>
-            <td>North Plaza</td>
-            <td>2024-01-19</td>
-            <td>USD</td>
-            <td>$67.25</td>
-            <td>Cash</td>
-            <td>Store Pickup</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-cancelled">Cancelled</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-005">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-006</td>
-            <td>Lisa Wilson</td>
-            <td>West Mall</td>
-            <td>2024-01-20</td>
-            <td>USD</td>
-            <td>$189.99</td>
-            <td>Credit Card</td>
-            <td>Home Delivery</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-pending">Pending</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-006">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-007</td>
-            <td>David Kim</td>
-            <td>East Side</td>
-            <td>2024-01-21</td>
-            <td>USD</td>
-            <td>$78.50</td>
-            <td>PayPal</td>
-            <td>Store Pickup</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-processing">Processing</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-007">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-008</td>
-            <td>Maria Garcia</td>
-            <td>Downtown</td>
-            <td>2024-01-22</td>
-            <td>USD</td>
-            <td>$345.75</td>
-            <td>Credit Card</td>
-            <td>Home Delivery</td>
-            <td>2024-01-24</td>
-            <td><span class="transaction-status-badge status-completed">Completed</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-008">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-009</td>
-            <td>James Taylor</td>
-            <td>North Plaza</td>
-            <td>2024-01-23</td>
-            <td>USD</td>
-            <td>$122.30</td>
-            <td>Cash</td>
-            <td>Store Pickup</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-cancelled">Cancelled</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-009">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>ORD-010</td>
-            <td>Amanda Lee</td>
-            <td>West Mall</td>
-            <td>2024-01-24</td>
-            <td>USD</td>
-            <td>$278.45</td>
-            <td>Credit Card</td>
-            <td>Home Delivery</td>
-            <td></td>
-            <td><span class="transaction-status-badge status-processing">Processing</span></td>
-            <td class="action-cell">
-              <div class="action-buttons">
-                <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="ORD-010">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
+          </tr><?php }?>
         </tbody>
       </table>
     </div>
@@ -630,6 +495,7 @@ include('staff-header.html');
       <form id="bowlingBagForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="ballID" name="ballID" value="<?php echo $bbproductID;?>">
           <div class="form-group">
             <label for="ballName" class="required">Ball Name</label>
             <input type="text" id="ballName" name="ballName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -638,14 +504,14 @@ include('staff-header.html');
             <label for="ballBrand" class="required">Brand</label>
             <select id="ballBrand" name="ballBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
           <div class="form-group">
@@ -698,8 +564,8 @@ include('staff-header.html');
             <label for="coreType">Core Type</label>
             <select id="coreType" name="coreType">
               <option value="">Select Core Type</option>
-              <option value="Symmetric">Symmetric</option>
-              <option value="Asymmetric">Asymmetric</option>
+              <option value="Symetric">Symmetric</option>
+              <option value="Asymetric">Asymmetric</option>
             </select>
           </div>
           <div class="form-group">
@@ -738,20 +604,25 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="ballImage" class="required">Product Images</label>
-            <input type="text" id="ballImage" name="ballImage">
+            <div class="image-upload-container">
+              <div class="image-upload" id="ballImageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload product images</p>
+                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
+                <input type="file" id="ballImage" name="ballImage" accept="image/*" style="display: none;" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
+          <button type="submit" name="insertedit_bb" class="btn btn-primary" id="submitBtn">Add Bowling Ball</button>
         </div>
       </form>
     </div>
-    
   </div>
 </div>
-
 <!-- modal for adding and editing bowling shoes-->
 <div class="modal bowling-shoes-modal" id="bowlingShoesModal" style="display: none;">
   <div class="modal-content">
@@ -763,6 +634,7 @@ include('staff-header.html');
       <form id="bowlingShoesForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="shoeID" name="shoeID" value="<?php echo $bsproductID;?>">
           <div class="form-group">
             <label for="shoeName" class="required">Shoe Name</label>
             <input type="text" id="shoeName" name="shoeName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -771,14 +643,14 @@ include('staff-header.html');
             <label for="shoeBrand" class="required">Brand</label>
             <select id="shoeBrand" name="shoeBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
 
@@ -808,13 +680,20 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="shoeImage" class="required">Product Images</label>
-            <input type="text" id="shoeImage" name="shoeImage">
+            <div class="image-upload-container">
+              <div class="image-upload" id="imageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload product images</p>
+                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
+                <input type="file" id="shoeImage" name="shoeImage" accept="image/*" style="display: none;" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="shoeModalCancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="shoeModalSubmitBtn">Add Bowling Shoe</button>
+          <button type="submit" name="insertedit_bs" class="btn btn-primary" id="shoeModalSubmitBtn">Add Bowling Shoe</button>
         </div>
       </form>
     </div>
@@ -833,6 +712,7 @@ include('staff-header.html');
       <form id="bowlingBagForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="bagID" name="bagID" value="<?php echo $bgproductID;?>">
           <div class="form-group">
             <label for="bagName" class="required">Bag Name</label>
             <input type="text" id="bagName" name="bagName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -841,14 +721,14 @@ include('staff-header.html');
             <label for="bagBrand" class="required">Brand</label>
             <select id="bagBrand" name="bagBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
 
@@ -883,13 +763,20 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="bagImage" class="required">Product Images</label>
-            <input type="text" id="bagImage" name="bagImage">
+            <div class="image-upload-container">
+              <div class="image-upload" id="imageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload product images</p>
+                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
+                <input type="file" id="bagImage" name="bagImage" accept="image/*" style="display: none;" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="bagModalCancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="bagModalSubmitBtn">Add Bowling Bag</button>
+          <button type="submit" name="insertedit_bg" class="btn btn-primary" id="bagModalSubmitBtn">Add Bowling Bag</button>
         </div>
       </form>
     </div>
@@ -908,6 +795,7 @@ include('staff-header.html');
       <form id="bowlingAccessoriesForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="accessoryID" name="accessoryID" value="<?php echo $baproductID;?>">
           <div class="form-group">
             <label for="accessoryName" class="required">Accessory Name</label>
             <input type="text" id="accessoryName" name="accessoryName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -916,14 +804,14 @@ include('staff-header.html');
             <label for="accessoryBrand" class="required">Brand</label>
             <select id="accessoryBrand" name="accessoryBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
 
@@ -962,13 +850,20 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="accessoryImage" class="required">Product Images</label>
-            <input type="text" id="accessoryImage" name="accessoryImage">
+            <div class="image-upload-container">
+              <div class="image-upload" id="imageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload product images</p>
+                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
+                <input type="file" id="accessoryImage" name="accessoryImage" accept="image/*" style="display: none;" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="accessoryModalCancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="accessoryModalSubmitBtn">Add Bowling Accessory</button>
+          <button type="submit" name="insertedit_ba" class="btn btn-primary" id="accessoryModalSubmitBtn">Add Bowling Accessory</button>
         </div>
       </form>
     </div>
@@ -987,6 +882,7 @@ include('staff-header.html');
       <form id="CleaningSuppliesForm">
         <div class="form-grid">
           <!-- Basic Information -->
+          <input type="hidden" id="cleaningID" name="cleaningID" value="<?php echo $csproductID;?>">
           <div class="form-group">
             <label for="supplyName" class="required">Supply Name</label>
             <input type="text" id="supplyName" name="supplyName" placeholder="e.g., Phantom, Hy-Road, Game Breaker" required>
@@ -995,14 +891,14 @@ include('staff-header.html');
             <label for="supplyBrand" class="required">Brand</label>
             <select id="supplyBrand" name="supplyBrand" required>
               <option value="">Select Brand</option>
-              <option value="Storm">Storm</option>
-              <option value="Brunswick">Brunswick</option>
-              <option value="Ebonite">Ebonite</option>
-              <option value="Hammer">Hammer</option>
-              <option value="Roto Grip">Roto Grip</option>
-              <option value="Motiv">Motiv</option>
-              <option value="Track">Track</option>
-              <option value="900 Global">900 Global</option>
+              <option value="1">Storm</option>
+              <option value="6">Brunswick</option>
+              <option value="8">Ebonite</option>
+              <option value="3">Hammer</option>
+              <option value="9">Roto Grip</option>
+              <option value="2">Motiv</option>
+              <option value="4">Track</option>
+              <option value="7">900 Global</option>
             </select>
           </div>
 
@@ -1031,15 +927,22 @@ include('staff-header.html');
             <textarea id="supplyDescription" name="supplyDescription" placeholder="Describe the product..." required></textarea>
           </div>
 
-           <div class="form-group full-width">
+          <div class="form-group full-width">
             <label for="supplyImage" class="required">Product Images</label>
-            <input type="text" id="supplyImage" name="supplyImage">
+            <div class="image-upload-container">
+              <div class="image-upload" id="imageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload product images</p>
+                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
+                <input type="file" id="supplyImage" name="supplyImage" accept="image/*" style="display: none;" multiple>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="supplyModalCancelBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="supplyModalSubmitBtn">Add Cleaning Supply</button>
+          <button type="submit" name="insertedit_cs" class="btn btn-primary" id="supplyModalSubmitBtn">Add Cleaning Supply</button>
         </div>
       </form>
     </div>
@@ -1109,7 +1012,7 @@ include('staff-header.html');
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="cancelTransactionBtn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="updateStatusBtn">Update Status</button>
+          <button type="submit" name="update_order" class="btn btn-primary" id="updateStatusBtn">Update Status</button>
         </div>
       </form>
     </div>
@@ -1129,6 +1032,50 @@ include('staff-header.html');
       const $statusFilter = $('#statusFilter');
       
       let currentCategory = 'bowling-balls';
+      
+      /* ===== Image Upload Handlers =====
+      // Handle image upload for all product types
+      $('#ballImageUpload').on('click', function() {
+          $('#ballImage').click();
+      });
+      
+      $('#ballImage').on('change', function() {
+          const file = this.files[0];
+          if(file) {
+              const fileName = file.name;
+              $('#ballImageUpload').find('p').text(fileName);
+              $('#ballImageUpload').addClass('has-file');
+              console.log('Image selected:', fileName);
+          }
+      });
+      
+      // Handle drag and drop for image upload
+      $('#ballImageUpload').on('dragover', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).addClass('dragover');
+      });
+      
+      $('#ballImageUpload').on('dragleave', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).removeClass('dragover');
+      });
+      
+      $('#ballImageUpload').on('drop', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          $(this).removeClass('dragover');
+          
+          const files = e.originalEvent.dataTransfer.files;
+          if(files.length > 0) {
+              $('#ballImage')[0].files = files;
+              const fileName = files[0].name;
+              $('#ballImageUpload').find('p').text(fileName);
+              $('#ballImageUpload').addClass('has-file');
+              console.log('Image dropped:', fileName);
+          }
+      });*/
       
       // Category configuration (edit)
       const categoryConfig = {
@@ -1367,69 +1314,178 @@ include('staff-header.html');
     }
 
     function showEditTransactionModal(orderId) {
-      const $row = $(`[data-id="${orderId}"]`).closest('tr');
+      // Search ONLY in the transactions table to avoid matching product rows with same data-id
+      const $transactionsTable = $('.transactions-info-container:not(.hidden)');
+      const $row = $transactionsTable.find(`tbody tr[data-id="${orderId}"]`).first();
+      
       if ($row.length === 0) {
           console.error('Transaction not found with ID:', orderId);
+          console.log('Attempted lookup with orderId:', orderId);
           return;
       }
         
       // Populate transaction modal with data
-      const cells = $row.find('td');
-      $('#orderId').val(cells.eq(0).text());
-      $('#customer').val(cells.eq(1).text());
-      $('#shopBranch').val(cells.eq(2).text());
-      $('#datePurchased').val(cells.eq(3).text());
-      $('#currency').val(cells.eq(4).text());
-      $('#total').val(cells.eq(5).text());
-      $('#paymentMode').val(cells.eq(6).text());
-      $('#deliveryMethod').val(cells.eq(7).text());
-      $('#dateCompleted').val(cells.eq(8).text());
+      // Get cells directly from this row only (direct children)
+      const $cells = $row.find('> td');
       
-      // Get the current status from the badge text - FIXED: using transaction-status-badge
-      const currentStatus = cells.eq(9).find('.transaction-status-badge').text().trim();
+      // Log for debugging
+      console.log('Populating transaction modal for order:', orderId);
+      console.log('Total cells found in row:', $cells.length);
+      console.log('Full row HTML:', $row.html());
+      
+      // Map cells to form fields (matches table columns)
+      // Column 0: Order ID, Column 1: Customer, Column 2: Shop Branch, Column 3: Date Purchased
+      // Column 4: Currency, Column 5: Total, Column 6: Payment Mode, Column 7: Delivery Method
+      // Column 8: Date Completed, Column 9: Status, Column 10: Actions
+      $('#orderId').val($cells.eq(0).text().trim());
+      $('#customer').val($cells.eq(1).text().trim());
+      $('#shopBranch').val($cells.eq(2).text().trim());
+      $('#datePurchased').val($cells.eq(3).text().trim());
+      $('#currency').val($cells.eq(4).text().trim());
+      $('#total').val($cells.eq(5).text().trim());
+      $('#paymentMode').val($cells.eq(6).text().trim());
+      $('#deliveryMethod').val($cells.eq(7).text().trim());
+      $('#dateCompleted').val($cells.eq(8).text().trim());
+      
+      // Get the current status from the badge text (column 9)
+      // The status is inside a span with class transaction-status-badge
+      const $statusCell = $cells.eq(9);
+      const currentStatus = $statusCell.find('.transaction-status-badge').text().trim();
+      console.log('Status cell HTML:', $statusCell.html());
+      console.log('Current status value:', currentStatus);
       $('#status').val(currentStatus);
       
       $('#transactionModal').fadeIn(300);
       $('body').css('overflow', 'hidden');
   }
 
-  // Update handleTransactionFormSubmit to use transaction-status-badge
-  function handleTransactionFormSubmit($form) {
-      const orderId = $('#orderId').val();
-      const newStatus = $('#status').val();
+    // Transaction form submit — sends AJAX request to update order in database
+    function handleTransactionFormSubmit($form) {
+    const $submitBtn = $form.find('button[type="submit"]');
+    const originalBtnText = $submitBtn.text();
+    $submitBtn.prop('disabled', true).text('Processing...');
+
+    // Read and normalize form values
+    let orderId = $form.find('#orderId').val();
+    orderId = orderId ? orderId.toString().trim() : '';
+    const newStatus = $form.find('#status').val();
+    const dateCompleted = $form.find('#dateCompleted').val();
+
+      // Validate
+      if(!orderId || !newStatus) {
+        showNotification('Error', 'Order ID and Status are required.', 'error');
+        $submitBtn.prop('disabled', false).text(originalBtnText);
+        return;
+      }
+
+      // Find the corresponding table row (before sending request) - search ONLY in transactions table
+      const $transactionsTable = $('.transactions-info-container:not(.hidden)');
+      let $row = $transactionsTable.find(`tbody tr[data-id="${orderId}"]`).first();
+      // Fallback: match by first <td> text if data-id lookup fails (handles older markup)
+      if($row.length === 0) {
+        $row = $transactionsTable.find('tbody tr').filter(function() {
+          return $(this).find('td').eq(0).text().trim() === orderId;
+        }).first();
+      }
+
+      if($row.length === 0) {
+        showNotification('Error', 'Transaction not found in the table.', 'error');
+        $submitBtn.prop('disabled', false).text(originalBtnText);
+        return;
+      }
+
+      // Prepare AJAX payload
+      const formData = new FormData();
+      formData.append('update_order', '1');
+      formData.append('orderId', orderId);
+      formData.append('status', newStatus);
+      if(newStatus === 'Completed' && !dateCompleted) {
+        const today = new Date().toISOString().split('T')[0];
+        formData.append('dateCompleted', today);
+      } else {
+        formData.append('dateCompleted', dateCompleted || '');
+      }
+
+      // Send AJAX request
+      $.ajax({
+        url: '../update_orders.php',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response){
+          console.log('Server response:', response);
+          if(response.success){
+            // Update table row with new status
+            updateTransactionTableRow(orderId, newStatus, dateCompleted);
+            closeModal('#transactionModal');
+            showNotification('Success', response.message, 'success');
+          } else {
+            showNotification('Error', response.message, 'error');
+          }
+        },
+        error: function(xhr, status, error){
+          console.error('AJAX Error:', {status: xhr.status, error: error, response: xhr.responseText});
+          let errorMsg = 'An error occurred while updating the transaction.';
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            errorMsg = errorResponse.message || errorMsg;
+          } catch(e) {
+            // Response is not JSON
+          }
+          showNotification('Error', errorMsg, 'error');
+        },
+        complete: function(){
+          $submitBtn.prop('disabled', false).text(originalBtnText);
+        }
+      });
+    }
+
+    // Helper function to update transaction row in table
+    function updateTransactionTableRow(orderId, newStatus, dateCompleted) {
+      // Normalize orderId and search ONLY in transactions table
+      orderId = orderId ? orderId.toString().trim() : '';
+      const $transactionsTable = $('.transactions-info-container:not(.hidden)');
+      let $row = $transactionsTable.find(`tbody tr[data-id="${orderId}"]`).first();
       
-      // Update the table row with new status
-      const $row = $(`[data-id="${orderId}"]`).closest('tr');
-      const $statusCell = $row.find('td:nth-child(10)');
-      const $dateCompletedCell = $row.find('td:nth-child(9)');
-      
-      // Status class mapping for the four statuses
+      if($row.length === 0) {
+        $row = $transactionsTable.find('tbody tr').filter(function() {
+          return $(this).find('td').eq(0).text().trim() === orderId;
+        }).first();
+      }
+
+      if($row.length === 0) {
+        console.warn('Transaction row not found for ID:', orderId);
+        return;
+      }
+
+      // Status class mapping
       const statusClassMap = {
-          'Pending': 'status-pending',
-          'Processing': 'status-processing', 
-          'Completed': 'status-completed',
-          'Cancelled': 'status-cancelled'
+        'Pending': 'status-pending',
+        'Processing': 'status-processing',
+        'Completed': 'status-completed',
+        'Cancelled': 'status-cancelled'
       };
-      
-      // Update status badge - FIXED: using transaction-status-badge
+
+      // Update status badge (column 10)
+      const $statusCell = $row.find('td:nth-child(10)');
+      const $badge = $statusCell.find('.transaction-status-badge');
+      if(!$badge.length) {
+        $statusCell.html(`<span class="transaction-status-badge"></span>`);
+      }
       $statusCell.find('.transaction-status-badge')
-          .removeClass('status-pending status-processing status-completed status-cancelled')
-          .addClass(statusClassMap[newStatus])
-          .text(newStatus);
-      
-      // Update date completed if status changes to Completed
-      if (newStatus === 'Completed' && !$dateCompletedCell.text().trim()) {
-          const today = new Date().toISOString().split('T')[0];
-          $dateCompletedCell.text(today);
+        .removeClass('status-pending status-processing status-completed status-cancelled')
+        .addClass(statusClassMap[newStatus] || '')
+        .text(newStatus);
+
+      // Update date completed (column 9) if status is Completed
+      if(newStatus === 'Completed' && dateCompleted) {
+        $row.find('td:nth-child(9)').text(dateCompleted);
+      } else if(newStatus !== 'Completed') {
+        $row.find('td:nth-child(9)').text('');
       }
-      // Clear date completed if status changes from Completed to something else
-      else if (newStatus !== 'Completed' && $dateCompletedCell.text().trim()) {
-          $dateCompletedCell.text('');
-      }
-      
-      closeModal('#transactionModal');
-      alert(`Transaction ${orderId} status updated to ${newStatus}!`);
-  }
+    }
 
   // Update the filterTransactionTable function to use transaction-status-badge
   function filterTransactionTable() {
@@ -1524,6 +1580,11 @@ include('staff-header.html');
     function resetModalForm(modalId) {
         const $form = $(modalId).find('form');
         $form[0].reset();
+        
+        // Reset image upload display
+        const $imageUpload = $(modalId).find('.image-upload');
+        $imageUpload.find('p').text('Click to upload product images');
+        $imageUpload.removeClass('has-file');
         
         // Update modal title for adding
         $(modalId).find('.modal-title').text($(modalId).find('.modal-title').text().replace('Edit', 'Add'));
@@ -1715,27 +1776,269 @@ include('staff-header.html');
           $form.find('#supplyStock').val(cells.eq(4).text());
       }
 
-          // Handle form submission  
-      function handleFormSubmit($form) {
-          const modalId = '#' + $form.closest('.modal').attr('id');
-          const isEdit = $form.find('button[type="submit"]').text().includes('Update');
-          
-          // Here you would typically send data to your backend
-          console.log('Form submitted:', {
-              category: currentCategory,
-              isEdit: isEdit,
-              formData: new FormData($form[0])
-          });
-          
-          // For demo purposes, just close the modal
-          closeModal(modalId);
-          
-          // Show success message (you can implement this)
-          alert(`${isEdit ? 'Product updated' : 'Product added'} successfully!`);
+    function handleFormSubmit($form) {
+        const modalId = '#' + $form.closest('.modal').attr('id');
+        const isEdit = $form.find('button[type="submit"]').text().includes('Update');
+        const category = currentCategory;
+        const formData = new FormData($form[0]);
+        
+      // Determine backend flag and endpoint per category
+      let backendFlag = '';
+      let targetURL = '';
+      switch (category) {
+        case 'bowling-balls':
+          backendFlag = 'insertedit_bb';
+          targetURL = isEdit ? '../update_bowlingball.php' : '../insert_bowlingball.php';
+          break;
+        case 'shoes':
+          backendFlag = 'insertedit_bs';
+          targetURL = isEdit ? '../update_bowlingshoes.php' : '../insert_bowlingshoes.php';
+          break;
+        case 'bags':
+          backendFlag = 'insertedit_bg';
+          targetURL = isEdit ? '../update_bowlingbags.php' : '../insert_bowlingbags.php';
+          break;
+        case 'accessories':
+          backendFlag = 'insertedit_ba';
+          targetURL = isEdit ? '../update_bowlingaccessories.php' : '../insert_bowlingaccessories.php';
+          break;
+        case 'cleaning':
+          backendFlag = 'insertedit_cs';
+          targetURL = isEdit ? '../update_cleaningsupplies.php' : '../insert_cleaningsupplies.php';
+          break;
+        default:
+          console.error('Unknown category:', category);
+          return;
       }
+
+      // Append proper flag expected by backend
+      formData.append(backendFlag, '1');
+        
+        // Show loading state
+        const $submitBtn = $form.find('button[type="submit"]');
+        const originalBtnText = $submitBtn.text();
+        $submitBtn.prop('disabled', true).text('Processing...');
+        
+        $.ajax({
+            url: targetURL,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response){
+                console.log('Server response:', response);
+                
+                if(response.success){
+                    // Close modal
+                    closeModal(modalId);
+                    
+                    // Update DOM - add or update table row
+                    if(isEdit){
+                        updateTableRow(response.data, category);
+                        showNotification('Success', response.message, 'success');
+                    } else {
+                        addTableRow(response.data, category);
+                        showNotification('Success', response.message, 'success');
+                    }
+                    
+                    // Reset form
+                    $form[0].reset();
+                } else {
+                    showNotification('Error', response.message, 'error');
+                }
+            },
+            error: function(xhr, status, error){
+                console.error('AJAX Error:', {status: xhr.status, error: error, response: xhr.responseText});
+                let errorMsg = 'An error occurred while processing your request.';
+                
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    errorMsg = errorResponse.message || errorMsg;
+                } catch(e) {
+                    // Response is not JSON
+                }
+                
+                showNotification('Error', errorMsg, 'error');
+            },
+            complete: function(){
+                // Restore button state
+                $submitBtn.prop('disabled', false).text(originalBtnText);
+            }
+        });
+    }
+    
+    // Helper function to add a new row to the table
+    function addTableRow(data, category) {
+      let newRow = '';
+      const visibleTable = getVisibleTable();
+        
+      switch(category) {
+        case 'bowling-balls':
+          newRow = `
+            <tr data-id="${data.productId}">
+              <td>${data.ballName}</td>
+              <td>${data.ballBrand}</td>
+              <td>${data.ballType}</td>
+              <td>${data.ballQuality}</td>
+              <td>${data.ballWeight}</td>
+              <td>${data.coreName}</td>
+              <td>${data.coreType}</td>
+              <td>${data.rgValue}</td>
+              <td>${data.diffValue}</td>
+              <td>${data.intDiffValue}</td>
+              <td>${data.coverstockName}</td>
+              <td>${data.coverstockType}</td>
+              <td>${data.ballPrice}</td>
+              <td>${data.ballStock}</td>
+              <td>
+                <span class="status-badge status-active">In Stock</span>
+              </td>
+              <td>
+                <button class="edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button>
+                <button class="delete-btn" data-id="${data.productId}"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+          break;
+        case 'shoes':
+          newRow = `
+            <tr data-id="${data.productId}">
+              <td>${data.shoeName}</td>
+              <td>${data.shoeBrand}</td>
+              <td>${data.shoeSize}</td>
+              <td>${data.shoeGender}</td>
+              <td>${data.shoePrice}</td>
+              <td>${data.shoeStock}</td>
+              <td><span class="status-badge status-active">In Stock</span></td>
+              <td class="action-cell"><div class="action-buttons"><button class="btn btn-warning btn-sm edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button></div></td>
+            </tr>
+          `;
+          break;
+        case 'bags':
+          newRow = `
+            <tr data-id="${data.productId}">
+              <td>${data.bagName}</td>
+              <td>${data.bagBrand}</td>
+              <td>${data.bagColor}</td>
+              <td>${data.bagType}</td>
+              <td>${data.bagSize}</td>
+              <td>${data.bagPrice}</td>
+              <td>${data.bagStock}</td>
+              <td><span class="status-badge status-active">In Stock</span></td>
+              <td class="action-cell"><div class="action-buttons"><button class="btn btn-warning btn-sm edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button></div></td>
+            </tr>
+          `;
+          break;
+        case 'accessories':
+          newRow = `
+            <tr data-id="${data.productId}">
+              <td>${data.accessoryName}</td>
+              <td>${data.accessoryBrand}</td>
+              <td>${data.accessoryType}</td>
+              <td>${data.handedness}</td>
+              <td>${data.accessoryPrice}</td>
+              <td>${data.accessoryStock}</td>
+              <td><span class="status-badge status-active">In Stock</span></td>
+              <td class="action-cell"><div class="action-buttons"><button class="btn btn-warning btn-sm edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button></div></td>
+            </tr>
+          `;
+          break;
+        case 'cleaning':
+          newRow = `
+            <tr data-id="${data.productId}">
+              <td>${data.supplyName}</td>
+              <td>${data.supplyBrand}</td>
+              <td>${data.supplyType}</td>
+              <td>${data.supplyPrice}</td>
+              <td>${data.supplyStock}</td>
+              <td><span class="status-badge status-active">In Stock</span></td>
+              <td class="action-cell"><div class="action-buttons"><button class="btn btn-warning btn-sm edit-btn" data-id="${data.productId}"><i class="fas fa-edit"></i></button></div></td>
+            </tr>
+          `;
+          break;
+        // Add other categories as needed
+      }
+        
+      if(newRow) {
+        visibleTable.find('tbody').append(newRow);
+        initializeTableFunctionality();
+        initializeModalHandlers();
+      }
+    }
+    
+    // Helper function to update an existing row in the table
+    function updateTableRow(data, category) {
+      const $row = $(`[data-id="${data.productId}"]`).closest('tr');
+        
+      if($row.length === 0) {
+        console.warn('Row not found for product ID:', data.productId);
+        return;
+      }
+        
+      switch(category) {
+        case 'bowling-balls':
+          $row.find('td:eq(0)').text(data.ballName);
+          $row.find('td:eq(1)').text(data.ballBrand);
+          $row.find('td:eq(2)').text(data.ballType);
+          $row.find('td:eq(3)').text(data.ballQuality);
+          $row.find('td:eq(4)').text(data.ballWeight);
+          $row.find('td:eq(5)').text(data.coreName);
+          $row.find('td:eq(6)').text(data.coreType);
+          $row.find('td:eq(7)').text(data.rgValue);
+          $row.find('td:eq(8)').text(data.diffValue);
+          $row.find('td:eq(9)').text(data.intDiffValue);
+          $row.find('td:eq(10)').text(data.coverstockName);
+          $row.find('td:eq(11)').text(data.coverstockType);
+          $row.find('td:eq(12)').text(data.ballPrice);
+          $row.find('td:eq(13)').text(data.ballStock);
+          break;
+        case 'shoes':
+          $row.find('td:eq(0)').text(data.shoeName);
+          $row.find('td:eq(1)').text(data.shoeBrand);
+          $row.find('td:eq(2)').text(data.shoeSize);
+          $row.find('td:eq(3)').text(data.shoeGender);
+          $row.find('td:eq(4)').text(data.shoePrice);
+          $row.find('td:eq(5)').text(data.shoeStock);
+          break;
+        case 'bags':
+          $row.find('td:eq(0)').text(data.bagName);
+          $row.find('td:eq(1)').text(data.bagBrand);
+          $row.find('td:eq(2)').text(data.bagColor);
+          $row.find('td:eq(3)').text(data.bagType);
+          $row.find('td:eq(4)').text(data.bagSize);
+          $row.find('td:eq(5)').text(data.bagPrice);
+          $row.find('td:eq(6)').text(data.bagStock);
+          break;
+        case 'accessories':
+          $row.find('td:eq(0)').text(data.accessoryName);
+          $row.find('td:eq(1)').text(data.accessoryBrand);
+          $row.find('td:eq(2)').text(data.accessoryType);
+          $row.find('td:eq(3)').text(data.handedness);
+          $row.find('td:eq(4)').text(data.accessoryPrice);
+          $row.find('td:eq(5)').text(data.accessoryStock);
+          break;
+        case 'cleaning':
+          $row.find('td:eq(0)').text(data.supplyName);
+          $row.find('td:eq(1)').text(data.supplyBrand);
+          $row.find('td:eq(2)').text(data.supplyType);
+          $row.find('td:eq(3)').text(data.supplyPrice);
+          $row.find('td:eq(4)').text(data.supplyStock);
+          break;
+        // Add other categories as needed
+      }
+        
+      updateStockStatus();
+    }
+    
+    // Helper function to show notifications (toast/alert)
+    function showNotification(title, message, type) {
+        // Simple implementation using alert; can be replaced with a toast library
+        const prefix = type === 'error' ? '❌' : '✅';
+        alert(`${prefix} ${title}\n\n${message}`);
+        console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+    }
   });
 </script>
-
-
 </body>
 </html>
