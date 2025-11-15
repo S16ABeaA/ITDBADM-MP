@@ -234,7 +234,6 @@ CREATE TABLE order_log (
 );
 
 DELIMITER $$
-
 CREATE TRIGGER OrderInsertLog
 AFTER INSERT ON orders
 FOR EACH ROW
@@ -257,9 +256,8 @@ BEGIN
         NEW.DeliveryMethod,
         'Created'
     );
-END $$
-
-DELIMITER $$
+END 
+$$ DELIMITER ;
 
 CREATE TRIGGER OrderUpdateLog
 AFTER UPDATE ON orders

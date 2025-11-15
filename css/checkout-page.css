@@ -1,4 +1,3 @@
-
 :root {
   --primary: #2c3e50;
   --secondary: #e74c3c;
@@ -37,8 +36,7 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   padding: 20px;
   max-width: 1200px;
-  margin:0px 200px;
-  margin-top: 100px;
+  margin: 100px auto 40px; /* Changed this line - center horizontally */
   min-height: calc(100vh - 65px);
   padding-bottom: 40px;
 }
@@ -132,13 +130,13 @@ input:focus, select:focus {
 }
 
 /* Simple Currency Selection */
-  .currency-selection {
-    margin-bottom: 25px;
-  }
+.currency-selection {
+  margin-bottom: 25px;
+}
 
-  .currency-selection .form-group {
-    margin-bottom: 0;
-  }
+.currency-selection .form-group {
+  margin-bottom: 0;
+}
 
 /* Order Items */
 .order-items-section {
@@ -281,8 +279,17 @@ input:focus, select:focus {
   background-color: #c0392b;
 }
 
+.checkout-btn:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.checkout-btn:disabled:hover {
+  background-color: #bdc3c7;
+}
+
 /* Payment Method */
-.payment-methods , .delivery-methods{
+.payment-methods, .delivery-methods {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -303,7 +310,7 @@ input:focus, select:focus {
   border-color: var(--accent);
 }
 
-.payment-method.selected, .delivery-method:hover {
+.payment-method.selected, .delivery-method.selected {
   border-color: var(--accent);
   background-color: rgba(52, 152, 219, 0.05);
 }
@@ -343,20 +350,38 @@ input:focus, select:focus {
   color: white;
 }
 
+/* Empty Cart Message */
+.empty-cart-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+.empty-cart-message a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.empty-cart-message a:hover {
+  text-decoration: underline;
+}
+
 /* Responsive Styles */
 @media (max-width: 1200px) {
   .content-section {
-    margin: 0 100px;
-    margin-top: 100px;
+    margin: 100px auto 40px; /* Keep centered */
     padding: 20px;
+    max-width: 95%; /* Allow some breathing room */
   }
 }
 
 @media (max-width: 992px) {
   .content-section {
-    margin: 0 50px;
-    margin-top: 90px;
+    margin: 90px auto 40px;
     padding: 15px;
+    max-width: 95%;
   }
   
   .cart-title {
@@ -377,9 +402,9 @@ input:focus, select:focus {
 
 @media (max-width: 768px) {
   .content-section {
-    margin: 0 20px;
-    margin-top: 80px;
+    margin: 80px auto 40px;
     padding: 15px;
+    max-width: 95%;
   }
 
   .cart-title {
@@ -508,9 +533,9 @@ input:focus, select:focus {
 
 @media (max-width: 576px) {
   .content-section {
-    margin: 0 10px;
-    margin-top: 70px;
+    margin: 70px auto 40px;
     padding: 10px;
+    max-width: 98%;
   }
 
   .cart-title {
@@ -632,9 +657,9 @@ input:focus, select:focus {
 
 @media (max-width: 400px) {
   .content-section {
-    margin: 0 5px;
-    margin-top: 60px;
+    margin: 60px auto 40px;
     padding: 8px;
+    max-width: 99%;
   }
 
   .cart-title {

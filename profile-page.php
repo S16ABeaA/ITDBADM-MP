@@ -1,27 +1,68 @@
 <?php 
-  require_once 'dependencies/session.php';
-  require_once 'dependencies/config.php';
-  include("header.html");
+require_once 'dependencies/session.php';
+require_once 'dependencies/config.php';
+include("header.html");
 
-  $userID = $_SESSION['user_id'];
+$userID = $_SESSION['user_id'];
 
-  // Call stored procedure GetUserProfile
-  $stmt = $conn->prepare("CALL GetUserProfile(?)");
-  $stmt->bind_param("i", $userID);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $user = $result->fetch_assoc();
+// Call stored procedure GetUserProfile
+$stmt = $conn->prepare("CALL GetUserProfile(?)");
+$stmt->bind_param("i", $userID);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
 
-  //debugging
-  echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
+//debugging
+echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
 
+// Must close procedure before another call
+$stmt->close();
+$conn->next_result();
 
-  // Must close procedure before another call
-  $stmt->close();
-  $conn->next_result();
+// Fetch user's recent orders
+$ordersSQL = "SELECT o.OrderID, o.DatePurchased, o.Status, o.Total, o.PaymentMode, o.DeliveryMethod
+              FROM orders o 
+              WHERE o.CustomerID = ? 
+              ORDER BY o.DatePurchased DESC 
+              LIMIT 10";
+$ordersStmt = $conn->prepare($ordersSQL);
+$ordersStmt->bind_param("i", $userID);
+$ordersStmt->execute();
+$ordersResult = $ordersStmt->get_result();
+$recentOrders = $ordersResult->fetch_all(MYSQLI_ASSOC);
+$ordersStmt->close();
 
-  // Handle Save Changes POST
-  if (isset($_POST['saveChanges'])) {
+// Fetch order items for all orders
+$orderItems = [];
+if (!empty($recentOrders)) {
+    $orderIDs = array_column($recentOrders, 'OrderID');
+    $placeholders = str_repeat('?,', count($orderIDs) - 1) . '?';
+    
+    $itemsSQL = "SELECT od.OrderID, od.ProductID, od.Quantity, od.price,
+                        p.ImageID,
+                        COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name) as ProductName
+                 FROM orderdetails od
+                 JOIN product p ON od.ProductID = p.ProductID
+                 LEFT JOIN bowlingball bb ON od.ProductID = bb.ProductID AND p.BranchID = bb.BranchID
+                 LEFT JOIN bowlingshoes bs ON od.ProductID = bs.ProductID AND p.BranchID = bs.BranchID
+                 LEFT JOIN bowlingbag bg ON od.ProductID = bg.ProductID AND p.BranchID = bg.BranchID
+                 LEFT JOIN bowlingaccessories ba ON od.ProductID = ba.ProductID AND p.BranchID = ba.BranchID
+                 LEFT JOIN cleaningsupplies cs ON od.ProductID = cs.ProductID AND p.BranchID = cs.BranchID
+                 WHERE od.OrderID IN ($placeholders)";
+    
+    $itemsStmt = $conn->prepare($itemsSQL);
+    $itemsStmt->bind_param(str_repeat('i', count($orderIDs)), ...$orderIDs);
+    $itemsStmt->execute();
+    $itemsResult = $itemsStmt->get_result();
+    
+    while ($item = $itemsResult->fetch_assoc()) {
+        $orderItems[$item['OrderID']][] = $item;
+    }
+    $itemsStmt->close();
+}
+
+// Handle Save Changes POST
+if (isset($_POST['saveChanges'])) {
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
     $email = $_POST['email'];
@@ -38,7 +79,7 @@
 
     echo "<script>alert('Profile updated successfully!'); window.location.href='profile-page.php';</script>";
     exit;
-  } elseif (isset($_POST['savePasswordChanges'])) {
+} elseif (isset($_POST['savePasswordChanges'])) {
     $currentPassword = $_POST['currentPassword'];
     $newPassword = $_POST['newPassword'];
 
@@ -50,7 +91,9 @@
 
     echo "<script>alert('Password changed successfully!'); window.location.href='profile-page.php';</script>";
     exit;
-  }
+}
+
+$conn->close();
 ?>
 
 
@@ -81,7 +124,6 @@
     <div class="tabs">
       <div class="tab active" data-tab="orders">Orders</div>
       <div class="tab" data-tab="account">Account Details</div>
-      <div class="tab" data-tab="payment">Payment Methods</div>
     </div>
 
     <!-- Orders Tab -->
@@ -92,38 +134,53 @@
           Recent Orders
         </div>
         
-        <div class="order">
-          <div class="order-image">
-            <img src="./images/bowlingball1.png" alt="Ball">
+        <?php if (!empty($recentOrders)): ?>
+          <?php foreach ($recentOrders as $order): ?>
+            <div class="order" data-order-id="<?php echo $order['OrderID']; ?>">
+              <?php if (isset($orderItems[$order['OrderID']]) && !empty($orderItems[$order['OrderID']])): ?>
+                <div class="order-image">
+                  <img src="./images/<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ImageID']); ?>" 
+                       alt="<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ProductName']); ?>"
+                       onerror="this.src='./images/default_product.jpg'">
+                </div>
+                <div class="order-info">
+                  <div class="order-title">
+                    <?php 
+                    $firstItem = $orderItems[$order['OrderID']][0];
+                    echo htmlspecialchars($firstItem['ProductName']);
+                    if (count($orderItems[$order['OrderID']]) > 1) {
+                        echo " and " . (count($orderItems[$order['OrderID']]) - 1) . " more item(s)";
+                    }
+                    ?>
+                    - ₱<?php echo number_format($order['Total'], 2); ?>
+                  </div>
+                  <div class="order-details">
+                    Ordered: <?php echo date('M j, Y', strtotime($order['DatePurchased'])); ?> - 
+                    Status: <span class="status-<?php echo strtolower($order['Status']); ?>"><?php echo $order['Status']; ?></span>
+                  </div>
+                </div>
+              <?php else: ?>
+                <div class="order-image">
+                  <img src="./images/default_product.jpg" alt="No items">
+                </div>
+                <div class="order-info">
+                  <div class="order-title">Order #<?php echo $order['OrderID']; ?> - ₱<?php echo number_format($order['Total'], 2); ?></div>
+                  <div class="order-details">
+                    Ordered: <?php echo date('M j, Y', strtotime($order['DatePurchased'])); ?> - 
+                    Status: <span class="status-<?php echo strtolower($order['Status']); ?>"><?php echo $order['Status']; ?></span>
+                  </div>
+                </div>
+              <?php endif; ?>
+              <button class="view-details-btn" data-order-id="<?php echo $order['OrderID']; ?>">View Details</button>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="no-orders">
+            <i class="fas fa-shopping-cart"></i>
+            <p>You haven't placed any orders yet.</p>
+            <a href="homepage.php" class="btn btn-primary">Start Shopping</a>
           </div>
-          <div class="order-info">
-            <div class="order-title">Ball - &#8369; 1129.99</div>
-            <div class="order-details">Ordered: Oct 12, 2023 - Status: Delivered</div>
-          </div>
-          <button>View Details</button>
-        </div>
-        
-        <div class="order">
-          <div class="order-image">
-            <img src="./images/bowlingbag1.png" alt="Bag">
-          </div>
-          <div class="order-info">
-            <div class="order-title">Bowling Bag - &#8369; 1199.99</div>
-            <div class="order-details">Ordered: Oct 5, 2023 - Status: Shipped</div>
-          </div>
-          <button>View Details</button>
-        </div>
-        
-        <div class="order">
-          <div class="order-image">
-            <img src="./images/cleaningsupplies.png" alt="Cleaning Supplies">
-          </div>
-          <div class="order-info">
-            <div class="order-title">Cleaning Supplies - &#8369; 334.99</div>
-            <div class="order-details">Ordered: Sep 28, 2023 - Status: Delivered</div>
-          </div>
-          <button>View Details</button>
-        </div>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -137,42 +194,24 @@
         <div class="modal-body">
           <div class="order-summary">
             <div class="order-header">
-              <div class="order-id">Order #: <span id="modalOrderId">ORD-123456</span></div>
-              <div class="order-date">Order Date: <span id="modalOrderDate">Oct 12, 2023</span></div>
-              <div class="order-status">Status: <span id="modalOrderStatus" class="status-delivered">Delivered</span></div>
+              <div class="order-id">Order #: <span id="modalOrderId">-</span></div>
+              <div class="order-date">Order Date: <span id="modalOrderDate">-</span></div>
+              <div class="order-status">Status: <span id="modalOrderStatus">-</span></div>
+              <div class="order-payment">Payment: <span id="modalOrderPayment">-</span></div>
+              <div class="order-delivery">Delivery: <span id="modalOrderDelivery">-</span></div>
             </div>
             
             <div class="order-items">
               <h4>Items Ordered</h4>
-              <div class="order-item">
-                <div class="item-image">
-                  <img src="./images/bowlingball1.png" alt="Ball">
-                </div>
-                <div class="item-details">
-                  <div class="item-name">Professional Bowling Ball</div>
-                  <div class="item-price">₱1129.99</div>
-                  <div class="item-quantity">Quantity: 1</div>
-                </div>
-                <div class="item-total">₱1129.99</div>
-              </div>
-              
-              <div class="order-item">
-                <div class="item-image">
-                  <img src="./images/bowlingbag1.png" alt="Bag">
-                </div>
-                <div class="item-details">
-                  <div class="item-name">Premium Bowling Bag</div>
-                  <div class="item-price">₱1199.99</div>
-                  <div class="item-quantity">Quantity: 1</div>
-                </div>
-                <div class="item-total">₱1199.99</div>
+              <div id="modalOrderItems">
+                <!-- Order items will be populated here by JavaScript -->
               </div>
             </div>
             
             <div class="order-totals">
               <div class="total-row">
                 <span>Subtotal:</span>
-                <span>₱2329.98</span>
+                <span id="modalSubtotal">-</span>
               </div>
               <div class="total-row">
                 <span>Shipping:</span>
@@ -180,34 +219,22 @@
               </div>
               <div class="total-row">
                 <span>Tax:</span>
-                <span>₱128.00</span>
+                <span id="modalTax">-</span>
               </div>
               <div class="total-row grand-total">
                 <span>Total:</span>
-                <span>₱2517.97</span>
+                <span id="modalTotal">-</span>
               </div>
             </div>
             
             <div class="shipping-info">
               <h4>Shipping Information</h4>
               <div class="shipping-details">
-                <p><strong>User One</strong></p>
-                <p>123 Main Street</p>
-                <p>Manila, MNL 1000</p>
-                <p>Phone: 1234 567 8910</p>
-                <p>Email: user.one@example.com</p>
-              </div>
-            </div>
-            
-            <div class="tracking-info">
-              <h4>Tracking Information</h4>
-              <div class="tracking-details">
-                <div class="tracking-number">
-                  <strong>Tracking Number:</strong> TRK-789456123
-                </div>
-                <div class="tracking-carrier">
-                  <strong>Carrier:</strong> LBC Express
-                </div>
+                <p><strong><?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?></strong></p>
+                <p><?php echo htmlspecialchars($user['Street']); ?></p>
+                <p><?php echo htmlspecialchars($user['City'] . ', ' . $user['zip_code']); ?></p>
+                <p>Phone: <?php echo htmlspecialchars($user['MobileNumber']); ?></p>
+                <p>Email: <?php echo htmlspecialchars($user['Email']); ?></p>
               </div>
             </div>
           </div>
@@ -307,114 +334,16 @@
         </div>
       </div>
     </div>
-
-     <!-- Payment Methods Tab -->
-    <div class="tab-content" id="payment">
-      <div class="payment-methods-section">
-        <div class="section-title">
-          <i class="fas fa-credit-card"></i>
-          Payment Methods
-        </div>
-        
-        <div class="payment-methods">
-          <div class="payment-card default">
-            <div class="payment-type">
-              <i class="fab fa-cc-visa payment-icon"></i>
-              <span>Visa</span>
-            </div>
-            <div class="card-number">**** **** **** 4242</div>
-            <div class="card-details">
-              <span>Expires: 05/2025</span>
-              <span class="default-badge">Default</span>
-            </div>
-            <div class="card-actions">
-              <span class="remove-card">Remove</span>
-            </div>
-          </div>
-          
-          <div class="payment-card">
-            <div class="payment-type">
-              <i class="fab fa-cc-mastercard payment-icon"></i>
-              <span>Mastercard</span>
-            </div>
-            <div class="card-number">**** **** **** 5555</div>
-            <div class="card-details">
-              <span>Expires: 11/2024</span>
-              <span class="set-default">Set as Default</span>
-            </div>
-            <div class="card-actions">
-              <span class="remove-card">Remove</span>
-            </div>
-          </div>
-          
-          <div class="payment-card">
-            <div class="payment-type">
-              <i class="fab fa-paypal payment-icon"></i>
-              <span>PayPal</span>
-            </div>
-            <div class="card-number">user.one@example.com</div>
-            <div class="card-details">
-              <span>Connected</span>
-              <span class="set-default">Set as Default</span>
-            </div>
-            <div class="card-actions">
-              <span class="remove-card">Remove</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="add-payment-method">
-          <div class="add-payment-title">Add New Payment Method</div>
-          
-          <div class="payment-type-selector">
-            <div class="payment-type-option selected">
-              <i class="fas fa-credit-card payment-type-icon"></i>
-              <div>Credit Card</div>
-            </div>
-            <div class="payment-type-option">
-              <i class="fab fa-paypal payment-type-icon"></i>
-              <div>PayPal</div>
-            </div>
-            <div class="payment-type-option">
-              <i class="fab fa-apple payment-type-icon"></i>
-              <div>Apple Pay</div>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cardNumber">Card Number</label>
-              <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cardName">Name on Card</label>
-              <input type="text" id="cardName" placeholder="User">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="expiryDate">Expiry Date</label>
-              <input type="text" id="expiryDate" placeholder="MM/YY">
-            </div>
-            <div class="form-group">
-              <label for="cvv">CVV</label>
-              <input type="text" id="cvv" placeholder="123">
-            </div>
-          </div>
-          
-          <div class="form-actions">
-            <button class="btn btn-primary">Add Payment Method</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
+    // Pass PHP data to JavaScript
+    const orderData = <?php echo json_encode([
+        'orders' => $recentOrders,
+        'orderItems' => $orderItems,
+        'user' => $user
+    ]); ?>;
+
     document.getElementById('logoutBtn').addEventListener('click', function() {
         window.location.href = 'user_logout.php';
     });
@@ -440,7 +369,6 @@
         document.getElementById(tabId).classList.add('active');
       });
     });
-
 
     // Change Password Modal functionality
     const changePasswordBtn = document.getElementById('changePasswordBtn');
@@ -493,151 +421,98 @@
       changePasswordForm.submit();
     });
 
-
-    // Payment method type selection
-    document.querySelectorAll('.payment-type-option').forEach(option => {
-      option.addEventListener('click', () => {
-        document.querySelectorAll('.payment-type-option').forEach(o => {
-          o.classList.remove('selected');
-        });
-        option.classList.add('selected');
-      });
-    });
-
-        // Set default payment method
-    function setupPaymentMethodListeners() {
-      // Remove existing listeners first
-      document.querySelectorAll('.set-default').forEach(link => {
-        link.replaceWith(link.cloneNode(true));
-      });
-      
-      // Add new listeners to all "Set as Default" links
-      document.querySelectorAll('.set-default').forEach(link => {
-        link.addEventListener('click', function() {
-          // Reset ALL payment cards
-          document.querySelectorAll('.payment-card').forEach(card => {
-            card.classList.remove('default');
-            const statusElement = card.querySelector('.card-details span:last-child');
-            if (statusElement) {
-              statusElement.textContent = 'Set as Default';
-              statusElement.className = 'set-default';
-            }
-          });
-          
-          // Set new default
-          const clickedCard = this.closest('.payment-card');
-          clickedCard.classList.add('default');
-          
-          // Update status
-          const statusElement = clickedCard.querySelector('.card-details span:last-child');
-          if (statusElement) {
-            statusElement.textContent = 'Default';
-            statusElement.className = 'default-badge';
-          }
-          
-          // Re-setup listeners for the new state
-          setupPaymentMethodListeners();
-        });
-      });
-    }
-
-    // Initial setup
-    setupPaymentMethodListeners();
-
-        // Remove payment method
-        document.querySelectorAll('.remove-card').forEach(link => {
-          link.addEventListener('click', () => {
-            if (confirm('Are you sure you want to remove this payment method?')) {
-              link.closest('.payment-card').remove();
-            }
-          });
-        });
-
-
     // Order Details Modal functionality
-function setupOrderDetailsModal() {
-  const orderDetailsModal = document.getElementById('orderDetailsModal');
-  const closeOrderModal = document.getElementById('closeOrderModal');
-  const closeBtn = orderDetailsModal.querySelector('.close');
-  
-  // Function to open modal with order data
-  function openOrderDetailsModal(orderData) {
-    // Populate modal with order data
-    document.getElementById('modalOrderId').textContent = orderData.id;
-    document.getElementById('modalOrderDate').textContent = orderData.date;
-    document.getElementById('modalOrderStatus').textContent = orderData.status;
-    document.getElementById('modalOrderStatus').className = `status-${orderData.status.toLowerCase()}`;
-    
-    // Show modal
-    orderDetailsModal.style.display = 'block';
-  }
-  
-  // Function to close modal
-  function closeOrderModalFunc() {
-    orderDetailsModal.style.display = 'none';
-  }
-  
-  // Close modal events
-  closeOrderModal.addEventListener('click', closeOrderModalFunc);
-  closeBtn.addEventListener('click', closeOrderModalFunc);
-  
-  // Close modal when clicking outside
-  window.addEventListener('click', (event) => {
-    if (event.target === orderDetailsModal) {
-      closeOrderModalFunc();
-    }
-  });
-  
-  // Update existing order button listeners to use the modal
-  document.querySelectorAll('.order button').forEach((button, index) => {
-    button.addEventListener('click', () => {
-      // Sample order data - in real app, this would come from your data source
-      const sampleOrders = [
-        {
-          id: 'ORD-789456',
-          date: 'Oct 12, 2023',
-          status: 'Delivered',
-          items: [
-            { name: 'Professional Bowling Ball', price: 1129.99, quantity: 1, image: './images/bowlingball1.png' }
-          ],
-          subtotal: 1129.99,
-          shipping: 59.99,
-          tax: 67.20,
-          total: 1257.18
-        },
-        {
-          id: 'ORD-123456',
-          date: 'Oct 5, 2023',
-          status: 'Shipped',
-          items: [
-            { name: 'Premium Bowling Bag', price: 1199.99, quantity: 1, image: './images/bowlingbag1.png' }
-          ],
-          subtotal: 1199.99,
-          shipping: 59.99,
-          tax: 71.40,
-          total: 1331.38
-        },
-        {
-          id: 'ORD-456123',
-          date: 'Sep 28, 2023',
-          status: 'Delivered',
-          items: [
-            { name: 'Cleaning Supplies', price: 334.99, quantity: 1, image: './images/cleaningsupplies.png' }
-          ],
-          subtotal: 334.99,
-          shipping: 59.99,
-          tax: 19.80,
-          total: 414.78
-        }
-      ];
-      
-      openOrderDetailsModal(sampleOrders[index]);
-    });
-  });
-}
+    function setupOrderDetailsModal() {
+      const orderDetailsModal = document.getElementById('orderDetailsModal');
+      const closeOrderModal = document.getElementById('closeOrderModal');
+      const closeBtn = orderDetailsModal.querySelector('.close');
 
-// Initialize the modal when page loads
-document.addEventListener('DOMContentLoaded', setupOrderDetailsModal);
+      // Function to open modal with order data
+      function openOrderDetailsModal(orderId) {
+        const order = orderData.orders.find(o => o.OrderID == orderId);
+        const items = orderData.orderItems[orderId] || [];
+
+        if (!order) return;
+
+        // Populate modal with order data
+        document.getElementById('modalOrderId').textContent = order.OrderID;
+        document.getElementById('modalOrderDate').textContent = new Date(order.DatePurchased).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        document.getElementById('modalOrderStatus').textContent = order.Status;
+        document.getElementById('modalOrderStatus').className = `status-${order.Status.toLowerCase()}`;
+        document.getElementById('modalOrderPayment').textContent = order.PaymentMode;
+        document.getElementById('modalOrderDelivery').textContent = order.DeliveryMethod;
+
+        // Calculate totals
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.Quantity), 0);
+        const tax = subtotal * 0.08;
+        const shipping = 59.99;
+        const total = subtotal + tax + shipping;
+
+        // Populate order items
+        const itemsContainer = document.getElementById('modalOrderItems');
+        itemsContainer.innerHTML = '';
+
+        if (items.length > 0) {
+          items.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'order-item';
+            itemElement.innerHTML = `
+              <div class="item-image">
+                <img src="./images/${item.ImageID}" alt="${item.ProductName}" onerror="this.src='./images/default_product.jpg'">
+              </div>
+              <div class="item-details">
+                <div class="item-name">${item.ProductName}</div>
+                <div class="item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+                <div class="item-quantity">Quantity: ${item.Quantity}</div>
+              </div>
+              <div class="item-total">₱${(item.price * item.Quantity).toFixed(2)}</div>
+            `;
+            itemsContainer.appendChild(itemElement);
+          });
+        } else {
+          itemsContainer.innerHTML = '<p>No items found for this order.</p>';
+        }
+
+        // Populate totals
+        document.getElementById('modalSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
+        document.getElementById('modalTax').textContent = `₱${tax.toFixed(2)}`;
+        document.getElementById('modalTotal').textContent = `₱${order.Total}`;
+
+        // Show modal
+        orderDetailsModal.style.display = 'block';
+      }
+
+      // Function to close modal
+      function closeOrderModalFunc() {
+        orderDetailsModal.style.display = 'none';
+      }
+
+      // Close modal events
+      closeOrderModal.addEventListener('click', closeOrderModalFunc);
+      closeBtn.addEventListener('click', closeOrderModalFunc);
+
+      // Close modal when clicking outside
+      window.addEventListener('click', (event) => {
+        if (event.target === orderDetailsModal) {
+          closeOrderModalFunc();
+        }
+      });
+
+      // Add event listeners to view details buttons
+      document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const orderId = button.getAttribute('data-order-id');
+          openOrderDetailsModal(orderId);
+        });
+      });
+    }
+
+    // Initialize the modal when page loads
+    document.addEventListener('DOMContentLoaded', setupOrderDetailsModal);
   </script>
 </body>
 </html>

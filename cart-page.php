@@ -1,4 +1,9 @@
-<?php include("header.html");?>
+<?php 
+require_once 'dependencies/session.php';
+require_once 'dependencies/config.php';
+include("header.html"); 
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,136 +27,224 @@
 
     <div class="cart-main-container">
       <div class="cart-order-container">
-        <div class="order">
-          <div class="order-image-container">
-            <img class="order-image" src="./images/bowlingbag1.png" alt="Bowling Bag">
-          </div>
-          <div class="order-info">
-            <div class="product-name">
-              Premium Bowling Bag
+
+        <?php
+        // Check if cart exists and has items
+        if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+          
+          // Get product details for all items in cart
+          $cartItems = array();
+          
+          foreach ($_SESSION['cart'] as $cartKey => $cartItem) {
+            $productID = $cartItem['productID'];
+            $branchID = $cartItem['branchID'];
+            
+            // Get product basic info
+            $sql = "SELECT p.ImageID, p.Price FROM product p WHERE p.ProductID = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $productID);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+              $product = $result->fetch_assoc();
+              
+              // Now get the product name from the appropriate category table
+              $productName = "Product Name Not Found";
+              
+              // Check each category table for the product name
+              $tables = array(
+                'bowlingball' => 'SELECT Name FROM bowlingball WHERE ProductID = ? AND BranchID = ?',
+                'bowlingbag' => 'SELECT Name FROM bowlingbag WHERE ProductID = ? AND BranchID = ?',
+                'bowlingshoes' => 'SELECT name AS Name FROM bowlingshoes WHERE ProductID = ? AND BranchID = ?',
+                'bowlingaccessories' => 'SELECT Name FROM bowlingaccessories WHERE ProductID = ? AND BranchID = ?',
+                'cleaningsupplies' => 'SELECT Name FROM cleaningsupplies WHERE ProductID = ? AND BranchID = ?'
+              );
+              
+              foreach ($tables as $tableName => $sqlCheck) {
+                $stmt2 = $conn->prepare($sqlCheck);
+                $stmt2->bind_param("ii", $productID, $branchID);
+                $stmt2->execute();
+                $result2 = $stmt2->get_result();
+                
+                if ($result2->num_rows > 0) {
+                  $nameData = $result2->fetch_assoc();
+                  $productName = $nameData['Name'];
+                  $stmt2->close();
+                  break;
+                }
+                $stmt2->close();
+              }
+              
+              $cartItems[$cartKey] = array(
+                'productID' => $productID,
+                'branchID' => $branchID,
+                'ProductName' => $productName,
+                'ImageID' => $product['ImageID'],
+                'Price' => $product['Price']
+              );
+            }
+            $stmt->close();
+          }
+          
+          // Display cart items
+          foreach ($_SESSION['cart'] as $cartKey => $cartItem) {
+            if (isset($cartItems[$cartKey])) {
+              $product = $cartItems[$cartKey];
+        ?>
+
+          <div class="order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>">
+
+            <div class="order-image-container">
+              <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
             </div>
-            <div class="product-price">
-              ₱3889.99
+
+            <div class="order-info">
+              <div class="product-name"><?php echo htmlspecialchars($product['ProductName']); ?></div>
+              <div class="product-price">₱<?php echo number_format($cartItem['price'], 2); ?></div>
+              <div class="product-branch">Branch ID: <?php echo $product['branchID']; ?></div>
             </div>
-            <div class="product-info">
-              Size: Large
+
+            <div class="product-quantity">
+              <button class="add-subtract-btn" data-action="decrease">-</button>
+              <div class="quantity"><?php echo $cartItem['quantity']; ?></div>
+              <button class="add-subtract-btn" data-action="increase">+</button>
             </div>
+
+            <div class="product-total-cost">
+              ₱<?php echo number_format($cartItem['quantity'] * $cartItem['price'], 2); ?>
+            </div>
+
+            <button class="remove-from-cart-btn" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+
           </div>
 
-          <div class="product-quantity">
-            <button class="add-subtract-btn">-</button>
-            <div class="quantity">
-              1
-            </div>
-            <button class="add-subtract-btn">+</button>
+        <?php 
+            }
+          }
+        } else { 
+        ?>
+          <div class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <h2>Your cart is empty</h2>
+            <p>Looks like you haven't added any items to your cart yet.</p>
+            <button onclick="location.href='./homepage.php'" class="shop-now-btn">Shop Now</button>
           </div>
+        <?php } ?>
 
-          <div class="product-total-cost">
-            ₱3889.99
-          </div>
-          <button class="remove-from-cart-btn">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="order">
-          <div class="order-image-container">
-            <img class="order-image" src="./images/bowlingball1.png" alt="Bowling Ball">
-          </div>
-          <div class="order-info">
-            <div class="product-name">
-              Professional Bowling Ball
-            </div>
-            <div class="product-price">
-              ₱8129.99
-            </div>
-            <div class="product-info">
-              Weight: 15 lbs
-            </div>
-          </div>
-
-          <div class="product-quantity">
-            <button class="add-subtract-btn">-</button>
-            <div class="quantity">
-              2
-            </div>
-            <button class="add-subtract-btn">+</button>
-          </div>
-
-          <div class="product-total-cost">
-            ₱16259.98
-          </div>
-          <button class="remove-from-cart-btn">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
       </div>
 
+      <?php 
+      if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+        // Calculate totals
+        $itemCount = 0;
+        $subtotal = 0;
+        
+        foreach ($_SESSION['cart'] as $cartItem) {
+          $itemCount += $cartItem['quantity'];
+          $subtotal += $cartItem['quantity'] * $cartItem['price'];
+        }
+        
+        $shipping = 59.99;
+        $tax = $subtotal * 0.08; // 8% tax
+        $total = $subtotal + $shipping + $tax;
+      ?>
       <div class="cart-summary">
         <div class="summary-container">
           <h2 class="summary-title">Order Summary</h2>
+          
           <div class="summary-row">
-            <span>Subtotal (3 items)</span>
-            <span>₱20149.97</span>
+            <span>Subtotal (<?php echo $itemCount; ?> items)</span>
+            <span>₱<?php echo number_format($subtotal, 2); ?></span>
           </div>
           <div class="summary-row">
             <span>Shipping</span>
-            <span>₱59.99</span>
+            <span>₱<?php echo number_format($shipping, 2); ?></span>
           </div>
           <div class="summary-row">
             <span>Tax</span>
-            <span>₱128.00</span>
+            <span>₱<?php echo number_format($tax, 2); ?></span>
           </div>
           <div class="summary-row summary-total">
             <span>Total</span>
-            <span>₱20337.96</span>
+            <span>₱<?php echo number_format($total, 2); ?></span>
           </div>
           <button class="checkout-btn" onclick="location.href='checkout-page.php'">Proceed to Checkout</button>
         </div>
       </div>
+      <?php } ?>
     </div>
   </div>
 
   <script>
     $(document).ready(function() {
       // Quantity adjustment functionality
-      $('.add-subtract-btn').on('click', function() {
+      $('.cart-order-container').on('click', '.add-subtract-btn', function() {
         const $order = $(this).closest('.order');
         const $quantity = $order.find('.quantity');
-        const $priceElement = $order.find('.product-price');
-        const $totalElement = $order.find('.product-total-cost');
+        const cartKey = $order.data('cartkey');
+        const action = $(this).data('action');
         
         let currentQuantity = parseInt($quantity.text());
-        const unitPrice = parseFloat($priceElement.text().replace('₱', ''));
         
-        if ($(this).text() === '+') {
+        if (action === 'increase') {
           currentQuantity += 1;
-        } else if ($(this).text() === '-' && currentQuantity > 1) {
+        } else if (action === 'decrease' && currentQuantity > 1) {
           currentQuantity -= 1;
         }
         
-        $quantity.text(currentQuantity);
-        
-        // Update total for this item
-        const newTotal = (unitPrice * currentQuantity).toFixed(2);
-        $totalElement.text('₱' + newTotal);
-        
-        // Update cart summary
-        updateCartSummary();
+        // Update quantity in session via AJAX
+        $.post('update_cart_quantity.php', {
+          cartKey: cartKey,
+          quantity: currentQuantity
+        }, function(response) {
+          if (response.success) {
+            $quantity.text(currentQuantity);
+            updateItemTotal($order);
+            updateCartSummary();
+          } else {
+            alert('Error updating quantity: ' + response.message);
+          }
+        }, 'json').fail(function() {
+          alert('Connection error while updating quantity');
+        });
       });
       
       // Remove item functionality
-      $('.remove-from-cart-btn').on('click', function() {
-        $(this).closest('.order').fadeOut(300, function() {
-          $(this).remove();
-          updateCartSummary();
-          
-          // Show empty cart message if no items left
-          if ($('.order').length === 0) {
-            showEmptyCart();
+      $('.cart-order-container').on('click', '.remove-from-cart-btn', function() {
+        const cartKey = $(this).data('cartkey');
+        const $order = $(this).closest('.order');
+        
+        // Remove from session via AJAX
+        $.post('remove_from_cart.php', {
+          cartKey: cartKey
+        }, function(response) {
+          if (response.success) {
+            $order.fadeOut(300, function() {
+              $(this).remove();
+              updateCartSummary();
+              
+              // Show empty cart message if no items left
+              if ($('.order').length === 0) {
+                showEmptyCart();
+              }
+            });
+          } else {
+            alert('Error removing item: ' + response.message);
           }
+        }, 'json').fail(function() {
+          alert('Connection error while removing item');
         });
       });
+      
+      function updateItemTotal($order) {
+        const quantity = parseInt($order.find('.quantity').text());
+        const price = parseFloat($order.find('.product-price').text().replace('₱', ''));
+        const newTotal = (price * quantity).toFixed(2);
+        $order.find('.product-total-cost').text('₱' + newTotal);
+      }
       
       function updateCartSummary() {
         let itemCount = 0;
@@ -170,7 +263,7 @@
         const total = subtotal + shipping + tax;
         
         // Update summary display
-        $('.summary-row:first span:first').text(`Subtotal (${itemCount} items)`);
+        $('.summary-row:first span:first').text('Subtotal (' + itemCount + ' items)');
         $('.summary-row:first span:last').text('₱' + subtotal.toFixed(2));
         $('.summary-row:eq(1) span:last').text('₱' + shipping.toFixed(2));
         $('.summary-row:eq(2) span:last').text('₱' + tax.toFixed(2));
@@ -179,36 +272,13 @@
       
       function showEmptyCart() {
         $('.cart-order-container')
-          .html(`
-            <div class="empty-cart">
-              <i class="fas fa-shopping-cart"></i>
-              <h2>Your cart is empty</h2>
-              <p>Looks like you haven't added any items to your cart yet.</p>
-              <button onclick="location.href='./homepage.php'" class="shop-now-btn">Shop Now</button>
-            </div>
-          `)
-          .addClass('empty'); // Add the empty class
+          .html('<div class="empty-cart"><i class="fas fa-shopping-cart"></i><h2>Your cart is empty</h2><p>Looks like you haven\'t added any items to your cart yet.</p><button onclick="location.href=\'./homepage.php\'" class="shop-now-btn">Shop Now</button></div>');
         
         $('.cart-summary').hide();
       }
-      $('.remove-from-cart-btn').on('click', function() {
-        $(this).closest('.order').fadeOut(300, function() {
-          $(this).remove();
-          updateCartSummary();
-          
-          // Show empty cart message if no items left
-          if ($('.order').length === 0) {
-            showEmptyCart();
-          } else {
-            // Remove empty class if there are items
-            $('.cart-order-container').removeClass('empty');
-          }
-        });
-      });
     });
   </script>
 </body>
 </html>
-
 
 <?php include("footer.html");?>

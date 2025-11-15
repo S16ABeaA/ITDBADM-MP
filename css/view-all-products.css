@@ -128,7 +128,265 @@ h5, h2{
   box-shadow: 0 8px 15px rgba(0,0,0,0.15);
 }
 
-/* Responsive Design for Grid */
+/* ===== FILTER SECTION STYLES ===== */
+.filter-section {
+    display: flex;
+    width: 99%;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filter-section > span {
+    font-weight: 600;
+    color: #555;
+    margin-right: 10px;
+}
+
+.filter-section > span:first-child {
+    margin-right: 20px;
+}
+
+.filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.filter-button {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-weight: 500;
+    min-width: 150px;
+    justify-content: space-between;
+}
+
+.filter-button:hover {
+    background: #f9f9f9;
+    border-color: #bbb;
+}
+
+.filter-button.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.filter-button i {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.filter-button.active i {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background: white;
+    min-width: 220px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    z-index: 100;
+    padding: 15px;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
+    border: 1px solid #eee;
+}
+
+.dropdown-content.show {
+    display: block;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-option {
+    padding: 10px 0;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+}
+
+.dropdown-option:last-child {
+    border-bottom: none;
+}
+
+.dropdown-option:hover {
+    color: var(--accent);
+    background-color: #f9f9f9;
+    margin: 0 -15px;
+    padding: 10px 15px;
+}
+
+.dropdown-option.selected {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    display: inline-block;
+    position: relative;
+}
+
+.dropdown-option.selected .checkbox {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.dropdown-option.selected .checkbox::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Apply Filter Button */
+.filter-apply-btn {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.filter-apply-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+}
+
+.filter-apply-btn:active {
+    transform: translateY(0);
+}
+
+/* Active filter indicators */
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.active-filter-tag {
+    background-color: var(--accent);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.active-filter-tag .remove-filter {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    margin-left: 5px;
+}
+
+.clear-all-filters {
+    background: none;
+    border: none;
+    color: var(--secondary);
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: underline;
+    margin-left: 10px;
+}
+
+/* Right side - Sort by section */
+.filter-section .sort-section {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===== PAGINATION STYLES ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px 0;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pagination a, .pagination span {
+    display: inline-block;
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.pagination a:hover {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+}
+
+.pagination .current {
+    background-color: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.pagination .disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    border-color: #eee;
+}
+
+.page-info {
+    text-align: left;
+    margin-bottom: 20px;
+    margin-left: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
   .product-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -150,6 +408,15 @@ h5, h2{
   
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .filter-section {
+    gap: 12px;
+  }
+  
+  .filter-button {
+    min-width: 140px;
+    padding: 8px 12px;
   }
 }
 
@@ -183,169 +450,96 @@ h5, h2{
   
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .filter-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .filter-dropdown {
+    width: 100%;
+  }
+  
+  .filter-button {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .dropdown-content {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .filter-apply-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+  
+  .filter-section > span:first-child {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .pagination {
+    gap: 5px;
+  }
+  
+  .pagination a, .pagination span {
+    padding: 6px 12px;
+    font-size: 14px;
   }
 }
 
-
-.filter-section {
-    display: flex;
-    width: 99%;
-    align-items: center;
-    background: white;
-    border-radius: 8px;
-    padding: 15px 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 10px;
-    flex-wrap: wrap;
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: 1fr;
     gap: 15px;
+  }
+  
+  .hp-product-container {
+    height: 220px;
+  }
+  
+  .hp-product-image {
+    height: 100px;
+  }
+  
+  .filter-section {
+    padding: 10px;
+  }
+  
+  .page-info {
+    font-size: 12px;
+    margin-left: 0;
+    text-align: center;
+  }
 }
 
-.filter-section > span {
-    font-weight: 600;
-    color: #555;
-    margin-right: 10px;
+/* Loading state for filters */
+.filter-loading {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
-.filter-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.filter-button {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-    font-weight: 500;
-}
-
-.filter-button:hover {
-    background: #f9f9f9;
-    border-color: #bbb;
-}
-
-.filter-button.active {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.dropdown-content {
-    display: none;
+.filter-loading::after {
+    content: '';
     position: absolute;
-    background: white;
-    min-width: 220px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    z-index: 100;
-    padding: 15px;
-    top: 100%;
-    left: 0;
-    margin-top: 5px;
+    top: 50%;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-.dropdown-content.show {
-    display: block;
-    animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.dropdown-option {
-    padding: 10px 0;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.dropdown-option:last-child {
-    border-bottom: none;
-}
-
-.dropdown-option:hover {
-    color: var(--accent);
-}
-
-.checkbox {
-    width: 18px;
-    height: 18px;
-    margin-right: 10px;
-}
-
-@media (max-width: 768px) {
-    .filter-section {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .filter-dropdown {
-        width: 100%;
-    }
-    
-    .filter-button {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
-
-    /* Pagination Styles */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 30px 0;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    .pagination a, .pagination span {
-        display: inline-block;
-        padding: 8px 16px;
-        text-decoration: none;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        color: #333;
-        transition: all 0.3s;
-        font-weight: 500;
-    }
-    
-    .pagination a:hover {
-        background-color: #f5f5f5;
-        border-color: #bbb;
-    }
-    
-    .pagination .current {
-        background-color: #4a6cf7;
-        color: white;
-        border-color: #4a6cf7;
-    }
-    
-    .pagination .disabled {
-        color: #ccc;
-        cursor: not-allowed;
-        border-color: #eee;
-    }
-    
-    .page-info {
-        text-align: left;
-        margin-bottom: 20px;
-        margin-left: 10px;
-        color: #666;
-        font-size: 14px;
-    }
-
-
-/* Right side - Sort by section  move to right*/
-.filter-section > span:last-of-type {
-    margin-left: auto; 
-    margin-right: 10px;
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
 }

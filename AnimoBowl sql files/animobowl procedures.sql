@@ -617,7 +617,6 @@ DELIMITER $$
 
 -- Procedures 18,19 Add to cart-- 
 DELIMITER $$
-
 CREATE PROCEDURE AddOrderDetails(
     IN p_OrderID INT,
     IN p_CustomerID INT,
@@ -664,9 +663,8 @@ BEGIN
 
     COMMIT;
 
-END $$
-
-DELIMITER ;
+END 
+$$ DELIMITER ;
 
 
 DELIMITER $$

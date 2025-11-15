@@ -1,9 +1,10 @@
 <?php 
+ob_start(); // Start output buffering
 require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 include("header.html");
 
-// ✅ Validate and capture product ID from URL
+// Validate and capture product ID from URL
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $productID = (int)$_GET['id'];
     echo "<script>console.log('ProductID fetched: ' + $productID);</script>";
@@ -13,7 +14,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
 $branchID = $_SESSION["selected_branch_id"];
 
-// ✅ Detect which table this product belongs to
+// Detect which table this product belongs to
 $tables = [
     'bowlingball' => 'SELECT * FROM bowlingball WHERE ProductID = ? AND BranchID = ?',
     'bowlingshoes' => 'SELECT * FROM bowlingshoes WHERE ProductID = ? AND BranchID = ?',
@@ -42,12 +43,12 @@ foreach ($tables as $tableName => $sqlCheck) {
     $stmt->close();
 }
 
-// ✅ Handle product not found
+// Handle product not found
 if (!$productCategory) {
     die("<script>alert('Product not found in any category.'); window.location.href='homepage.php';</script>");
 }
 
-// ✅ Fetch general product info (including image, price, and quantity)
+// Fetch general product info (including image, price, and quantity)
 $sql = "
     SELECT 
         p.ProductID,
@@ -70,7 +71,7 @@ if ($productResult->num_rows === 0) {
 $product = $productResult->fetch_assoc();
 $stmt->close();
 
-// ✅ Fetch category-specific attributes
+// Fetch category-specific attributes
 $categorySpecificData = [];
 
 switch ($productCategory) {
@@ -129,7 +130,7 @@ switch ($productCategory) {
         break;
 }
 
-// ✅ Execute and store result if applicable
+// Execute and store result if applicable
 if ($sql_statement) {
     $stmt = $conn->prepare($sql_statement);
     $stmt->bind_param("ii", $productID, $branchID);
@@ -156,14 +157,14 @@ $conn->close();
 <body>
   <div class="content-section">
     <div class="product-page-container">
-      <!-- 🖼 Product Image -->
+      <!-- Product Image -->
       <div class="image-container">
         <img class="image" 
              src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" 
              alt="<?php echo htmlspecialchars($categoryData['Name']); ?>">
       </div>
 
-      <!-- 📋 Product Details -->
+      <!-- Product Details -->
       <div class="product-info">
         <div class="brand">AnimoBowl</div>
         <div class="product-name"><?php echo htmlspecialchars($categoryData['Name']); ?></div>
@@ -175,7 +176,7 @@ $conn->close();
           <?php endif; ?>
         </div>
 
-        <!-- 🛒 Quantity Control -->
+        <!-- Quantity Control -->
         <?php if ($product['quantity'] > 0): ?>
           <div class="product-quantity">
             <button class="add-subtract-btn">-</button>
@@ -189,7 +190,7 @@ $conn->close();
           <div class="sold-out-text">This product is currently sold out.</div>
         <?php endif; ?>
 
-        <!-- 🧾 Product Description -->
+        <!-- Product Description -->
         <div class="product-description">
           <h3>Product Information</h3>
           <div class="description-content">
@@ -209,7 +210,6 @@ $conn->close();
     </div>
   </div>
 
-  <!-- JS: Control +/− buttons -->
   <script>
     document.querySelectorAll('.add-subtract-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -220,8 +220,47 @@ $conn->close();
         qtyElem.textContent = qty;
       });
     });
+
+    document.querySelector(".add-to-cart-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const productID = <?= $productID ?>;
+        const quantity = parseInt(document.querySelector(".quantity").textContent);
+
+        fetch("add_to_cart.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `productID=${productID}&quantity=${quantity}`
+        })
+        .then(res => {
+            // First, get the response as text to see what's actually coming back
+            return res.text().then(text => {
+                try {
+                    // Try to parse as JSON
+                    return JSON.parse(text);
+                } catch (err) {
+                    // If it's not JSON, throw an error with the actual response
+                    throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+                }
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                alert("✅ " + data.message);
+            } else {
+                alert("❌ " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert("Error: " + error.message);
+        });
+    });
   </script>
 </body>
 </html>
 
-<?php include("footer.html"); ?>
+<?php 
+include("footer.html"); 
+ob_end_flush(); // Send output buffer and turn off buffering
+?>
