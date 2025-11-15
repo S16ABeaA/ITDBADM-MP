@@ -5,7 +5,7 @@ include("header.html");
 
 $userID = $_SESSION['user_id'];
 
-// Call stored procedure GetUserProfile (same as profile page)
+// Call stored procedure GetUserProfile
 $stmt = $conn->prepare("CALL GetUserProfile(?)");
 $stmt->bind_param("i", $userID);
 $stmt->execute();
@@ -15,7 +15,6 @@ $user = $result->fetch_assoc();
 //debugging
 echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
 
-// Must close procedure before another call
 $stmt->close();
 $conn->next_result();
 ?>
@@ -194,7 +193,6 @@ $conn->next_result();
             if ($result->num_rows > 0) {
               $product = $result->fetch_assoc();
               
-              // Now get the product name from the appropriate category table
               $productName = "Product Name Not Found";
               
               // Check each category table for the product name
