@@ -81,7 +81,7 @@ FOR EACH ROW
 BEGIN
 	DECLARE current_stock INT;
     DECLARE order_branch INT;
-
+	DECLARE new_total DECIMAL(10,2);
    
     SELECT BranchID INTO order_branch
     FROM orders
@@ -108,9 +108,26 @@ BEGIN
 	SET MESSAGE_TEXT = 'No Inventory changes';
     END IF;
     
+    SELECT SUM(Price) INTO new_total
+    FROM servicedetails
+    WHERE OrderID = NEW.OrderID;
+
+ 
+    SELECT IFNULL(SUM(Price * Quantity), 0) INTO @Total
+    FROM orderdetails
+    WHERE OrderID = NEW.OrderID;
+
+    SET new_total = new_total + @Total;
+
+    UPDATE orders
+    SET Total = new_total
+    WHERE OrderID = NEW.OrderID;
+    
 END $$
 
 DELIMITER ;
+
+
 
 -- Trigger 4 No Negative Inventory
 DELIMITER $$
@@ -219,7 +236,7 @@ CREATE TABLE order_log (
 DELIMITER $$
 
 CREATE TRIGGER OrderInsertLog
-BEFORE INSERT ON orders
+AFTER INSERT ON orders
 FOR EACH ROW
 BEGIN
     INSERT INTO order_log (
