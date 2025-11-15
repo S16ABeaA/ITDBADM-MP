@@ -34,9 +34,8 @@ INSERT INTO branches
 VALUES (1,1), (2,2);
 
 
-
 -- Add products -- 
-CALL AddBowlingBall(1,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
+
 CALL AddBowlingBall(2,1,'Phaze II',8500, NULL,'New','Solid',15,'Symetric','Velocity','TX-16','3000 Abralon',2.48,0.051,0.000,1);
 CALL AddBowlingBall(1,2,'Hyper Venom',10000, NULL,'New','Pearl',15,'Symetric','Gear','Propulsion MXR','5500 LSP',2.48,0.048,0.000,1);
 CALL AddBowlingBall(2,2,'Hyper Venom',10000, NULL,'New','Pearl',14,'Symetric','Gear','Propulsion MXR','5500 LSP',2.55,0.048,0.000,1);
@@ -175,3 +174,5 @@ VALUES
 (3,5,'Sanding',400,1),
 (4,1,'Repair',1500,1);
 
+SELECT *
+FROM services;

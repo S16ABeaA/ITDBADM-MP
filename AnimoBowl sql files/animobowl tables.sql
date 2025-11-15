@@ -14,7 +14,7 @@ CREATE TABLE product (
     BrandID INT NOT NULL,
     Type ENUM('supplies', 'accessories', 'ball', 'bag', 'shoes'),
     Price FLOAT,
-	ImageID VARCHAR(100),
+	ImageID VARCHAR(255),
     BranchID INT PRIMARY KEY NOT NULL,
     quantity INT,
     FOREIGN KEY (BrandID) REFERENCES brand (BrandID),
@@ -117,7 +117,7 @@ MobileNumber VARCHAR(20),
 Email VARCHAR(100) NOT NULL,
 Password VARCHAR(255) NOT NULL,
 Role ENUM('Staff', 'Admin', 'Customer') DEFAULT 'Customer',
-FOREIGN KEY (AddressID) REFERENCES address(AddressID)
+FOREIGN KEY (AddressID) REFERENCES address(AddressID) ON DELETE CASCADE
 );
 
 CREATE TABLE staff
@@ -142,16 +142,17 @@ OrderID INT PRIMARY KEY NOT NULL UNIQUE AUTO_INCREMENT,
 CustomerID INT,
 CurrencyID INT,
 BranchID INT,
-DatePurchased DATETIME NOT NULL,
+DatePurchased DATETIME,
 DateCompleted DATETIME DEFAULT NULL,
 Status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') DEFAULT 'Pending',
 Total FLOAT NOT NULL,
-PaymentMode ENUM('Cash', 'Credit Card', 'Online'),
-DeliveryMethod ENUM('Pickup', 'Delivery'),
+PaymentMode ENUM('Cash', 'Credit Card', 'Online') DEFAULT NULL,
+DeliveryMethod ENUM('Pickup', 'Delivery') DEFAULT NULL,
 FOREIGN KEY (CustomerID) REFERENCES users(UserID) ON DELETE CASCADE ,
 FOREIGN KEY (CurrencyID) REFERENCES currency(CurrencyID),
 FOREIGN KEY (BranchID) REFERENCES branches(BranchID)
 );
+
 
 CREATE TABLE orderdetails
 (

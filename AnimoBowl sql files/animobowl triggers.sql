@@ -256,9 +256,9 @@ BEGIN
         NEW.DeliveryMethod,
         'Created'
     );
-END 
-$$ DELIMITER ;
+END $$ DELIMITER ;
 
+DELIMITER $$
 CREATE TRIGGER OrderUpdateLog
 AFTER UPDATE ON orders
 FOR EACH ROW
@@ -558,7 +558,7 @@ BEGIN
     
 	UPDATE product
     SET quantity = quantity + OLD.quantity
-    WHERE ProductID = OLD.ProductID AND order_branch = OLDBranchID;
+    WHERE ProductID = OLD.ProductID AND order_branch = BranchID;
     
     UPDATE orders
     SET Total = new_total
@@ -566,3 +566,5 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+DROP TRIGGER UpdateTotalAfterProductRemoval

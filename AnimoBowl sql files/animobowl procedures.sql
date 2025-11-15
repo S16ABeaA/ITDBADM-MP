@@ -1,311 +1,9 @@
 USE AnimoBowl;
 
--- Procedure 1: Get the Price for each currency(Products)-- 
-
-DELIMITER $$
-CREATE PROCEDURE GetPriceInEachCurrency(
-    IN p_product_id INT,
-    IN p_currency_id INT,
-    OUT convertedPrice DECIMAL(10,2)
-)
-BEGIN
-    DECLARE base_price DECIMAL(10,2);
-    DECLARE rate DECIMAL(10,4);
-    SELECT Price INTO base_price
-    FROM product
-    WHERE ProductID = p_product_id
-    LIMIT 1;
-    SELECT Currency_Rate INTO rate
-    FROM currency
-    WHERE CurrencyID = p_currency_id;
-    SET convertedPrice = base_price * rate;
-END
-$$ DELIMITER ;
-
-CALL GetPriceInEachCurrency(1,1,@result);
-SELECT @result;
-
-
--- Procedure 2:Get the Price for each currency(Services)-- 
-DELIMITER $$
-
-CREATE PROCEDURE GetServicePriceInEachCurrency(
-    IN s_service_id INT,
-    IN p_currency_id INT,
-    OUT convertedPrice DECIMAL(10,2)
-)
-BEGIN
-    DECLARE base_price DECIMAL(10,2);
-    DECLARE rate DECIMAL(10,4);
-    SELECT Price INTO base_price
-    FROM services
-    WHERE ServiceID = s_service_id;
-    SELECT Currency_Rate INTO rate
-    FROM currency
-    WHERE CurrencyID = p_currency_id;
-    SET convertedPrice = base_price * rate;
-END
-$$ DELIMITER ;
-
-
-CALL GetServicePriceInEachCurrency(1,2,@result);
-SELECT @result;
-
--- Procedure 3:Get the inventory stock per item -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetProductInventory(
-    IN p_ProductID INT,
-    IN p_BranchID INT
-)
-BEGIN
-    DECLARE v_Type ENUM('supplies','accessories','ball','bag','shoes');
-
-    -- Get product type
-    SELECT Type INTO v_Type
-    FROM product
-    WHERE ProductID = p_ProductID AND BranchID = p_BranchID;
-
-    -- Balls
-    IF v_Type = 'ball' THEN
-        SELECT b.ProductID, b.Name, b.RG, b.DIFF, b.INTDIFF, b.Weight, b.Quality, b.CoreType, 
-               b.CoreName, b.Coverstock, b.CoverstockType, b.BranchID,p.quantity
-        FROM bowlingball b
-        JOIN product p ON b.productID AND p.productID
-        WHERE b.ProductID = p_ProductID AND b.BranchID = p_BranchID
-		LIMIT 1;
-    -- Shoes
-    ELSEIF v_Type = 'shoes' THEN
-        SELECT sh.ProductID, sh.Name, sh.Size, sh.Sex, sh.BranchID,p.quantity
-        FROM bowlingshoes sh
-        JOIN product p ON sh.productID AND p.productID
-        WHERE sh.ProductID = p_ProductID AND sh.BranchID = p_BranchI
-		LIMIT 1;
-    -- Bags
-    ELSEIF v_Type = 'bag' THEN
-        SELECT bg.ProductID, bg.Name, bg.Color, bg.Size, bg.BranchID,p.quantity
-        FROM bowlingbag bg
-        JOIN product p ON bg.productID AND p.productID
-        WHERE bg.ProductID = p_ProductID AND bg.BranchID = p_BranchID
-		LIMIT 1;
-    -- Accessories
-    ELSEIF v_Type = 'accessories' THEN
-        SELECT a.ProductID, a.Name, a.Type, a.Handedness, a.BranchID,p.quantity
-        FROM bowlingaccessories a
-		JOIN product p ON a.productID AND p.productID
-        WHERE a.ProductID = p_ProductID AND a.BranchID = p_BranchID
-		LIMIT 1;
-    -- Supplies
-    ELSEIF v_Type = 'supplies' THEN
-        SELECT cs.ProductID, cs.Name, cs.Type, cs.Quantity, cs.BranchID,p.quantity
-        FROM cleaningsupplies cs
-        JOIN product p ON cs.productID AND p.productID
-        WHERE cs.ProductID = p_ProductID AND cs.BranchID = p_BranchID
-        LIMIT 1;
-    END IF;
-
-END $$
-
-
-DELIMITER ;
-
-
-CALL GetProductInventory(13,2);
-
--- Procedure 4 Service Availability -- 
-DELIMITER $$
-CREATE PROCEDURE GetServiceAvailability(
-    INOUT p_serviceid INT
-)
-BEGIN
-    DECLARE avail TINYINT(1);
-
-    SELECT Availability INTO avail
-    FROM services
-    WHERE ServiceID = p_serviceid
-    LIMIT 1;
-
-    SET p_serviceid = avail;
-END $$
-
-DELIMITER ;
-
--- Procedure 5 Get All Products per category -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetProductsByCategory(IN p_category VARCHAR(50),IN branch_id INT)
-BEGIN
-    IF p_category = 'bowlingball' THEN
-        SELECT Name FROM bowlingball WHERE branch_id = branchid;
-    ELSEIF p_category = 'bowlingshoes' THEN
-        SELECT Name FROM bowlingshoes WHERE branch_id = branchid;
-    ELSEIF p_category = 'bowlingbag' THEN
-        SELECT Name FROM bowlingbag WHERE branch_id = branchid;
-    ELSEIF p_category = 'accessories' THEN
-        SELECT Name FROM bowlingaccessories WHERE branch_id = branchid;
-    ELSEIF p_category = 'supplies' THEN
-        SELECT Name FROM cleaningsupplies WHERE branch_id = branchid;
-    ELSE
-        SELECT 'Invalid category name. Choose from: bowlingball, bowlingshoes, bowlingbag, accessories, supplies.' AS Error;
-    END IF;
-END $$
-
-
-DELIMITER ;
-CALL GetProductsByCategory('bowlingball',1);
-CALL GetProductsByCategory('supplies',2);
-
--- Procedure 6 Get product by name(search function)-- 
-DELIMITER $$
-
-CREATE PROCEDURE GetProductByName(
-    IN p_search VARCHAR(100),
-    IN p_branchID INT
-)
-BEGIN
-    -- Search across all categories (ball, shoes, bag, accessories, supplies)
-    SELECT 'bowlingball' AS Category, Name
-    FROM bowlingball
-    WHERE Name LIKE CONCAT('%', p_search, '%') AND BranchID = p_branchID
-
-    UNION ALL
-
-    SELECT 'bowlingshoes' AS Category, Name
-    FROM bowlingshoes
-    WHERE Name LIKE CONCAT('%', p_search, '%') AND BranchID = p_branchID
-
-    UNION ALL
-
-    SELECT 'bowlingbag' AS Category, Name
-    FROM bowlingbag
-    WHERE Name LIKE CONCAT('%', p_search, '%') AND BranchID = p_branchID
-
-    UNION ALL
-
-    SELECT 'accessories' AS Category, Name
-    FROM bowlingaccessories
-    WHERE Name LIKE CONCAT('%', p_search, '%') AND BranchID = p_branchID
-
-    UNION ALL
-
-    SELECT 'supplies' AS Category, Name
-    FROM cleaningsupplies
-    WHERE Name LIKE CONCAT('%', p_search, '%') AND BranchID = p_branchID;
-END $$
-
-DELIMITER ;
-
--- Procedure 7 Get all orders made by a CUSTOMER-- 
-DELIMITER $$
-
-CREATE PROCEDURE GetCustomerOrderHistory(IN customerid INT)
-BEGIN
-    SELECT *
-    FROM orders o 
-    WHERE CustomerID = customerid;
-END $$
-DELIMITER ;
-CALL GetCustomerOrderHistory(1);
-
--- Procedure 8 Get Shoes per Gender and Size -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetShoesPerParameter(
-    IN p_sex VARCHAR(1),  
-    IN p_size INT,
-    IN branch INT
-)
-BEGIN
-    SELECT bs.Name, bs.size, bs.sex, p.Price
-    FROM product p
-    JOIN bowlingshoes bs ON p.ProductID = bs.ProductID
-    WHERE (p_sex IS NULL OR bs.sex = p_sex)
-      AND (p_size IS NULL OR bs.size = p_size)
-      AND p.BranchID = branch;
-END $$
-
-DELIMITER ;
-
-
-CALL GetShoesPerParameter('F',7,1);
-
--- Procedure 9 Get Cleaning Supplies per Type -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetSuppliesperType(IN typeof VARCHAR(10))
-BEGIN
-    SELECT cs.Name,p.price
-    FROM product p
-    JOIN cleaningsupplies cs ON cs.ProductID = p.ProductID
-    WHERE typeof = cs.type;
-END 
-$$ DELIMITER ;
-
-
-CALL GetSuppliesperType('pads');
-
--- Procedure 10 Get Accessories per Type -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetAccessoriesperType(IN typeof VARCHAR(20))
-BEGIN
-    SELECT ba.Name,p.price,ba.Handedness
-    FROM product p
-    JOIN bowlingaccessories ba ON ba.ProductID = p.ProductID
-    WHERE typeof = ba.type;
-END 
-$$ DELIMITER ;
-
--- Procedure 11 Bowling Bag search per type and sizes -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetBagPerParameter(
-    IN Typeof VARCHAR(10),
-    IN sizes INT
-)
-BEGIN
-    SELECT bb.Name, bb.type,bb.color,bb.size,p.price
-    FROM product p
-    JOIN bowlingbag bb ON p.ProductID = bb.ProductID
-    WHERE (Typeof IS NULL OR Typeof = bb.type)
-      AND (sizes IS NULL OR sizes = bb.size);
-END $$
-
-DELIMITER ;
-
-
-CALL GetBagPerParameter('Tote',NULL);
-
--- Procedure 12 Bowling Ball Search -- 
-DELIMITER $$
-
-CREATE PROCEDURE GetBallPerParameter(
-    IN weights INT,
-    IN qual VARCHAR(10),
-    IN types VARCHAR(20),
-    IN core VARCHAR(20)
-)
-BEGIN
-    SELECT b.Name AS 'Brand',bb.Name, bb.Quality,bb.weight,p.price
-    FROM brand b
-    JOIN product p ON p.BrandID = b.BrandID
-    JOIN bowlingball bb ON p.ProductID = bb.ProductID
-    WHERE (weight IS NULL OR weights = bb.weight)
-      AND (qual IS NULL OR qual = bb.quality)
-      AND (types IS NULL OR types = bb.Type)
-      AND (core IS NULL OR bb.CoreType = core);
-END $$
-
-DELIMITER ;
-
-
-CALL GetBallPerParameter('15',NULL,'Plastic',NULL);
-
-
 
 -- ADD PROCEDURES -- 
 
--- Procedure 13 Add a Bowling Ball --
+-- Procedure 1 Add a Bowling Ball --
 DELIMITER $$
 
 CREATE PROCEDURE AddBowlingBall(
@@ -401,7 +99,7 @@ CALL AddBowlingBall(
 
 SELECT *
 FROM bowlingball;
--- Procedure 14 Add a Bowling Accessory --
+-- Procedure 2 Add a Bowling Accessory --
 DELIMITER $$
 
 CREATE PROCEDURE AddBowlingAccessories(
@@ -451,7 +149,7 @@ END $$
 
 DELIMITER ;
 
--- Procedure 15 Add a Bowling Bag --
+-- Procedure 3 Add a Bowling Bag --
 DELIMITER $$
 
 CREATE PROCEDURE AddBowlingBag(
@@ -514,7 +212,7 @@ CALL AddBowlingBag(
     8                   -- Quantity
 );
 
--- Procedure 16 Add a Bowling Shoe --
+-- Procedure 4 Add a Bowling Shoe --
 DELIMITER $$
 
 CREATE PROCEDURE AddBowlingShoes(
@@ -564,7 +262,7 @@ END $$
 
 DELIMITER ;
 
--- Procedure 17 Add a Cleaning Supply --
+-- Procedure 5 Add a Cleaning Supply --
 DELIMITER $$
 
 CREATE PROCEDURE AddCleaningSupplies(
@@ -615,8 +313,9 @@ DELIMITER ;
 
 DELIMITER $$
 
--- Procedures 18,19 Add to cart-- 
+-- Procedures 6,7 Add to cart-- 
 DELIMITER $$
+
 CREATE PROCEDURE AddOrderDetails(
     IN p_OrderID INT,
     IN p_CustomerID INT,
@@ -629,7 +328,7 @@ BEGIN
     DECLARE checkOrder INT;
     DECLARE converted_price DECIMAL(10,2);
 
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
     END;
@@ -646,11 +345,11 @@ BEGIN
     IF checkOrder = 0 THEN
         INSERT INTO orders (
             OrderID, CustomerID, CurrencyID, BranchID,
-            DatePurchased, Status, Total, PaymentMode, DeliveryMethod
+            DatePurchased, Status, Total
         )
         VALUES (
             p_OrderID, p_CustomerID, p_CurrencyID, p_BranchID,
-            NULL, 'Pending', 0, NULL, NULL
+            NULL, 'Pending', 0
         );
     END IF;
 
@@ -663,39 +362,10 @@ BEGIN
 
     COMMIT;
 
-END 
-$$ DELIMITER ;
+END $$
 
-DELIMITER $$
-CREATE PROCEDURE ProcessOrder(
-    IN p_CustomerID INT,
-    IN p_BranchID INT,
-    IN p_PaymentMode ENUM('Cash','Credit Card','Online'),
-    IN p_DeliveryMethod ENUM('Pickup','Delivery'),
-    IN p_CurrencyID INT,
-    IN p_Total DECIMAL(10,2)
-)
-BEGIN
-    DECLARE v_OrderID INT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
+DELIMITER ;
 
-    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-    START TRANSACTION;
-
-    INSERT INTO orders (CustomerID, CurrencyID, BranchID, Status, Total, PaymentMode, DeliveryMethod, DatePurchased)
-    VALUES (p_CustomerID, p_CurrencyID, p_BranchID, 'Pending', p_Total, p_PaymentMode, p_DeliveryMethod, NOW());
-    
-    SET v_OrderID = LAST_INSERT_ID();
-
-    COMMIT;
-    
-    SELECT v_OrderID AS OrderID;
-END 
-$$ DELIMITER ;
 
 DELIMITER $$
 
@@ -716,11 +386,13 @@ BEGIN
     BEGIN
         ROLLBACK;
     END;
-
+    
     SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-
     START TRANSACTION;
-    -- Check if order already exists
+
+
+
+    -- Check if order exists
     SELECT COUNT(*) INTO checkOrder
     FROM orders
     WHERE OrderID = p_OrderID;
@@ -736,19 +408,90 @@ BEGIN
         );
     END IF;
 
+    
     CALL GetServicePriceInEachCurrency(p_ServiceID, p_CurrencyID, converted_price);
-	SELECT @temp_price INTO converted_price;
 
-    IF p_isFromStore = TRUE THEN 
+    
+    IF p_isFromStore THEN 
         SET converted_price = converted_price * 1.05;
     END IF;
-    INSERT INTO servicedetails (OrderID, ServiceID, isFromStore, Price)
+
+    INSERT INTO servicedetails (OrderID, ServiceID, isFromStore, price)
     VALUES (p_OrderID, p_ServiceID, p_isFromStore, converted_price);
+
+    COMMIT;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE UpdatedProductQuantity(
+    IN p_OrderID INT,
+    IN p_ProductID INT,
+    IN p_Quantity INT
+)
+BEGIN
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
+
+    -- Check if order exists
+	
+    UPDATE productdetails 
+    SET quantity = p_Quantity
+    WHERE p_OrderID = OrderID;
+
+    COMMIT;
+END $$
+DELIMITER ;
+
+
+
+-- Edit/Update Details -- 
+-- Procedure 20 updates details on order page 
+DELIMITER $$
+
+CREATE PROCEDURE CheckOutPage(
+    IN p_OrderID INT,
+    IN p_PaymentMode ENUM('Cash','Credit Card','Online'),
+    IN p_DeliveryMethod ENUM('Pickup','Delivery')
+)
+BEGIN
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+   
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
+
     
+    SELECT OrderID 
+    FROM orders
+    WHERE OrderID = p_OrderID
+    FOR UPDATE;
+
+    
+    IF NOT EXISTS (SELECT 1 FROM orders WHERE OrderID = p_OrderID) THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Order ID does not exist.';
+    END IF;
+
+    
+    UPDATE orders
+    SET PaymentMode = p_PaymentMode,
+        DeliveryMethod = p_DeliveryMethod,
+        Status = 'Processing',
+        DatePurchased = NOW()
+    WHERE OrderID = p_OrderID;
+
     COMMIT;
 END $$
 
 DELIMITER ;
+
 
 -- Procedure 21 updates order status -- 
 DELIMITER $$
@@ -919,27 +662,39 @@ DELIMITER ;
 
 
 DELIMITER $$
-
 CREATE PROCEDURE ChangeUserInformation(
     IN p_UserID INT,
     IN p_FirstName VARCHAR(100),
     IN p_LastName VARCHAR(100),
     IN p_MobileNumber VARCHAR(20),
     IN p_Email VARCHAR(255),
-    IN p_Password VARCHAR(255)
+    IN p_City VARCHAR(100),
+    IN p_Street VARCHAR(255),
+    IN p_ZipCode VARCHAR(20)
 )
 BEGIN
+    DECLARE v_AddressID INT;
+
+    SELECT AddressID INTO v_AddressID
+    FROM users
+    WHERE UserID = p_UserID;
+
     UPDATE users
     SET 
-        FirstName =  p_FirstName,
-        LastName =  p_LastName,
-        MobileNumber =  p_MobileNumber,
-        Email =  p_Email,
-        Password =  p_Password
+        FirstName = p_FirstName,
+        LastName = p_LastName,
+        MobileNumber = p_MobileNumber,
+        Email = p_Email
     WHERE UserID = p_UserID;
-END $$
 
-DELIMITER ;
+    UPDATE address
+    SET
+        City = p_City,
+        Street = p_Street,
+        zip_code = p_ZipCode
+    WHERE AddressID = v_AddressID;
+END 
+$$ DELIMITER ;
 
 
 DELIMITER $$
@@ -1033,3 +788,20 @@ END $$
 
 DELIMITER ;
 
+DELIMITER $$
+CREATE PROCEDURE GetUserProfile(IN p_userID INT)
+BEGIN
+    SELECT 
+        u.FirstName,
+        u.LastName,
+        u.Email,
+        u.MobileNumber,
+        u.AddressID,
+        a.City,
+        a.Street,
+        a.zip_code
+    FROM users u
+    LEFT JOIN address a ON u.AddressID = a.AddressID
+    WHERE u.UserID = p_userID;
+END
+$$ DELIMITER ;
