@@ -15,7 +15,6 @@ $user = $result->fetch_assoc();
 //debugging
 echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
 
-// Must close procedure before another call
 $stmt->close();
 $conn->next_result();
 
