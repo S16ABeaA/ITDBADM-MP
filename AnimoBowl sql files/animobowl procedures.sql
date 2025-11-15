@@ -666,6 +666,36 @@ BEGIN
 END 
 $$ DELIMITER ;
 
+DELIMITER $$
+CREATE PROCEDURE ProcessOrder(
+    IN p_CustomerID INT,
+    IN p_BranchID INT,
+    IN p_PaymentMode ENUM('Cash','Credit Card','Online'),
+    IN p_DeliveryMethod ENUM('Pickup','Delivery'),
+    IN p_CurrencyID INT,
+    IN p_Total DECIMAL(10,2)
+)
+BEGIN
+    DECLARE v_OrderID INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+    START TRANSACTION;
+
+    INSERT INTO orders (CustomerID, CurrencyID, BranchID, Status, Total, PaymentMode, DeliveryMethod, DatePurchased)
+    VALUES (p_CustomerID, p_CurrencyID, p_BranchID, 'Pending', p_Total, p_PaymentMode, p_DeliveryMethod, NOW());
+    
+    SET v_OrderID = LAST_INSERT_ID();
+
+    COMMIT;
+    
+    SELECT v_OrderID AS OrderID;
+END 
+$$ DELIMITER ;
 
 DELIMITER $$
 
@@ -719,55 +749,6 @@ BEGIN
 END $$
 
 DELIMITER ;
-
-
-
-
--- Edit/Update Details -- 
--- Procedure 20 updates details on order page 
-DELIMITER $$
-
-CREATE PROCEDURE CheckOutPage(
-    IN p_OrderID INT,
-    IN p_PaymentMode ENUM('Cash','Credit Card','Online'),
-    IN p_DeliveryMethod ENUM('Pickup','Delivery')
-)
-BEGIN
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-    END;
-
-   
-    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-    START TRANSACTION;
-
-    
-    SELECT OrderID 
-    FROM orders
-    WHERE OrderID = p_OrderID
-    FOR UPDATE;
-
-    
-    IF NOT EXISTS (SELECT 1 FROM orders WHERE OrderID = p_OrderID) THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Order ID does not exist.';
-    END IF;
-
-    
-    UPDATE orders
-    SET PaymentMode = p_PaymentMode,
-        DeliveryMethod = p_DeliveryMethod,
-        Status = 'Processing',
-        DatePurchased = NOW()
-    WHERE OrderID = p_OrderID;
-
-    COMMIT;
-END $$
-
-DELIMITER ;
-
 
 -- Procedure 21 updates order status -- 
 DELIMITER $$

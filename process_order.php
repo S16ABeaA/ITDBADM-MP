@@ -42,30 +42,27 @@ try {
     $currencyMap = [
         'PHP' => 1,
         'USD' => 2, 
-        'KOR' => 3
+        'KRW' => 3
     ];
     $currencyID = $currencyMap[$currency] ?? 1;
     
-    // Start transaction
-    $conn->begin_transaction();
+    // Call the stored procedure
+    $stmt = $conn->prepare("CALL ProcessOrder(?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iissid", $customerID, $branchID, $paymentMethod, $deliveryMethod, $currencyID, $total);
     
-    // Temporarily disable the OrderInsertLog trigger by renaming it (if possible)
-    // Alternatively, we'll work with the trigger by ensuring proper data flow
-    
-    // Insert into orders table - the trigger will handle order_log automatically
-    $orderSQL = "INSERT INTO orders (CustomerID, CurrencyID, BranchID, Status, Total, PaymentMode, DeliveryMethod) 
-                 VALUES (?, ?, ?, 'Pending', ?, ?, ?)";
-    $orderStmt = $conn->prepare($orderSQL);
-    $orderStmt->bind_param("iiidss", $customerID, $currencyID, $branchID, $total, $paymentMethod, $deliveryMethod);
-    
-    if (!$orderStmt->execute()) {
-        throw new Exception('Failed to create order: ' . $orderStmt->error);
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to create order: ' . $stmt->error);
     }
     
-    $orderID = $conn->insert_id;
-    $orderStmt->close();
+    // Get the result from stored procedure
+    $result = $stmt->get_result();
+    $orderData = $result->fetch_assoc();
+    $orderID = $orderData['OrderID'];
     
-    // Insert order details - triggers will handle inventory checks and updates
+    $stmt->close();
+    $conn->next_result();
+    
+    // Insert order details
     foreach ($_SESSION['cart'] as $cartItem) {
         $orderDetailSQL = "INSERT INTO orderdetails (OrderID, ProductID, Quantity, price) 
                            VALUES (?, ?, ?, ?)";
@@ -78,17 +75,12 @@ try {
         $orderDetailStmt->close();
     }
     
-    // Commit transaction
-    $conn->commit();
-    
     // Clear cart session
     unset($_SESSION['cart']);
     
     echo json_encode(['success' => true, 'message' => 'Order placed successfully', 'orderID' => $orderID]);
     
 } catch (Exception $e) {
-    // Rollback transaction on error
-    $conn->rollback();
     error_log("Order processing error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()]);
 }
