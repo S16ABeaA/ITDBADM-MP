@@ -233,13 +233,10 @@ $conn->close();
             body: `productID=${productID}&quantity=${quantity}`
         })
         .then(res => {
-            // First, get the response as text to see what's actually coming back
             return res.text().then(text => {
                 try {
-                    // Try to parse as JSON
                     return JSON.parse(text);
                 } catch (err) {
-                    // If it's not JSON, throw an error with the actual response
                     throw new Error('Invalid JSON response: ' + text.substring(0, 100));
                 }
             });
