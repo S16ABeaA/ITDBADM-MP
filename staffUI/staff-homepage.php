@@ -604,14 +604,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="ballImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="ballImageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="ballImage" name="ballImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="ballImage" name="ballImage">
           </div>
         </div>
 
@@ -680,14 +673,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="shoeImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="shoeImage" name="shoeImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="shoeImage" name="shoeImage">
           </div>
         </div>
 
@@ -763,14 +749,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="bagImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="bagImage" name="bagImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="bagImage" name="bagImage">
           </div>
         </div>
 
@@ -850,14 +829,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="accessoryImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="accessoryImage" name="accessoryImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="accessoryImage" name="accessoryImage">
           </div>
         </div>
 
@@ -929,14 +901,7 @@ include('staff-header.html');
 
           <div class="form-group full-width">
             <label for="supplyImage" class="required">Product Images</label>
-            <div class="image-upload-container">
-              <div class="image-upload" id="imageUpload">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Click to upload product images</p>
-                <span class="upload-hint">Recommended: 800x800px, PNG or JPG</span>
-                <input type="file" id="supplyImage" name="supplyImage" accept="image/*" style="display: none;" multiple>
-              </div>
-            </div>
+            <input type="text" id="supplyImage" name="supplyImage">
           </div>
         </div>
 
@@ -1581,10 +1546,10 @@ include('staff-header.html');
         const $form = $(modalId).find('form');
         $form[0].reset();
         
-        // Reset image upload display
+        /*// Reset image upload display
         const $imageUpload = $(modalId).find('.image-upload');
         $imageUpload.find('p').text('Click to upload product images');
-        $imageUpload.removeClass('has-file');
+        $imageUpload.removeClass('has-file');*/
         
         // Update modal title for adding
         $(modalId).find('.modal-title').text($(modalId).find('.modal-title').text().replace('Edit', 'Add'));
