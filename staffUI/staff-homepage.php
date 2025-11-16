@@ -652,9 +652,13 @@ include('staff-header.html');
             <input type="number" id="shoeSize" name="shoeSize" required>
           </div>
 
-           <div class="form-group">
+          <div class="form-group">
             <label for="shoeGender" class="required">Gender</label>
-            <input type="number" id="shoeGender" name="shoeGender" required>
+            <select id="shoeGender" name="shoeGender" required>
+              <option value="">Select Sex</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
           </div>
      
           <div class="form-group">
