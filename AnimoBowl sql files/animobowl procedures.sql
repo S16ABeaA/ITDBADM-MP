@@ -635,20 +635,13 @@ CREATE PROCEDURE AddUser(
 BEGIN
     DECLARE existingUser INT;
 
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-    END;
-
-    -- Highest safety level
     SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     START TRANSACTION;
 
-    -- Check if email exists
+
     SELECT COUNT(*) INTO existingUser
     FROM users
-    WHERE Email = p_Email
-    FOR UPDATE;
+    WHERE Email = p_Email;
 
     IF existingUser > 0 THEN
         ROLLBACK;
@@ -656,7 +649,8 @@ BEGIN
         SET MESSAGE_TEXT = 'Email already registered.';
     END IF;
 
-    INSERT INTO users (AddressID, FirstName, LastName, PhoneNumber, Email, Password)
+    
+    INSERT INTO users (AddressID, FirstName, LastName, MobileNumber, Email, Password)
     VALUES (p_AddressID, p_FirstName, p_LastName, p_Number, p_Email, p_Pass);
 
     COMMIT;
@@ -671,7 +665,6 @@ CREATE PROCEDURE ChangeUserInformation(
     IN p_FirstName VARCHAR(100),
     IN p_LastName VARCHAR(100),
     IN p_MobileNumber VARCHAR(20),
-    IN p_Email VARCHAR(255),
     IN p_City VARCHAR(100),
     IN p_Street VARCHAR(255),
     IN p_ZipCode VARCHAR(20)
@@ -687,8 +680,7 @@ BEGIN
     SET 
         FirstName = p_FirstName,
         LastName = p_LastName,
-        MobileNumber = p_MobileNumber,
-        Email = p_Email
+        MobileNumber = p_MobileNumber
     WHERE UserID = p_UserID;
 
     UPDATE address
