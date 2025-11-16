@@ -334,7 +334,6 @@ BEGIN
     END;
 
     SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-
     START TRANSACTION;
 
 
@@ -432,14 +431,19 @@ CREATE PROCEDURE UpdatedProductQuantity(
 )
 BEGIN
 
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+    
     SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     START TRANSACTION;
 
-    -- Check if order exists
+    
 	
-    UPDATE productdetails 
+    UPDATE orderdetails
     SET quantity = p_Quantity
-    WHERE p_OrderID = OrderID;
+    WHERE p_OrderID = OrderID AND p_ProductID = ProductID;
 
     COMMIT;
 END $$

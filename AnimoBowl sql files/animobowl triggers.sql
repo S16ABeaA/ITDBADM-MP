@@ -73,59 +73,60 @@ DELIMITER ;
 
 
 -- Trigger 3 Editing cart details(Concurrency is practiced)
+
 DELIMITER $$
 
 CREATE TRIGGER ChangeCartDetails
-BEFORE UPDATE ON orderdetails
+AFTER UPDATE ON orderdetails
 FOR EACH ROW
 BEGIN
-	DECLARE current_stock INT;
     DECLARE order_branch INT;
-	DECLARE new_total DECIMAL(10,2);
-   
+    DECLARE new_product_total DECIMAL(10,2);
+    DECLARE new_service_total DECIMAL(10,2);
+    DECLARE new_total DECIMAL(10,2);
+
+    -- Get branch
     SELECT BranchID INTO order_branch
     FROM orders
-    WHERE OrderID = NEW.OrderID
-    LIMIT 1;
-    
-    IF OLD.quantity < NEW.quantity
-    THEN
-	UPDATE product
-    SET Quantity = Quantity - (NEW.Quantity - OLD.quantity)
-    WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
-    END IF;
-    
-    IF OLD.quantity > NEW.quantity
-    THEN
-	UPDATE product
-    SET Quantity = Quantity + (OLD.Quantity - NEW.quantity)
-    WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
-    END IF;
-    
-    IF OLD.quantity = NEW.quantity
-    THEN
-	SIGNAL SQLSTATE '45000'
-	SET MESSAGE_TEXT = 'No Inventory changes';
-    END IF;
-    
-    SELECT SUM(Price) INTO new_total
-    FROM servicedetails
     WHERE OrderID = NEW.OrderID;
 
- 
-    SELECT IFNULL(SUM(Price * Quantity), 0) INTO @Total
+    -- Inventory adjustments
+    IF NEW.Quantity > OLD.Quantity THEN
+        UPDATE product
+        SET Quantity = Quantity - (NEW.Quantity - OLD.Quantity)
+        WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
+    ELSEIF NEW.Quantity < OLD.Quantity THEN
+        UPDATE product
+        SET Quantity = Quantity + (OLD.Quantity - NEW.Quantity)
+        WHERE ProductID = NEW.ProductID AND BranchID = order_branch;
+    ELSE
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No inventory changes';
+    END IF;
+
+    -- Recalculate totals (force 0 when null)
+    SELECT IFNULL(SUM(Price * Quantity), 0)
+    INTO new_product_total
     FROM orderdetails
     WHERE OrderID = NEW.OrderID;
 
-    SET new_total = new_total + @Total;
+    SELECT IFNULL(SUM(Price), 0)
+    INTO new_service_total
+    FROM servicedetails
+    WHERE OrderID = NEW.OrderID;
 
+    SET new_total = new_product_total + new_service_total;
+
+    -- Update order total
     UPDATE orders
     SET Total = new_total
     WHERE OrderID = NEW.OrderID;
-    
+
 END $$
 
 DELIMITER ;
+
+
 
 
 
@@ -440,11 +441,13 @@ BEGIN
 			NULL,
             NULL,
             OLD.Price,
-            'Deleted Producted'
+            'Deleted Product'
         );
 END $$
 
 DELIMITER ;
+
+
 -- Trigger 14 User delete-- 
 CREATE TABLE user_deletion_log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
@@ -507,29 +510,36 @@ DELIMITER ;
 
 -- trigger 17,18 removal of item from cart -- 
 DELIMITER $$
+
 CREATE TRIGGER UpdateTotalAfterServiceRemoval
 AFTER DELETE ON servicedetails
 FOR EACH ROW
 BEGIN
-    DECLARE new_total DECIMAL(10,2);
+    DECLARE service_total DECIMAL(10,2);
+    DECLARE product_total DECIMAL(10,2);
 
-    SELECT SUM(Price) INTO new_total
+    
+    SELECT IFNULL(SUM(Price), 0)
+    INTO service_total
     FROM servicedetails
     WHERE OrderID = OLD.OrderID;
 
- 
-    SELECT IFNULL(SUM(Price * Quantity), 0) INTO @Total
+
+    SELECT IFNULL(SUM(Price * Quantity), 0)
+    INTO product_total
     FROM orderdetails
     WHERE OrderID = OLD.OrderID;
 
-    SET new_total = new_total + @Total;
-
+   
     UPDATE orders
-    SET Total = new_total
+    SET Total = service_total + product_total
     WHERE OrderID = OLD.OrderID;
-END $$
+END$$
 
 DELIMITER ;
+
+
+
 
 DELIMITER $$
 
@@ -537,34 +547,38 @@ CREATE TRIGGER UpdateTotalAfterProductRemoval
 AFTER DELETE ON orderdetails
 FOR EACH ROW
 BEGIN
-    DECLARE new_total DECIMAL(10,2);
+    DECLARE new_product_total DECIMAL(10,2);
+    DECLARE new_service_total DECIMAL(10,2);
     DECLARE order_branch INT;
-    
-    SELECT SUM(Price * Quantity) INTO new_total
+
+   
+    SELECT IFNULL(SUM(Price * Quantity), 0)
+    INTO new_product_total
     FROM orderdetails
     WHERE OrderID = OLD.OrderID;
 
-    SELECT IFNULL(SUM(Price),0) INTO @servicetotal
+    SELECT IFNULL(SUM(Price), 0)
+    INTO new_service_total
     FROM servicedetails
     WHERE OrderID = OLD.OrderID;
 
-    SET new_total = new_total + @servicetotal;
-
-
-    SELECT BranchID INTO order_branch
+    
+    SELECT BranchID
+    INTO order_branch
     FROM orders
     WHERE OrderID = OLD.OrderID
     LIMIT 1;
+
     
-	UPDATE product
-    SET quantity = quantity + OLD.quantity
-    WHERE ProductID = OLD.ProductID AND order_branch = BranchID;
+    UPDATE product
+    SET Quantity = Quantity + OLD.Quantity
+    WHERE ProductID = OLD.ProductID
+      AND BranchID = order_branch;
+
     
     UPDATE orders
-    SET Total = new_total
+    SET Total = new_product_total + new_service_total
     WHERE OrderID = OLD.OrderID;
-END $$
+END$$
 
 DELIMITER ;
-
-DROP TRIGGER UpdateTotalAfterProductRemoval
