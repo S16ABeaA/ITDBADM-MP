@@ -30,7 +30,7 @@ if(isset($_POST['update_order'])){
   }
   
   // Update order status in database
-  $updateQuery = "UPDATE orders SET status='$status'";
+  $updateQuery = "CALL UpdateOrderStatus('$orderId', '$status')";
   // Add date completed if provided
   if($status === 'Completed' && !empty($dateCompleted)){
     $updateQuery .= ", DateCompleted='$dateCompleted'";
