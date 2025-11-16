@@ -20,9 +20,10 @@ if(isset($_POST['insertedit_bb'])){
   $coverstockName = $_POST['coverstockName'] ?? '';
   $coverstockType = $_POST['coverstockType'] ?? '';
   $ballDescription = $_POST['ballDescription'] ?? '';
+  $ballImage = $_POST['ballImage'] ?? '';
   
   // Validate required fields
-  if(!$ballId || empty($ballName) || empty($ballBrand) || empty($ballPrice) || empty($ballStock) || empty($ballWeight) || empty($ballType) || empty($ballQuality) || empty($coreName) || empty($coreType) || empty($rgValue) || empty($diffValue) || empty($intDiffValue) || empty($coverstockName) || empty($coverstockType)){
+  if(!$ballId || empty($ballImage) || empty($ballName) || empty($ballBrand) || empty($ballPrice) || empty($ballStock) || empty($ballWeight) || empty($ballType) || empty($ballQuality) || empty($coreName) || empty($coreType) || empty($rgValue) || empty($diffValue) || empty($intDiffValue) || empty($coverstockName) || empty($coverstockType)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
@@ -71,7 +72,7 @@ if(isset($_POST['insertedit_bb'])){
   $updatebbquery = "UPDATE bowlingball SET Quality='$ballQuality', Name='$ballName', Type='$ballType', RG='$rgValue', DIFF='$diffValue', INTDIFF='$intDiffValue', weight='$ballWeight', CoreType='$coreType', CoreName='$coreName', Coverstock='$coverstockName', CoverstockType='$coverstockType' WHERE ProductID='$ballId'";
   $updatebbresult = $conn->query($updatebbquery);
   
-  $updateproductquery = "UPDATE product SET Price='$ballPrice', Quantity='$ballStock', ImageID='$bb_image', BrandID='$ballBrand' WHERE ProductID='$ballId'";
+  $updateproductquery = "UPDATE product SET Price='$ballPrice', Quantity='$ballStock', ImageID='$ballImage', BrandID='$ballBrand' WHERE ProductID='$ballId'";
   $updateproductresult = $conn->query($updateproductquery);
   
   if($updatebbresult && $updateproductresult){
@@ -96,7 +97,7 @@ if(isset($_POST['insertedit_bb'])){
         'coverstockType' => $coverstockType,
         'ballPrice' => '₱' . number_format($ballPrice, 2),
         'ballStock' => $ballStock,
-        'ballImage' => $bb_image
+        'ballImage' => $ballImage
       ]
     ]);
   } else {
