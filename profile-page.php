@@ -62,21 +62,39 @@ if (!empty($recentOrders)) {
 
 // Handle Save Changes POST
 if (isset($_POST['saveChanges'])) {
-    $firstname = $_POST['firstname'];
-    $lastname = $_POST['lastname'];
-    $email = $_POST['email'];
-    $mobile = $_POST['mobile'];
-    $city = $_POST['city'];
-    $street = $_POST['street'];
-    $zip = $_POST['zip'];
+    $firstname = trim($_POST['firstname']);
+    $lastname = trim($_POST['lastname']);
+    $email = trim($_POST['email']);
+    $mobile = trim($_POST['mobile']);
+    $city = trim($_POST['city']);
+    $street = trim($_POST['street']);
+    $zip = trim($_POST['zip']);
 
-    $stmt = $conn->prepare("CALL ChangeUserInformation(?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssssss", $userID, $firstname, $lastname, $mobile, $email, $city, $street, $zip);
-    $stmt->execute();
-    $stmt->close();
-    $conn->next_result();
+    // Check for actual changes
+    $changes = [];
+    if ($firstname !== $user['FirstName']) $changes[] = "Firstname: '{$firstname}' != '{$user['FirstName']}'";
+    if ($lastname !== $user['LastName']) $changes[] = "Lastname: '{$lastname}' != '{$user['LastName']}'";
+    if ($email !== $user['Email']) $changes[] = "Email: '{$email}' != '{$user['Email']}'";
+    if ($mobile !== $user['MobileNumber']) $changes[] = "Mobile: '{$mobile}' != '{$user['MobileNumber']}'";
+    if ($city !== $user['City']) $changes[] = "City: '{$city}' != '{$user['City']}'";
+    if ($street !== $user['Street']) $changes[] = "Street: '{$street}' != '{$user['Street']}'";
+    if ($zip !== $user['zip_code']) $changes[] = "ZIP: '{$zip}' != '{$user['zip_code']}'";
 
-    echo "<script>alert('Profile updated successfully!'); window.location.href='profile-page.php';</script>";
+    try {
+        $stmt = $conn->prepare("CALL ChangeUserInformation(?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssssss", $userID, $firstname, $lastname, $mobile, $email, $city, $street, $zip);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Profile updated successfully!'); window.location.href='profile-page.php';</script>";
+        } else {
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+        $stmt->close();
+        $conn->next_result();
+        
+    } catch (Exception $e) {
+        echo "<script>alert('Error updating profile: " . addslashes($e->getMessage()) . "'); console.error('Update error:', '" . addslashes($e->getMessage()) . "');</script>";
+    }
     exit;
 } elseif (isset($_POST['savePasswordChanges'])) {
     $currentPassword = $_POST['currentPassword'];
