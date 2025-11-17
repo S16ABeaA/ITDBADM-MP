@@ -486,27 +486,6 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Trigger 16 User Information Changes
-DELIMITER $$
-
-CREATE TRIGGER UserChangeChecker
-BEFORE UPDATE ON users
-FOR EACH ROW
-BEGIN
-    
-    IF 
-        OLD.FirstName = NEW.FirstName AND
-        OLD.LastName = NEW.LastName AND
-        OLD.MobileNumber = NEW.MobileNumber AND
-        OLD.Email = NEW.Email AND
-        OLD.Password = NEW.Password
-    THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'No fields were changed. Update aborted.';
-    END IF;
-END $$
-
-DELIMITER ;
 
 -- trigger 17,18 removal of item from cart -- 
 DELIMITER $$
