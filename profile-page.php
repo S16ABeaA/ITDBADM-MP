@@ -55,11 +55,13 @@ $currencyStmt->close();
 
 // Fetch order items for all orders - FIXED to avoid duplicates
 $orderItems = [];
+$serviceItems = [];
+
 if (!empty($recentOrders)) {
     $orderIDs = array_column($recentOrders, 'OrderID');
     $placeholders = str_repeat('?,', count($orderIDs) - 1) . '?';
     
-    // FIXED: Use DISTINCT and proper joins to avoid duplicates
+    // Get PRODUCT items
     $itemsSQL = "SELECT DISTINCT od.OrderID, od.ProductID, od.Quantity, od.price,
                         p.ImageID,
                         COALESCE(bb.Name, bs.name, bg.Name, ba.Name, cs.Name) as ProductName
@@ -82,6 +84,24 @@ if (!empty($recentOrders)) {
         $orderItems[$item['OrderID']][] = $item;
     }
     $itemsStmt->close();
+    
+    // Get SERVICE items
+    $servicesSQL = "SELECT sd.OrderID, sd.ServiceID, sd.isFromStore, sd.price,
+                           s.Type as ServiceName
+                    FROM servicedetails sd
+                    JOIN services s ON sd.ServiceID = s.ServiceID
+                    WHERE sd.OrderID IN ($placeholders)
+                    ORDER BY sd.OrderID, sd.ServiceID";
+    
+    $servicesStmt = $conn->prepare($servicesSQL);
+    $servicesStmt->bind_param(str_repeat('i', count($orderIDs)), ...$orderIDs);
+    $servicesStmt->execute();
+    $servicesResult = $servicesStmt->get_result();
+    
+    while ($service = $servicesResult->fetch_assoc()) {
+        $serviceItems[$service['OrderID']][] = $service;
+    }
+    $servicesStmt->close();
 }
 
 // Handle Save Changes POST
@@ -180,21 +200,50 @@ $conn->close();
             <?php 
             // Get currency symbol for this order
             $currencySymbol = $currencySymbols[$order['CurrencyID']] ?? '₱';
+            
+            // Check if order has products, services, or both
+            $hasProducts = isset($orderItems[$order['OrderID']]) && !empty($orderItems[$order['OrderID']]);
+            $hasServices = isset($serviceItems[$order['OrderID']]) && !empty($serviceItems[$order['OrderID']]);
             ?>
             <div class="order" data-order-id="<?php echo $order['OrderID']; ?>">
-              <?php if (isset($orderItems[$order['OrderID']]) && !empty($orderItems[$order['OrderID']])): ?>
+              <?php if ($hasProducts || $hasServices): ?>
                 <div class="order-image">
-                  <img src="./images/<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ImageID']); ?>" 
-                       alt="<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ProductName']); ?>"
-                       onerror="this.src='./images/default_product.jpg'">
+                  <?php if ($hasProducts): ?>
+                    <img src="./images/<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ImageID']); ?>" 
+                         alt="<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ProductName']); ?>"
+                         onerror="this.src='./images/default_product.jpg'">
+                  <?php else: ?>
+                    <div class="service-icon">
+                      <i class="fas fa-tools"></i>
+                    </div>
+                  <?php endif; ?>
                 </div>
                 <div class="order-info">
                   <div class="order-title">
                     <?php 
-                    $firstItem = $orderItems[$order['OrderID']][0];
-                    echo htmlspecialchars($firstItem['ProductName']);
-                    if (count($orderItems[$order['OrderID']]) > 1) {
-                        echo " and " . (count($orderItems[$order['OrderID']]) - 1) . " more item(s)";
+                    if ($hasProducts && $hasServices) {
+                        // Both products and services
+                        $firstProduct = $orderItems[$order['OrderID']][0];
+                        $firstService = $serviceItems[$order['OrderID']][0];
+                        echo htmlspecialchars($firstProduct['ProductName']) . " and " . htmlspecialchars($firstService['ServiceName']) . " Service";
+                        $remainingItems = (count($orderItems[$order['OrderID']]) - 1) + (count($serviceItems[$order['OrderID']]) - 1);
+                        if ($remainingItems > 0) {
+                            echo " and " . $remainingItems . " more item(s)";
+                        }
+                    } elseif ($hasProducts) {
+                        // Only products
+                        $firstItem = $orderItems[$order['OrderID']][0];
+                        echo htmlspecialchars($firstItem['ProductName']);
+                        if (count($orderItems[$order['OrderID']]) > 1) {
+                            echo " and " . (count($orderItems[$order['OrderID']]) - 1) . " more item(s)";
+                        }
+                    } elseif ($hasServices) {
+                        // Only services
+                        $firstService = $serviceItems[$order['OrderID']][0];
+                        echo htmlspecialchars($firstService['ServiceName']) . " Service";
+                        if (count($serviceItems[$order['OrderID']]) > 1) {
+                            echo " and " . (count($serviceItems[$order['OrderID']]) - 1) . " more service(s)";
+                        }
                     }
                     ?>
                     - <?php echo $currencySymbol . number_format($order['Total'], 2); ?>
@@ -373,6 +422,7 @@ $conn->close();
     const orderData = <?php echo json_encode([
         'orders' => $recentOrders,
         'orderItems' => $orderItems,
+        'serviceItems' => $serviceItems,
         'user' => $user,
         'currencySymbols' => $currencySymbols,
         'currencyRates' => $currencyRates
@@ -464,7 +514,8 @@ $conn->close();
       // Function to open modal with order data
       function openOrderDetailsModal(orderId) {
         const order = orderData.orders.find(o => o.OrderID == orderId);
-        const items = orderData.orderItems[orderId] || [];
+        const products = orderData.orderItems[orderId] || [];
+        const services = orderData.serviceItems[orderId] || [];
         const currencySymbol = orderData.currencySymbols[order.CurrencyID] || '₱';
 
         if (!order) return;
@@ -484,24 +535,24 @@ $conn->close();
         // Use the stored order total
         const storedTotal = parseFloat(order.Total);
 
-        // Populate order items
+        // Populate order items (both products and services)
         const itemsContainer = document.getElementById('modalOrderItems');
         itemsContainer.innerHTML = '';
 
-        if (items.length > 0) {
-          // Remove duplicates by using a Set to track unique product IDs
-          const uniqueItems = [];
+        // Display products
+        if (products.length > 0) {
+          const uniqueProducts = [];
           const seenProducts = new Set();
           
-          items.forEach(item => {
+          products.forEach(item => {
             const productKey = `${item.ProductID}-${item.price}`;
             if (!seenProducts.has(productKey)) {
               seenProducts.add(productKey);
-              uniqueItems.push(item);
+              uniqueProducts.push(item);
             }
           });
 
-          uniqueItems.forEach(item => {
+          uniqueProducts.forEach(item => {
             const itemElement = document.createElement('div');
             itemElement.className = 'order-item';
             itemElement.innerHTML = `
@@ -517,7 +568,34 @@ $conn->close();
             `;
             itemsContainer.appendChild(itemElement);
           });
-        } else {
+        }
+
+        // Display services
+        if (services.length > 0) {
+          services.forEach(service => {
+            const serviceElement = document.createElement('div');
+            serviceElement.className = 'order-item service-item';
+            const isFromStore = service.isFromStore ? 'Yes' : 'No';
+            const surchargeText = service.isFromStore ? '' : ' (+5% surcharge)';
+            
+            serviceElement.innerHTML = `
+              <div class="item-image">
+                <div class="service-icon">
+                  <i class="fas fa-tools"></i>
+                </div>
+              </div>
+              <div class="item-details">
+                <div class="item-name">${service.ServiceName} Service</div>
+                <div class="item-price">${currencySymbol}${parseFloat(service.price).toFixed(2)}</div>
+                <div class="item-quantity">Ball from store: ${isFromStore}${surchargeText}</div>
+              </div>
+              <div class="item-total">${currencySymbol}${parseFloat(service.price).toFixed(2)}</div>
+            `;
+            itemsContainer.appendChild(serviceElement);
+          });
+        }
+
+        if (products.length === 0 && services.length === 0) {
           itemsContainer.innerHTML = '<p>No items found for this order.</p>';
         }
 

@@ -198,13 +198,20 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
         </div>
         
         <?php
-        // Check if cart exists and has items
+        $hasItems = false;
+        $itemCount = 0;
+        $subtotal = 0;
+        
+        // Check if product cart exists and has items
         if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+          $hasItems = true;
+          
+          echo '<div class="order-items-category">
+                  <h3 class="category-title">Products</h3>
+                  <div class="category-items">';
           
           // Get product details for all items in cart
           $cartItems = array();
-          $itemCount = 0;
-          $subtotal = 0;
           
           foreach ($_SESSION['cart'] as $cartKey => $cartItem) {
             $productID = $cartItem['productID'];
@@ -251,7 +258,7 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
               $subtotal += $itemTotal;
         ?>
 
-        <div class="order">
+        <div class="order product-order">
           <div class="order-image-container">
             <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($productName); ?>">
           </div>
@@ -263,7 +270,7 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
                 <span class="currency-symbol"><?php echo $current_symbol; ?></span><span class="price-amount" data-base-price="<?php echo $cartItem['price']; ?>"><?php echo number_format($cartItem['price'], 2); ?></span>
             </div>
             <div class="product-info">
-              Branch ID: <?php echo $branchID; ?>
+              Branch ID: <?php echo $branchID; ?> | Qty: <?php echo $cartItem['quantity']; ?>
             </div>
           </div>
           <div class="product-quantity">
@@ -278,11 +285,71 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
             }
             $stmt->close();
           }
+          echo '</div></div>'; // Close products category
+        } 
+        
+        // Check if service cart exists and has items
+        if (isset($_SESSION['service_cart']) && !empty($_SESSION['service_cart'])) {
+          $hasItems = true;
           
-          // Calculate totals
-          $total = $subtotal;
+          echo '<div class="order-items-category">
+                  <h3 class="category-title">Services</h3>
+                  <div class="category-items">';
           
-        } else {
+          foreach ($_SESSION['service_cart'] as $cartKey => $serviceItem) {
+            // Get service details
+            $serviceID = $serviceItem['serviceID'];
+            $serviceSQL = "SELECT Type FROM services WHERE ServiceID = ?";
+            $serviceStmt = $conn->prepare($serviceSQL);
+            $serviceStmt->bind_param("i", $serviceID);
+            $serviceStmt->execute();
+            $serviceResult = $serviceStmt->get_result();
+            $serviceData = $serviceResult->fetch_assoc();
+            $serviceStmt->close();
+            
+            $serviceType = $serviceData['Type'] ?? 'Unknown Service';
+            $isFromStore = $serviceItem['isFromStore'] ? 'Yes' : 'No';
+            $surchargeText = $serviceItem['isFromStore'] ? '' : ' (+5% surcharge)';
+            
+            $itemCount += 1;
+            $itemTotal = $serviceItem['finalPrice'];
+            $subtotal += $itemTotal;
+        ?>
+
+        <div class="order service-order">
+          <div class="order-image-container">
+            <div class="service-icon">
+              <i class="fas fa-tools"></i>
+            </div>
+          </div>
+          <div class="order-info">
+            <div class="product-name">
+              <?php echo htmlspecialchars($serviceType); ?> Service
+            </div>
+            <div class="product-price">
+                <span class="currency-symbol"><?php echo $current_symbol; ?></span><span class="price-amount" data-base-price="<?php echo $serviceItem['finalPrice']; ?>"><?php echo number_format($serviceItem['finalPrice'], 2); ?></span>
+            </div>
+            <div class="product-info">
+              Ball from our store: <?php echo $isFromStore; ?><?php echo $surchargeText; ?>
+            </div>
+          </div>
+          <div class="product-quantity">
+            1
+          </div>
+          <div class="product-total-cost">
+              <span class="currency-symbol"><?php echo $current_symbol; ?></span><span class="total-amount" data-base-total="<?php echo $itemTotal; ?>"><?php echo number_format($itemTotal, 2); ?></span>
+          </div>
+        </div>
+
+        <?php 
+          }
+          echo '</div></div>'; // Close services category
+        }
+        
+        // Calculate totals
+        $total = $subtotal;
+        
+        if (!$hasItems) {
           // Empty cart message
           echo '<div class="empty-cart-message">Your cart is empty. <a href="./homepage.php">Continue shopping</a>.</div>';
           $itemCount = 0;
@@ -298,13 +365,13 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
           <h2 class="summary-title">Order Summary</h2>
           <div class="summary-row">
               <span>Subtotal (<span id="itemCount"><?php echo $itemCount; ?></span> items)</span>
-              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="subtotal"><?php echo number_format($subtotal, 2); ?></span></span>
+              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="subtotal" data-base-total="<?php echo $subtotal; ?>"><?php echo number_format($subtotal, 2); ?></span></span>
           </div>
           <div class="summary-row summary-total">
               <span>Total</span>
-              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="total"><?php echo number_format($total, 2); ?></span></span>
+              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="total" data-base-total="<?php echo $total; ?>"><?php echo number_format($total, 2); ?></span></span>
           </div>
-          <button class="checkout-btn" id="placeOrderBtn" <?php echo (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) ? 'disabled' : ''; ?>>Place Order</button>
+          <button class="checkout-btn" id="placeOrderBtn" <?php echo (!$hasItems) ? 'disabled' : ''; ?>>Place Order</button>
       </div>
     </div>
   </div>
@@ -348,8 +415,11 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
           $('.currency-symbol').text(currencySymbol);
           
           // Update summary amounts
-          $('#subtotal').text(convertCurrency(baseAmounts.subtotal, 1, currencyRate).toFixed(2));
-          $('#total').text(convertCurrency(baseAmounts.total, 1, currencyRate).toFixed(2));
+          const newSubtotal = convertCurrency(baseAmounts.subtotal, 1, currencyRate).toFixed(2);
+          const newTotal = convertCurrency(baseAmounts.total, 1, currencyRate).toFixed(2);
+          
+          $('#subtotal').text(newSubtotal);
+          $('#total').text(newTotal);
           
           // Update individual product prices
           productPrices.forEach(product => {

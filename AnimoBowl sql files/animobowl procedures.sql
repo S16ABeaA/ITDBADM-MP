@@ -408,9 +408,6 @@ BEGIN
     END IF;
 
     
-    CALL GetServicePriceInEachCurrency(p_ServiceID, p_CurrencyID, converted_price);
-
-    
     IF p_isFromStore THEN 
         SET converted_price = converted_price * 1.05;
     END IF;

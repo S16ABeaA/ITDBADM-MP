@@ -29,8 +29,11 @@ include("header.html");
       <div class="cart-order-container">
 
         <?php
-        // Check if cart exists and has items
+        $hasItems = false;
+        
+        // Check if product cart exists and has items
         if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+          $hasItems = true;
           
           // Get product details for all items in cart
           $cartItems = array();
@@ -87,13 +90,17 @@ include("header.html");
             $stmt->close();
           }
           
-          // Display cart items
+          // Display PRODUCT cart items
+          echo '<div class="cart-section">
+                  <h3 class="section-title">Products</h3>
+                  <div class="products-section">';
+          
           foreach ($_SESSION['cart'] as $cartKey => $cartItem) {
             if (isset($cartItems[$cartKey])) {
               $product = $cartItems[$cartKey];
         ?>
 
-          <div class="order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-price="<?php echo $cartItem['price']; ?>">
+          <div class="order product-order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-price="<?php echo $cartItem['price']; ?>">
 
             <div class="order-image-container">
               <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
@@ -115,7 +122,7 @@ include("header.html");
               ₱<?php echo number_format($cartItem['quantity'] * $cartItem['price'], 2); ?>
             </div>
 
-            <button class="remove-from-cart-btn" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>">
+            <button class="remove-from-cart-btn" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-type="product">
               <i class="fa-solid fa-trash"></i>
             </button>
 
@@ -124,7 +131,71 @@ include("header.html");
         <?php 
             }
           }
-        } else { 
+          echo '</div></div>'; // Close products section
+        } 
+        
+        // Check if service cart exists and has items
+        if (isset($_SESSION['service_cart']) && !empty($_SESSION['service_cart'])) {
+          $hasItems = true;
+          
+          // Display SERVICE cart items
+          echo '<div class="cart-section">
+                  <h3 class="section-title">Services</h3>
+                  <div class="services-section">';
+          
+          foreach ($_SESSION['service_cart'] as $cartKey => $serviceItem) {
+            // Get service details
+            $serviceID = $serviceItem['serviceID'];
+            $serviceSQL = "SELECT Type FROM services WHERE ServiceID = ?";
+            $serviceStmt = $conn->prepare($serviceSQL);
+            $serviceStmt->bind_param("i", $serviceID);
+            $serviceStmt->execute();
+            $serviceResult = $serviceStmt->get_result();
+            $serviceData = $serviceResult->fetch_assoc();
+            $serviceStmt->close();
+            
+            $serviceType = $serviceData['Type'] ?? 'Unknown Service';
+            $isFromStore = $serviceItem['isFromStore'] ? 'Yes' : 'No';
+            $surchargeText = $serviceItem['isFromStore'] ? '' : ' (+5% surcharge)';
+        ?>
+
+          <div class="order service-order" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-price="<?php echo $serviceItem['finalPrice']; ?>">
+
+            <div class="order-image-container">
+              <div class="service-icon">
+                <i class="fas fa-tools"></i>
+              </div>
+            </div>
+
+            <div class="order-info">
+              <div class="product-name"><?php echo htmlspecialchars($serviceType); ?> Service</div>
+              <div class="product-price">₱<?php echo number_format($serviceItem['finalPrice'], 2); ?></div>
+              <div class="service-details">
+                Ball from our store: <?php echo $isFromStore; ?><?php echo $surchargeText; ?>
+              </div>
+            </div>
+
+            <div class="product-quantity service-quantity">
+              <div class="quantity">1</div>
+            </div>
+
+            <div class="product-total-cost">
+              ₱<?php echo number_format($serviceItem['finalPrice'], 2); ?>
+            </div>
+
+            <button class="remove-from-cart-btn" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-type="service">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+
+          </div>
+
+        <?php 
+          }
+          echo '</div></div>'; // Close services section
+        }
+        
+        // Show empty cart message if no items
+        if (!$hasItems) { 
         ?>
           <div class="empty-cart">
             <i class="fas fa-shopping-cart"></i>
@@ -137,14 +208,25 @@ include("header.html");
       </div>
 
       <?php 
-      if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-        // Calculate totals
+      if ($hasItems) {
+        // Calculate totals for both products and services
         $itemCount = 0;
         $subtotal = 0;
         
-        foreach ($_SESSION['cart'] as $cartItem) {
-          $itemCount += $cartItem['quantity'];
-          $subtotal += $cartItem['quantity'] * $cartItem['price'];
+        // Product totals
+        if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+          foreach ($_SESSION['cart'] as $cartItem) {
+            $itemCount += $cartItem['quantity'];
+            $subtotal += $cartItem['quantity'] * $cartItem['price'];
+          }
+        }
+        
+        // Service totals
+        if (isset($_SESSION['service_cart']) && !empty($_SESSION['service_cart'])) {
+          foreach ($_SESSION['service_cart'] as $serviceItem) {
+            $itemCount += 1; // Each service counts as 1 item
+            $subtotal += $serviceItem['finalPrice'];
+          }
         }
         
         $total = $subtotal;
@@ -170,13 +252,13 @@ include("header.html");
 
   <script>
     $(document).ready(function() {
-      // Quantity adjustment functionality
+      // Quantity adjustment functionality for PRODUCTS only
       $('.cart-order-container').on('click', '.add-subtract-btn', function() {
         const $order = $(this).closest('.order');
         const $quantity = $order.find('.quantity');
         const cartKey = $order.data('cartkey');
         const action = $(this).data('action');
-        const price = parseFloat($order.data('price')); // Get price from data attribute
+        const price = parseFloat($order.data('price'));
         
         let currentQuantity = parseInt($quantity.text());
         
@@ -185,7 +267,7 @@ include("header.html");
         } else if (action === 'decrease' && currentQuantity > 1) {
           currentQuantity -= 1;
         } else {
-          return; // Don't update if quantity would be 0 or less
+          return;
         }
         
         // Update quantity in session via AJAX
@@ -194,38 +276,34 @@ include("header.html");
           quantity: currentQuantity
         }, function(response) {
           if (response.success) {
-            // Update the quantity display
             $quantity.text(currentQuantity);
-            
-            // Update the item total using the stored price
             const itemTotal = (price * currentQuantity).toFixed(2);
             $order.find('.product-total-cost').text('₱' + itemTotal);
-            
-            // Update the cart summary
             updateCartSummary();
           } else {
             alert('Error updating quantity: ' + response.message);
-            // Revert the quantity display if there was an error
             $quantity.text(response.currentQuantity || currentQuantity);
           }
         }, 'json').fail(function() {
           alert('Connection error while updating quantity');
-          // Revert the quantity display on connection error
           $quantity.text(currentQuantity - (action === 'increase' ? 1 : -1));
         });
       });
       
-      // Remove item functionality
+      // Remove item functionality for both PRODUCTS and SERVICES
       $('.cart-order-container').on('click', '.remove-from-cart-btn', function() {
         const cartKey = $(this).data('cartkey');
+        const itemType = $(this).data('type'); // 'product' or 'service'
         const $order = $(this).closest('.order');
         
         if (!confirm('Are you sure you want to remove this item from your cart?')) {
           return;
         }
         
+        const endpoint = itemType === 'service' ? 'remove_service_from_cart.php' : 'remove_from_cart.php';
+        
         // Remove from session via AJAX
-        $.post('remove_from_cart.php', {
+        $.post(endpoint, {
           cartKey: cartKey
         }, function(response) {
           if (response.success) {
@@ -233,9 +311,20 @@ include("header.html");
               $(this).remove();
               updateCartSummary();
               
-              // Show empty cart message if no items left
-              if ($('.order').length === 0) {
+              // Check if both product and service sections are empty
+              const hasProducts = $('.products-section .order').length > 0;
+              const hasServices = $('.services-section .order').length > 0;
+              
+              if (!hasProducts && !hasServices) {
                 showEmptyCart();
+              } else {
+                // Hide empty sections
+                if (!hasProducts) {
+                  $('.products-section').closest('.cart-section').hide();
+                }
+                if (!hasServices) {
+                  $('.services-section').closest('.cart-section').hide();
+                }
               }
             });
           } else {
@@ -250,12 +339,19 @@ include("header.html");
         let itemCount = 0;
         let subtotal = 0;
         
-        $('.order').each(function() {
+        // Calculate products
+        $('.product-order').each(function() {
           const quantity = parseInt($(this).find('.quantity').text());
-          const price = parseFloat($(this).data('price')); // Use data attribute for price
-          
+          const price = parseFloat($(this).data('price'));
           itemCount += quantity;
           subtotal += price * quantity;
+        });
+        
+        // Calculate services
+        $('.service-order').each(function() {
+          const price = parseFloat($(this).data('price'));
+          itemCount += 1;
+          subtotal += price;
         });
         
         const total = subtotal;
