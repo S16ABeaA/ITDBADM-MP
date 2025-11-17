@@ -52,14 +52,14 @@
         <button class="select-service-btn">Add to Cart</button>
       </div>
 
-      <!-- Replacement Service -->
+      <!-- Repairment Service -->
       <div class="service-card" data-service="replacement">
         <div class="service-icon">
           <i class="fas fa-sync-alt"></i>
         </div>
-        <h3 class="service-title">Parts Replacement</h3>
-        <p class="service-description">Complete replacement of inserts, slugs, and grips to restore your ball's performance.</p>
-        <div class="service-price">₱ depends</div>
+        <h3 class="service-title">Parts Repairment</h3>
+        <p class="service-description">Professional repair service for damaged ball parts to improve comfort and overall play quality.</p>
+        <div class="service-price">₱ </div>
         <div class="service-duration">2-3 days completion</div>
         <button class="select-service-btn">Add to Cart</button>
       </div>

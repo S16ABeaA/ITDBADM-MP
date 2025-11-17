@@ -152,3 +152,32 @@
 .right-section .icon-container:hover p {
   color: var(--secondary);
 }
+
+
+.form-group{
+  margin-right: 20px;
+}
+
+.branch-label {
+  color: var(--light);
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+#branch {
+  padding: 4px 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid var(--light);
+  background-color: var(--primary);
+  color: var(--light);
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+#branch option {
+  background-color: var(--primary);
+  color: var(--light);
+}

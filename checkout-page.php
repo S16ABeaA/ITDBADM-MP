@@ -254,8 +254,8 @@ $conn->next_result();
           
           // Calculate totals
           $shipping = 59.99;
-          $tax = $subtotal * 0.08; // 8% tax
-          $total = $subtotal + $shipping + $tax;
+          // $tax = $subtotal * 0.08; // 8% tax
+          $total = $subtotal + $shipping; // + $tax;
           
         } else {
           // Empty cart message
@@ -263,7 +263,7 @@ $conn->next_result();
           $itemCount = 0;
           $subtotal = 0;
           $shipping = 0;
-          $tax = 0;
+          // = 0;
           $total = 0;
         }
         $conn->close();
@@ -280,10 +280,6 @@ $conn->next_result();
         <div class="summary-row">
           <span>Shipping</span>
           <span>₱<?php echo number_format($shipping, 2); ?></span>
-        </div>
-        <div class="summary-row">
-          <span>Tax</span>
-          <span>₱<?php echo number_format($tax, 2); ?></span>
         </div>
         <div class="summary-row summary-total">
           <span>Total</span>
