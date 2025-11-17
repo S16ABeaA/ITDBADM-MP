@@ -11,12 +11,34 @@ $stmt->bind_param("i", $userID);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
+$stmt->close();
+$conn->next_result();
+
+// Get all currency rates using the stored procedure
+$currency_stmt = $conn->prepare("CALL GetCurrencyRate()");
+$currency_stmt->execute();
+$currency_result = $currency_stmt->get_result();
+$currencies = array();
+
+while ($currency = $currency_result->fetch_assoc()) {
+    $currencies[$currency['Currency_Name']] = array(
+        'rate' => $currency['Currency_Rate'],
+        'symbol' => $currency['Symbol'],
+        'id' => $currency['CurrencyID']
+    );
+}
+$currency_stmt->close();
+$conn->next_result();
+
+// Set default currency
+$default_currency = 'PHP';
+$current_currency = $default_currency;
+$current_symbol = $currencies[$default_currency]['symbol'];
+$current_rate = $currencies[$default_currency]['rate'];
 
 //debugging
 echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
-
-$stmt->close();
-$conn->next_result();
+echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</script>";
 ?>
 
 <!DOCTYPE html>
@@ -110,14 +132,19 @@ $conn->next_result();
           </div>
 
           <div class="currency-selection">
-            <div class="form-group">
-              <label for="currency">Select Currency</label>
-              <select id="currency" name="currency">
-                <option value="PHP" selected>Philippine Peso (₱)</option>
-                <option value="USD">US Dollar ($)</option>
-                <option value="KRW">Korean Won (₩)</option>
-              </select>
-            </div>
+              <div class="form-group">
+                  <label for="currency">Select Currency</label>
+                  <select id="currency" name="currency">
+                      <?php foreach ($currencies as $code => $currency_data): ?>
+                          <option value="<?php echo $code; ?>" 
+                                  data-rate="<?php echo $currency_data['rate']; ?>"
+                                  data-symbol="<?php echo htmlspecialchars($currency_data['symbol']); ?>"
+                                  <?php echo $code === $default_currency ? 'selected' : ''; ?>>
+                              <?php echo $code . ' (' . htmlspecialchars($currency_data['symbol']) . ')'; ?>
+                          </option>
+                      <?php endforeach; ?>
+                  </select>
+              </div>
           </div>
           
           <div class="payment-methods">
@@ -233,7 +260,7 @@ $conn->next_result();
               <?php echo htmlspecialchars($productName); ?>
             </div>
             <div class="product-price">
-              ₱<?php echo number_format($cartItem['price'], 2); ?>
+                <span class="currency-symbol"><?php echo $current_symbol; ?></span><span class="price-amount" data-base-price="<?php echo $cartItem['price']; ?>"><?php echo number_format($cartItem['price'], 2); ?></span>
             </div>
             <div class="product-info">
               Branch ID: <?php echo $branchID; ?>
@@ -243,7 +270,7 @@ $conn->next_result();
             <?php echo $cartItem['quantity']; ?>
           </div>
           <div class="product-total-cost">
-            ₱<?php echo number_format($itemTotal, 2); ?>
+              <span class="currency-symbol"><?php echo $current_symbol; ?></span><span class="total-amount" data-base-total="<?php echo $itemTotal; ?>"><?php echo number_format($itemTotal, 2); ?></span>
           </div>
         </div>
 
@@ -253,17 +280,13 @@ $conn->next_result();
           }
           
           // Calculate totals
-          $shipping = 59.99;
-          // $tax = $subtotal * 0.08; // 8% tax
-          $total = $subtotal + $shipping; // + $tax;
+          $total = $subtotal;
           
         } else {
           // Empty cart message
           echo '<div class="empty-cart-message">Your cart is empty. <a href="./homepage.php">Continue shopping</a>.</div>';
           $itemCount = 0;
           $subtotal = 0;
-          $shipping = 0;
-          // = 0;
           $total = 0;
         }
         $conn->close();
@@ -272,37 +295,99 @@ $conn->next_result();
 
       <!-- Order Summary -->
       <div class="order-summary-section">
-        <h2 class="summary-title">Order Summary</h2>
-        <div class="summary-row">
-          <span>Subtotal (<?php echo $itemCount; ?> items)</span>
-          <span>₱<?php echo number_format($subtotal, 2); ?></span>
-        </div>
-        <div class="summary-row">
-          <span>Shipping</span>
-          <span>₱<?php echo number_format($shipping, 2); ?></span>
-        </div>
-        <div class="summary-row summary-total">
-          <span>Total</span>
-          <span>₱<?php echo number_format($total, 2); ?></span>
-        </div>
-        <button class="checkout-btn" id="placeOrderBtn" <?php echo (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) ? 'disabled' : ''; ?>>Place Order</button>
+          <h2 class="summary-title">Order Summary</h2>
+          <div class="summary-row">
+              <span>Subtotal (<span id="itemCount"><?php echo $itemCount; ?></span> items)</span>
+              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="subtotal"><?php echo number_format($subtotal, 2); ?></span></span>
+          </div>
+          <div class="summary-row summary-total">
+              <span>Total</span>
+              <span><span class="currency-symbol"><?php echo $current_symbol; ?></span><span id="total"><?php echo number_format($total, 2); ?></span></span>
+          </div>
+          <button class="checkout-btn" id="placeOrderBtn" <?php echo (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) ? 'disabled' : ''; ?>>Place Order</button>
       </div>
     </div>
   </div>
 
   <script>
-    $(document).ready(function() {
+  $(document).ready(function() {
+      // Store original PHP amounts in base currency (PHP)
+      const baseAmounts = {
+          subtotal: <?php echo $subtotal; ?>,
+          total: <?php echo $total; ?>
+      };
+
+      // Store individual product prices
+      const productPrices = [];
+      $('.price-amount').each(function() {
+          productPrices.push({
+              element: $(this),
+              basePrice: parseFloat($(this).data('base-price'))
+          });
+      });
+
+      // Store individual product totals
+      const productTotals = [];
+      $('.total-amount').each(function() {
+          productTotals.push({
+              element: $(this),
+              baseTotal: parseFloat($(this).data('base-total'))
+          });
+      });
+
+      // Currency conversion function
+      function convertCurrency(amount, fromRate, toRate) {
+          // Convert from PHP to target currency
+          // If converting from PHP (rate 1) to USD (rate 0.018), amount * 0.018
+          return amount * toRate;
+      }
+
+      // Update all prices when currency changes
+      function updatePrices(selectedCurrency, currencyRate, currencySymbol) {
+          // Update currency symbol everywhere
+          $('.currency-symbol').text(currencySymbol);
+          
+          // Update summary amounts
+          $('#subtotal').text(convertCurrency(baseAmounts.subtotal, 1, currencyRate).toFixed(2));
+          $('#total').text(convertCurrency(baseAmounts.total, 1, currencyRate).toFixed(2));
+          
+          // Update individual product prices
+          productPrices.forEach(product => {
+              product.element.text(convertCurrency(product.basePrice, 1, currencyRate).toFixed(2));
+          });
+          
+          // Update individual product totals
+          productTotals.forEach(product => {
+              product.element.text(convertCurrency(product.baseTotal, 1, currencyRate).toFixed(2));
+          });
+      }
+
+      // Currency selection change handler
+      $('#currency').on('change', function() {
+          const selectedOption = $(this).find('option:selected');
+          const selectedCurrency = selectedOption.val();
+          const currencyRate = parseFloat(selectedOption.data('rate'));
+          const currencySymbol = selectedOption.data('symbol');
+          
+          updatePrices(selectedCurrency, currencyRate, currencySymbol);
+          
+          // Update session or hidden field for form submission
+          sessionStorage.setItem('selectedCurrency', selectedCurrency);
+          sessionStorage.setItem('currencyRate', currencyRate);
+          sessionStorage.setItem('currencySymbol', currencySymbol);
+      });
+
       // Payment method selection
       $('.payment-method').on('click', function() {
-        $('.payment-method').removeClass('selected');
-        $(this).addClass('selected');
-        $(this).find('input').prop('checked', true);
+          $('.payment-method').removeClass('selected');
+          $(this).addClass('selected');
+          $(this).find('input').prop('checked', true);
       });
 
       $('.delivery-method').on('click', function() {
-        $('.delivery-method').removeClass('selected');
-        $(this).addClass('selected');
-        $(this).find('input').prop('checked', true);
+          $('.delivery-method').removeClass('selected');
+          $(this).addClass('selected');
+          $(this).find('input').prop('checked', true);
       });
 
       // Initialize first payment method as selected
@@ -311,36 +396,44 @@ $conn->next_result();
 
       // Place Order functionality
       $('#placeOrderBtn').on('click', function() {
-        if ($(this).is(':disabled')) {
-          return;
-        }
-
-        const paymentMethod = $('input[name="payment"]:checked').val();
-        const deliveryMethod = $('input[name="delivery"]:checked').val();
-        const currency = $('#currency').val();
-
-        // Show loading state
-        $(this).html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
-
-        // Submit order via AJAX
-        $.post('process_order.php', {
-          paymentMethod: paymentMethod,
-          deliveryMethod: deliveryMethod,
-          currency: currency
-        }, function(response) {
-          if (response.success) {
-            alert('Order placed successfully! Order ID: ' + response.orderID);
-            window.location.href = 'order_confirmation.php?order_id=' + response.orderID;
-          } else {
-            alert('Error placing order: ' + response.message);
-            $('#placeOrderBtn').html('Place Order').prop('disabled', false);
+          if ($(this).is(':disabled')) {
+              return;
           }
-        }, 'json').fail(function() {
-          alert('Connection error while placing order');
-          $('#placeOrderBtn').html('Place Order').prop('disabled', false);
-        });
+
+          const paymentMethod = $('input[name="payment"]:checked').val();
+          const deliveryMethod = $('input[name="delivery"]:checked').val();
+          const selectedCurrency = $('#currency').val();
+          const currencyRate = $('#currency option:selected').data('rate');
+          const currencySymbol = $('#currency option:selected').data('symbol');
+
+          // Show loading state
+          $(this).html('<i class="fas fa-spinner fa-spin"></i> Processing...').prop('disabled', true);
+
+          // Submit order via AJAX
+          $.post('process_order.php', {
+              paymentMethod: paymentMethod,
+              deliveryMethod: deliveryMethod,
+              currency: selectedCurrency,
+              currencyRate: currencyRate,
+              currencySymbol: currencySymbol,
+              subtotal: baseAmounts.subtotal,
+              total: baseAmounts.total
+          }, function(response) {
+              if (response.success) {
+                  alert('Order placed successfully! Order ID: ' + response.orderID);
+                  window.location.href = 'order_confirmation.php?order_id=' + response.orderID;
+              } else {
+                  alert('Error placing order: ' + response.message);
+                  $('#placeOrderBtn').html('Place Order').prop('disabled', false);
+              }
+          }, 'json').fail(function() {
+              alert('Connection error while placing order');
+              $('#placeOrderBtn').html('Place Order').prop('disabled', false);
+          });
       });
-    });
+
+      $('#currency').val('<?php echo $default_currency; ?>');
+  });
   </script>
 </body>
 </html>

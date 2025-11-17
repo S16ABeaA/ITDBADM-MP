@@ -13,19 +13,29 @@ if (!isset($_GET['order_id']) || !is_numeric($_GET['order_id'])) {
 
 $orderID = (int)$_GET['order_id'];
 
-// Simple test query first
-$testSQL = "SELECT OrderID, Status, Total FROM orders WHERE OrderID = ?";
-$testStmt = $conn->prepare($testSQL);
-$testStmt->bind_param("i", $orderID);
-$testStmt->execute();
-$testResult = $testStmt->get_result();
+// Get order details with currency information
+$orderSQL = "SELECT o.OrderID, o.CurrencyID, o.Status, o.Total FROM orders o WHERE o.OrderID = ?";
+$orderStmt = $conn->prepare($orderSQL);
+$orderStmt->bind_param("i", $orderID);
+$orderStmt->execute();
+$orderResult = $orderStmt->get_result();
 
-if ($testResult->num_rows === 0) {
+if ($orderResult->num_rows === 0) {
     die("Order not found in database.");
 }
 
-$order = $testResult->fetch_assoc();
-$testStmt->close();
+$order = $orderResult->fetch_assoc();
+$orderStmt->close();
+
+// Determine currency symbol based on CurrencyID
+$currencySymbol = '₱'; // Default to PHP
+if ($order['CurrencyID'] == 1) {
+    $currencySymbol = '₱';
+} else if ($order['CurrencyID'] == 2) {
+    $currencySymbol = '$';
+} else if ($order['CurrencyID'] == 3) {
+    $currencySymbol = '₩';
+}
 
 $conn->close();
 ?>
@@ -68,7 +78,7 @@ $conn->close();
         </div>
         <div class="detail-item">
           <span class="detail-label">Total Amount:</span>
-          <span class="detail-value">₱<?php echo number_format($order['Total'], 2); ?></span>
+          <span class="detail-value"><?php echo $currencySymbol . number_format($order['Total'], 2); ?></span>
         </div>
       </div>
 

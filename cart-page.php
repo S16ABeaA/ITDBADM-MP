@@ -93,7 +93,7 @@ include("header.html");
               $product = $cartItems[$cartKey];
         ?>
 
-          <div class="order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>">
+          <div class="order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-price="<?php echo $cartItem['price']; ?>">
 
             <div class="order-image-container">
               <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
@@ -147,9 +147,7 @@ include("header.html");
           $subtotal += $cartItem['quantity'] * $cartItem['price'];
         }
         
-        $shipping = 59.99;
-        $tax = $subtotal * 0.08; // 8% tax
-        $total = $subtotal + $shipping + $tax;
+        $total = $subtotal;
       ?>
       <div class="cart-summary">
         <div class="summary-container">
@@ -158,14 +156,6 @@ include("header.html");
           <div class="summary-row">
             <span>Subtotal (<?php echo $itemCount; ?> items)</span>
             <span>₱<?php echo number_format($subtotal, 2); ?></span>
-          </div>
-          <div class="summary-row">
-            <span>Shipping</span>
-            <span>₱<?php echo number_format($shipping, 2); ?></span>
-          </div>
-          <div class="summary-row">
-            <span>Tax</span>
-            <span>₱<?php echo number_format($tax, 2); ?></span>
           </div>
           <div class="summary-row summary-total">
             <span>Total</span>
@@ -186,6 +176,7 @@ include("header.html");
         const $quantity = $order.find('.quantity');
         const cartKey = $order.data('cartkey');
         const action = $(this).data('action');
+        const price = parseFloat($order.data('price')); // Get price from data attribute
         
         let currentQuantity = parseInt($quantity.text());
         
@@ -193,6 +184,8 @@ include("header.html");
           currentQuantity += 1;
         } else if (action === 'decrease' && currentQuantity > 1) {
           currentQuantity -= 1;
+        } else {
+          return; // Don't update if quantity would be 0 or less
         }
         
         // Update quantity in session via AJAX
@@ -201,14 +194,24 @@ include("header.html");
           quantity: currentQuantity
         }, function(response) {
           if (response.success) {
+            // Update the quantity display
             $quantity.text(currentQuantity);
-            updateItemTotal($order);
+            
+            // Update the item total using the stored price
+            const itemTotal = (price * currentQuantity).toFixed(2);
+            $order.find('.product-total-cost').text('₱' + itemTotal);
+            
+            // Update the cart summary
             updateCartSummary();
           } else {
             alert('Error updating quantity: ' + response.message);
+            // Revert the quantity display if there was an error
+            $quantity.text(response.currentQuantity || currentQuantity);
           }
         }, 'json').fail(function() {
           alert('Connection error while updating quantity');
+          // Revert the quantity display on connection error
+          $quantity.text(currentQuantity - (action === 'increase' ? 1 : -1));
         });
       });
       
@@ -216,6 +219,10 @@ include("header.html");
       $('.cart-order-container').on('click', '.remove-from-cart-btn', function() {
         const cartKey = $(this).data('cartkey');
         const $order = $(this).closest('.order');
+        
+        if (!confirm('Are you sure you want to remove this item from your cart?')) {
+          return;
+        }
         
         // Remove from session via AJAX
         $.post('remove_from_cart.php', {
@@ -239,34 +246,23 @@ include("header.html");
         });
       });
       
-      function updateItemTotal($order) {
-        const quantity = parseInt($order.find('.quantity').text());
-        const price = parseFloat($order.find('.product-price').text().replace('₱', ''));
-        const newTotal = (price * quantity).toFixed(2);
-        $order.find('.product-total-cost').text('₱' + newTotal);
-      }
-      
       function updateCartSummary() {
         let itemCount = 0;
         let subtotal = 0;
         
         $('.order').each(function() {
           const quantity = parseInt($(this).find('.quantity').text());
-          const price = parseFloat($(this).find('.product-price').text().replace('₱', ''));
+          const price = parseFloat($(this).data('price')); // Use data attribute for price
           
           itemCount += quantity;
           subtotal += price * quantity;
         });
         
-        const shipping = 59.99;
-        const tax = subtotal * 0.08; // 8% tax
-        const total = subtotal + shipping + tax;
+        const total = subtotal;
         
         // Update summary display
         $('.summary-row:first span:first').text('Subtotal (' + itemCount + ' items)');
         $('.summary-row:first span:last').text('₱' + subtotal.toFixed(2));
-        $('.summary-row:eq(1) span:last').text('₱' + shipping.toFixed(2));
-        $('.summary-row:eq(2) span:last').text('₱' + tax.toFixed(2));
         $('.summary-total span:last').text('₱' + total.toFixed(2));
       }
       

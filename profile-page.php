@@ -27,7 +27,7 @@ $stmt->close();
 $conn->next_result();
 
 // Fetch user's recent orders
-$ordersSQL = "SELECT o.OrderID, o.DatePurchased, o.Status, o.Total, o.PaymentMode, o.DeliveryMethod
+$ordersSQL = "SELECT o.OrderID, o.CurrencyID, o.DatePurchased, o.Status, o.Total, o.PaymentMode, o.DeliveryMethod
               FROM orders o 
               WHERE o.CustomerID = ? 
               ORDER BY o.DatePurchased DESC 
@@ -39,23 +39,39 @@ $ordersResult = $ordersStmt->get_result();
 $recentOrders = $ordersResult->fetch_all(MYSQLI_ASSOC);
 $ordersStmt->close();
 
-// Fetch order items for all orders
+// Get currency rates for conversion
+$currencySQL = "SELECT CurrencyID, Currency_Rate, Symbol FROM currency";
+$currencyStmt = $conn->prepare($currencySQL);
+$currencyStmt->execute();
+$currencyResult = $currencyStmt->get_result();
+$currencyRates = [];
+$currencySymbols = [];
+
+while ($currency = $currencyResult->fetch_assoc()) {
+    $currencyRates[$currency['CurrencyID']] = $currency['Currency_Rate'];
+    $currencySymbols[$currency['CurrencyID']] = $currency['Symbol'];
+}
+$currencyStmt->close();
+
+// Fetch order items for all orders - FIXED to avoid duplicates
 $orderItems = [];
 if (!empty($recentOrders)) {
     $orderIDs = array_column($recentOrders, 'OrderID');
     $placeholders = str_repeat('?,', count($orderIDs) - 1) . '?';
     
-    $itemsSQL = "SELECT od.OrderID, od.ProductID, od.Quantity, od.price,
+    // FIXED: Use DISTINCT and proper joins to avoid duplicates
+    $itemsSQL = "SELECT DISTINCT od.OrderID, od.ProductID, od.Quantity, od.price,
                         p.ImageID,
-                        COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name) as ProductName
+                        COALESCE(bb.Name, bs.name, bg.Name, ba.Name, cs.Name) as ProductName
                  FROM orderdetails od
                  JOIN product p ON od.ProductID = p.ProductID
-                 LEFT JOIN bowlingball bb ON od.ProductID = bb.ProductID AND p.BranchID = bb.BranchID
-                 LEFT JOIN bowlingshoes bs ON od.ProductID = bs.ProductID AND p.BranchID = bs.BranchID
-                 LEFT JOIN bowlingbag bg ON od.ProductID = bg.ProductID AND p.BranchID = bg.BranchID
-                 LEFT JOIN bowlingaccessories ba ON od.ProductID = ba.ProductID AND p.BranchID = ba.BranchID
-                 LEFT JOIN cleaningsupplies cs ON od.ProductID = cs.ProductID AND p.BranchID = cs.BranchID
-                 WHERE od.OrderID IN ($placeholders)";
+                 LEFT JOIN bowlingball bb ON (od.ProductID = bb.ProductID)
+                 LEFT JOIN bowlingshoes bs ON (od.ProductID = bs.ProductID)
+                 LEFT JOIN bowlingbag bg ON (od.ProductID = bg.ProductID)
+                 LEFT JOIN bowlingaccessories ba ON (od.ProductID = ba.ProductID)
+                 LEFT JOIN cleaningsupplies cs ON (od.ProductID = cs.ProductID)
+                 WHERE od.OrderID IN ($placeholders)
+                 ORDER BY od.OrderID, od.ProductID";
     
     $itemsStmt = $conn->prepare($itemsSQL);
     $itemsStmt->bind_param(str_repeat('i', count($orderIDs)), ...$orderIDs);
@@ -161,6 +177,10 @@ $conn->close();
         
         <?php if (!empty($recentOrders)): ?>
           <?php foreach ($recentOrders as $order): ?>
+            <?php 
+            // Get currency symbol for this order
+            $currencySymbol = $currencySymbols[$order['CurrencyID']] ?? '₱';
+            ?>
             <div class="order" data-order-id="<?php echo $order['OrderID']; ?>">
               <?php if (isset($orderItems[$order['OrderID']]) && !empty($orderItems[$order['OrderID']])): ?>
                 <div class="order-image">
@@ -177,7 +197,7 @@ $conn->close();
                         echo " and " . (count($orderItems[$order['OrderID']]) - 1) . " more item(s)";
                     }
                     ?>
-                    - ₱<?php echo number_format($order['Total'], 2); ?>
+                    - <?php echo $currencySymbol . number_format($order['Total'], 2); ?>
                   </div>
                   <div class="order-details">
                     Ordered: <?php echo date('M j, Y', strtotime($order['DatePurchased'])); ?> - 
@@ -189,7 +209,7 @@ $conn->close();
                   <img src="./images/default_product.jpg" alt="No items">
                 </div>
                 <div class="order-info">
-                  <div class="order-title">Order #<?php echo $order['OrderID']; ?> - ₱<?php echo number_format($order['Total'], 2); ?></div>
+                  <div class="order-title">Order #<?php echo $order['OrderID']; ?> - <?php echo $currencySymbol . number_format($order['Total'], 2); ?></div>
                   <div class="order-details">
                     Ordered: <?php echo date('M j, Y', strtotime($order['DatePurchased'])); ?> - 
                     Status: <span class="status-<?php echo strtolower($order['Status']); ?>"><?php echo $order['Status']; ?></span>
@@ -233,27 +253,15 @@ $conn->close();
             </div>
             
             <div class="order-totals">
-              <div class="total-row">
-                <span>Subtotal:</span>
-                <span id="modalSubtotal">-</span>
-              </div>
-              <div class="total-row">
-                <span>Shipping:</span>
-                <span>₱59.99</span>
-              </div>
-              <div class="total-row">
-                <span>Tax:</span>
-                <span id="modalTax">-</span>
-              </div>
               <div class="total-row grand-total">
                 <span>Total:</span>
                 <span id="modalTotal">-</span>
               </div>
             </div>
             
-            <div class="shipping-info">
-              <h4>Shipping Information</h4>
-              <div class="shipping-details">
+            <div class="customer-info">
+              <h4>Customer Information</h4>
+              <div class="customer-details">
                 <p><strong><?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?></strong></p>
                 <p><?php echo htmlspecialchars($user['Street']); ?></p>
                 <p><?php echo htmlspecialchars($user['City'] . ', ' . $user['zip_code']); ?></p>
@@ -365,7 +373,9 @@ $conn->close();
     const orderData = <?php echo json_encode([
         'orders' => $recentOrders,
         'orderItems' => $orderItems,
-        'user' => $user
+        'user' => $user,
+        'currencySymbols' => $currencySymbols,
+        'currencyRates' => $currencyRates
     ]); ?>;
 
     document.getElementById('logoutBtn').addEventListener('click', function() {
@@ -455,6 +465,7 @@ $conn->close();
       function openOrderDetailsModal(orderId) {
         const order = orderData.orders.find(o => o.OrderID == orderId);
         const items = orderData.orderItems[orderId] || [];
+        const currencySymbol = orderData.currencySymbols[order.CurrencyID] || '₱';
 
         if (!order) return;
 
@@ -470,18 +481,27 @@ $conn->close();
         document.getElementById('modalOrderPayment').textContent = order.PaymentMode;
         document.getElementById('modalOrderDelivery').textContent = order.DeliveryMethod;
 
-        // Calculate totals
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.Quantity), 0);
-        const tax = subtotal * 0.08;
-        const shipping = 59.99;
-        const total = subtotal + tax + shipping;
+        // Use the stored order total
+        const storedTotal = parseFloat(order.Total);
 
         // Populate order items
         const itemsContainer = document.getElementById('modalOrderItems');
         itemsContainer.innerHTML = '';
 
         if (items.length > 0) {
+          // Remove duplicates by using a Set to track unique product IDs
+          const uniqueItems = [];
+          const seenProducts = new Set();
+          
           items.forEach(item => {
+            const productKey = `${item.ProductID}-${item.price}`;
+            if (!seenProducts.has(productKey)) {
+              seenProducts.add(productKey);
+              uniqueItems.push(item);
+            }
+          });
+
+          uniqueItems.forEach(item => {
             const itemElement = document.createElement('div');
             itemElement.className = 'order-item';
             itemElement.innerHTML = `
@@ -490,10 +510,10 @@ $conn->close();
               </div>
               <div class="item-details">
                 <div class="item-name">${item.ProductName}</div>
-                <div class="item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+                <div class="item-price">${currencySymbol}${parseFloat(item.price).toFixed(2)}</div>
                 <div class="item-quantity">Quantity: ${item.Quantity}</div>
               </div>
-              <div class="item-total">₱${(item.price * item.Quantity).toFixed(2)}</div>
+              <div class="item-total">${currencySymbol}${(parseFloat(item.price) * parseInt(item.Quantity)).toFixed(2)}</div>
             `;
             itemsContainer.appendChild(itemElement);
           });
@@ -501,10 +521,8 @@ $conn->close();
           itemsContainer.innerHTML = '<p>No items found for this order.</p>';
         }
 
-        // Populate totals
-        document.getElementById('modalSubtotal').textContent = `₱${subtotal.toFixed(2)}`;
-        document.getElementById('modalTax').textContent = `₱${tax.toFixed(2)}`;
-        document.getElementById('modalTotal').textContent = `₱${order.Total}`;
+        // Populate total with correct currency symbol
+        document.getElementById('modalTotal').textContent = `${currencySymbol}${storedTotal.toFixed(2)}`;
 
         // Show modal
         orderDetailsModal.style.display = 'block';

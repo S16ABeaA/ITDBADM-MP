@@ -3,30 +3,59 @@ require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 
 $max_attempts = 3;
-$lockout_time = 10; // 10 secs for testing
-
-if (isset($_SESSION['login_attempts']) && isset($_SESSION['last_attempt_time'])) {
-    if ($_SESSION['login_attempts'] >= $max_attempts && 
-        (time() - $_SESSION['last_attempt_time']) < $lockout_time) {
-        header("Location: login-signup.php?error=locked");
-        exit();
-    } else if ((time() - $_SESSION['last_attempt_time']) >= $lockout_time) {
-        $_SESSION['login_attempts'] = 0;
-    }
-}
+$lockout_time = 300; // 5 minutes in seconds
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
     $email = trim($_POST["login-email"]);
     $password = trim($_POST["login-password"]);
+    $ip_address = $_SERVER['REMOTE_ADDR'];
 
     if (empty($email) || empty($password)) {
-        header("Location: login-signup.php?error=invalid");
+        header("Location: login-signup.php?error=empty");
         exit();
     }
 
-    $_SESSION['login_attempts'] = isset($_SESSION['login_attempts']) ? $_SESSION['login_attempts'] + 1 : 1;
-    $_SESSION['last_attempt_time'] = time();
+    // Step 1: Check if user exists and get UserID
+    $user_check = $conn->prepare("SELECT UserID FROM users WHERE Email = ?");
+    $user_check->bind_param("s", $email);
+    $user_check->execute();
+    $user_result = $user_check->get_result();
+    
+    if ($user_result->num_rows === 0) {
+        $record_attempt = $conn->prepare("INSERT INTO login_attempts (UserID, IPAddress, Successful) VALUES (NULL, ?, FALSE)");
+        $record_attempt->bind_param("s", $ip_address);
+        $record_attempt->execute();
+        $record_attempt->close();
+        
+        $user_check->close();
+        header("Location: login-signup.php?error=invalid");
+        exit();
+    }
+    
+    $user_data = $user_result->fetch_assoc();
+    $user_id = $user_data['UserID'];
+    $user_check->close();
 
+    // Step 2: Check if user is locked out
+    $lock_check = $conn->prepare("
+        SELECT COUNT(*) as recent_failures 
+        FROM login_attempts 
+        WHERE UserID = ? 
+        AND AttemptTime > DATE_SUB(NOW(), INTERVAL ? SECOND)
+        AND Successful = FALSE
+    ");
+    $lock_check->bind_param("ii", $user_id, $lockout_time);
+    $lock_check->execute();
+    $lock_result = $lock_check->get_result();
+    $lock_data = $lock_result->fetch_assoc();
+    $lock_check->close();
+
+    if ($lock_data['recent_failures'] >= $max_attempts) {
+        header("Location: login-signup.php?error=locked");
+        exit();
+    }
+
+    // Step 3: Verify credentials
     $stmt = $conn->prepare("SELECT * FROM users WHERE Email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -41,53 +70,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         if ($is_hashed) {
             $login_successful = password_verify($password, $stored);
         } else {
+            // Legacy password verification
             if (hash_equals((string)$stored, (string)$password)) {
                 $login_successful = true;
-
-                // Rehash to bcrypt
+                // Rehash password
                 $newHash = password_hash($password, PASSWORD_DEFAULT);
                 $update = $conn->prepare("UPDATE users SET Password = ? WHERE UserID = ?");
-                if ($update) {
-                    $update->bind_param("si", $newHash, $user['UserID']);
-                    $update->execute();
-                    $update->close();
-                }
+                $update->bind_param("si", $newHash, $user['UserID']);
+                $update->execute();
+                $update->close();
             }
         }
     }
 
+    // Step 4: Record the attempt
+    $record_attempt = $conn->prepare("INSERT INTO login_attempts (UserID, IPAddress, Successful) VALUES (?, ?, ?)");
+    $success_val = $login_successful ? 1 : 0;
+    $record_attempt->bind_param("isi", $user_id, $ip_address, $success_val);
+    $record_attempt->execute();
+    $record_attempt->close();
+
+    // Step 5: Handle login result
     if ($login_successful) {
-        $_SESSION['login_attempts'] = 0;
         $_SESSION['user_id'] = $user['UserID'];
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
-        $_SESSION['user_role'] = $user['role'];
+        $_SESSION['user_role'] = $user['Role'];
         
-        // Check if user already has a selected branch
+        // Redirect based on role and branch selection
         if (isset($_SESSION['selected_branch_id']) && !empty($_SESSION['selected_branch_id'])) {
-            // User already has a branch selected, redirect to homepage
-            if (isset($user['role']) && strtolower($user['role']) === 'staff') {
+            if (strtolower($user['Role']) === 'staff') {
                 header("Location: staffUI/staff-homepage.php");
-            } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
+            } else if (strtolower($user['Role']) === 'admin') {
                 header("Location: adminUI/admin-homepage.php");
             } else {
                 header("Location: homepage.php");
             }
         } else {
-            // No branch selected, redirect to branch selection
-            if (isset($user['role']) && strtolower($user['role']) === 'staff') {
+            if (strtolower($user['Role']) === 'staff') {
                 header("Location: staffUI/staff-homepage.php");
-            } else if (isset($user['role']) && strtolower($user['role']) === 'admin') {
+            } else if (strtolower($user['Role']) === 'admin') {
                 header("Location: adminUI/admin-homepage.php");
             } else {
                 header("Location: select-branch.php");
             }
         }
         exit();
+    } else {
+        header("Location: login-signup.php?error=invalid");
+        exit();
     }
-
-    $stmt->close();
-    header("Location: login-signup.php?error=invalid");
-    exit();
 }
 ?>

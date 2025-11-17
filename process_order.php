@@ -19,7 +19,7 @@ try {
     // Get form data
     $paymentMethod = $_POST['paymentMethod'];
     $deliveryMethod = $_POST['deliveryMethod'];
-    $currency = $_POST['currency'];
+    $currencyCode = $_POST['currency'];
     
     // Get user and branch info from session
     $customerID = $_SESSION['user_id'] ?? 0;
@@ -29,26 +29,39 @@ try {
         throw new Exception('User information missing');
     }
     
-    // Calculate total from cart
-    $subtotal = 0;
+    // Calculate total from cart (in PHP - base currency)
+    $subtotalPHP = 0;
     foreach ($_SESSION['cart'] as $cartItem) {
-        $subtotal += $cartItem['quantity'] * $cartItem['price'];
+        $subtotalPHP += $cartItem['quantity'] * $cartItem['price'];
     }
-    $shipping = 59.99;
-    $tax = $subtotal * 0.08;
-    $total = $subtotal + $shipping + $tax;
     
-    // Get currency ID based on selection
-    $currencyMap = [
-        'PHP' => 1,
-        'USD' => 2, 
-        'KRW' => 3
-    ];
-    $currencyID = $currencyMap[$currency] ?? 1;
+    // Total is just the subtotal (no shipping)
+    $totalPHP = $subtotalPHP;
+    
+    // Get currency ID and rate from database
+    $currencySQL = "SELECT CurrencyID, Currency_Rate, Symbol FROM currency WHERE Currency_Name = ?";
+    $currencyStmt = $conn->prepare($currencySQL);
+    $currencyStmt->bind_param("s", $currencyCode);
+    $currencyStmt->execute();
+    $currencyResult = $currencyStmt->get_result();
+    
+    if ($currencyResult->num_rows === 0) {
+        throw new Exception('Invalid currency selected');
+    }
+    
+    $currencyData = $currencyResult->fetch_assoc();
+    $currencyID = $currencyData['CurrencyID'];
+    $currencyRate = $currencyData['Currency_Rate'];
+    $currencySymbol = $currencyData['Symbol'];
+    
+    $currencyStmt->close();
+    
+    // Convert total to selected currency for order record
+    $totalInSelectedCurrency = $totalPHP * $currencyRate;
     
     // Call the stored procedure
     $stmt = $conn->prepare("CALL ProcessOrder(?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iissid", $customerID, $branchID, $paymentMethod, $deliveryMethod, $currencyID, $total);
+    $stmt->bind_param("iissid", $customerID, $branchID, $paymentMethod, $deliveryMethod, $currencyID, $totalInSelectedCurrency);
     
     if (!$stmt->execute()) {
         throw new Exception('Failed to create order: ' . $stmt->error);
@@ -62,12 +75,19 @@ try {
     $stmt->close();
     $conn->next_result();
     
-    // Insert order details
+    // Insert order details with prices in selected currency
     foreach ($_SESSION['cart'] as $cartItem) {
+        $priceInSelectedCurrency = $cartItem['price'] * $currencyRate;
+        
         $orderDetailSQL = "INSERT INTO orderdetails (OrderID, ProductID, Quantity, price) 
                            VALUES (?, ?, ?, ?)";
         $orderDetailStmt = $conn->prepare($orderDetailSQL);
-        $orderDetailStmt->bind_param("iiid", $orderID, $cartItem['productID'], $cartItem['quantity'], $cartItem['price']);
+        $orderDetailStmt->bind_param("iiid", 
+            $orderID, 
+            $cartItem['productID'], 
+            $cartItem['quantity'], 
+            $priceInSelectedCurrency
+        );
         
         if (!$orderDetailStmt->execute()) {
             throw new Exception('Failed to add order details: ' . $orderDetailStmt->error);
@@ -78,7 +98,15 @@ try {
     // Clear cart session
     unset($_SESSION['cart']);
     
-    echo json_encode(['success' => true, 'message' => 'Order placed successfully', 'orderID' => $orderID]);
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Order placed successfully', 
+        'orderID' => $orderID,
+        'currency' => $currencyCode,
+        'currencySymbol' => $currencySymbol,
+        'currencyRate' => $currencyRate,
+        'total' => $totalInSelectedCurrency
+    ]);
     
 } catch (Exception $e) {
     error_log("Order processing error: " . $e->getMessage());
