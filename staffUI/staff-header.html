@@ -5,6 +5,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" href="../css/staffCSS/staff-header.css">
+    <script>
+      // On load get the current branch from session and set the select
+      $(function(){
+        $.getJSON('../get_branch.php').done(function(resp){
+          if(resp && resp.success && resp.branchName){
+            $('#branch').val(resp.branchName);
+          }
+        });
+
+        $('#branch').on('change', function(){
+          const branch = $(this).val();
+          $.post('../set_branch.php', { branch: branch }, function(resp){
+            if(resp && resp.success){
+              location.reload();
+            } else {
+              alert(resp && resp.message ? resp.message : 'Failed to set branch');
+            }
+          }, 'json').fail(function(){
+            alert('Failed to set branch');
+          });
+        });
+      });
+    </script>
 </head>
 
 <body>
@@ -23,7 +46,7 @@
         <div class="branch-group">
             <label for="branch" class="branch-label">Branch</label>
             <select id="branch" name="branch" required>
-              <option value=""></option>
+              <option value="Makati">Makati</option>
               <option value="Manila">Manila</option>
             </select>
         </div>
