@@ -180,7 +180,7 @@ if ($branchId) {
         </thead>
         <tbody>
           <?php
-          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
+          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, pr.ImageID as imageid, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                     FROM bowlingball bb JOIN product pr ON bb.ProductID = pr.ProductID
                     JOIN brand br ON pr.BrandID = br.BrandID
                     WHERE 1=1 " . $branchFilterSQL_pr . "
@@ -190,6 +190,7 @@ if ($branchId) {
             $bbproductID = $row['bbproductid'];
             $bbName = $row['bbname'];
             $brand = $row['brandname'];
+            $imageid = $row['imageid'] ?? '';
             $branchID = $row['branchid'];
             $type = $row['bbtype'];
             $quality = $row['bbquality'];
@@ -205,7 +206,7 @@ if ($branchId) {
             $quantity = $row['quantity'];
           ?>
   
-          <tr data-id="<?php echo $bbproductID;?>" data-branch-id="<?php echo $branchID;?>">
+          <tr data-id="<?php echo $bbproductID;?>" data-branch-id="<?php echo $branchID;?>" data-image="<?php echo htmlspecialchars($imageid);?>">
             <td><?php echo $bbName;?></td>
             <td><?php echo $brand;?></td>
             <td><?php echo $type;?></td>
@@ -253,7 +254,7 @@ if ($branchId) {
         </thead>
         <tbody>
           <?php
-          $bgquery = "SELECT bg.ProductID as bgproductid, bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
+          $bgquery = "SELECT bg.ProductID as bgproductid, bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, pr.ImageID as imageid, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingbag bg JOIN product pr ON bg.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
                       WHERE 1=1 " . $branchFilterSQL_pr . "
@@ -263,6 +264,7 @@ if ($branchId) {
             $bgproductID = $bgrow['bgproductid'];
             $bgname = $bgrow['bgname'];
             $brname = $bgrow['brandname'];
+            $bgimage = $bgrow['imageid'] ?? '';
             $branchID = $bgrow['branchid'];
             $bgcolor = $bgrow['color'];
             $bgsize = $bgrow['size'];
@@ -270,7 +272,7 @@ if ($branchId) {
             $bgprice = $bgrow['price'];
             $bgquantity = $bgrow['quantity'];
           ?>
-          <tr data-id="<?php echo $bgproductID;?>" data-branch-id="<?php echo $branchID;?>">
+          <tr data-id="<?php echo $bgproductID;?>" data-branch-id="<?php echo $branchID;?>" data-image="<?php echo htmlspecialchars($bgimage);?>">
             <td><?php echo $bgname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bgcolor;?></td>
@@ -310,7 +312,7 @@ if ($branchId) {
         </thead>
         <tbody>
            <?php
-          $bsquery = "SELECT bs.ProductID as bsproductid, bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
+          $bsquery = "SELECT bs.ProductID as bsproductid, bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, pr.ImageID as imageid, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingshoes bs JOIN product pr ON bs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
                       WHERE 1=1 " . $branchFilterSQL_pr . "
@@ -320,13 +322,14 @@ if ($branchId) {
             $bsproductID = $bsrow['bsproductid'];
             $bsname = $bsrow['bsname'];
             $brname = $bsrow['brandname'];
+            $bsimage = $bsrow['imageid'] ?? '';
             $bssize = $bsrow['size'];
             $bssex = $bsrow['sex'];
             $bsprice = $bsrow['price'];
             $bsquantity = $bsrow['quantity'];
             $branchID = $bsrow['branchid'];
           ?> 
-           <tr data-id="<?php echo $bsproductID;?>" data-branch-id="<?php echo $branchID;?>">
+           <tr data-id="<?php echo $bsproductID;?>" data-branch-id="<?php echo $branchID;?>" data-image="<?php echo htmlspecialchars($bsimage);?>">
             <td><?php echo $bsname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bssize;?></td>
@@ -365,7 +368,7 @@ if ($branchId) {
         </thead>
         <tbody>
            <?php
-          $baquery = "SELECT ba.ProductID as baproductid, ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
+          $baquery = "SELECT ba.ProductID as baproductid, ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, pr.ImageID as imageid, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
                       WHERE 1=1 " . $branchFilterSQL_pr . "
@@ -376,13 +379,14 @@ if ($branchId) {
             $baproductID = $barow['baproductid'];
             $baname = $barow['baname'];
             $brname = $barow['brandname'];
+             $baimage = $barow['imageid'] ?? '';
             $batype = $barow['batype'];
             $bahandedness = $barow['bahandedness'];
             $baprice = $barow['price'];
             $baquantity = $barow['quantity'];
             $branchID = $barow['branchid'];
           ?>
-           <tr data-id="<?php echo $baproductID;?>" data-branch-id="<?php echo $branchID;?>">
+           <tr data-id="<?php echo $baproductID;?>" data-branch-id="<?php echo $branchID;?>" data-image="<?php echo htmlspecialchars($baimage);?>">
             <td><?php echo $baname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $batype;?></td>
@@ -420,7 +424,7 @@ if ($branchId) {
         </thead>
         <tbody>
            <?php
-          $csquery = "SELECT DISTINCT cs.ProductID as csproductid, cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
+          $csquery = "SELECT DISTINCT cs.ProductID as csproductid, cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, pr.ImageID as imageid, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
                       WHERE 1=1 " . $branchFilterSQL_pr . "
@@ -431,11 +435,12 @@ if ($branchId) {
             $branchID = $csrow['branchid'];
             $csname = $csrow['csname'];
             $brname = $csrow['brandname'];
+            $csimage = $csrow['imageid'] ?? '';
             $cstype = $csrow['cstype'];
             $csprice = $csrow['price'];
             $csquantity = $csrow['quantity'];
           ?>
-           <tr data-id="<?php echo $csproductID;?>" data-branch-id="<?php echo $branchID;?>">
+           <tr data-id="<?php echo $csproductID;?>" data-branch-id="<?php echo $branchID;?>" data-image="<?php echo htmlspecialchars($csimage);?>">
             <td><?php echo $csname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $cstype;?></td>
@@ -2269,16 +2274,21 @@ if ($branchId) {
           $form.find('#coverstockType').val(cells.eq(11).text());
           $form.find('#ballPrice').val(cells.eq(12).text().replace('₱', '').replace(',', ''));
           $form.find('#ballStock').val(cells.eq(13).text());
+          const ballImage = $row.data('image') || $row.attr('data-image') || '';
+          $form.find('#ballImage').val(ballImage);
       }
 
       function populateShoesForm($form, $row) {
           const cells = $row.find('td');
           $form.find('#shoeName').val(cells.eq(0).text());
           $form.find('#shoeBrand').val(cells.eq(1).text());
-          $form.find('#shoeSize').val(cells.eq(2).text());
-          $form.find('#shoeGender').val(cells.eq(3).text());
-          $form.find('#shoePrice').val(cells.eq(4).text().replace('₱', '').replace(',', ''));
-          $form.find('#shoeStock').val(cells.eq(5).text());
+          $form.find('#shoeColor').val(cells.eq(2).text());
+          $form.find('#shoeSize').val(cells.eq(3).text());
+          $form.find('#shoeGender').val(cells.eq(4).text());
+          $form.find('#shoePrice').val(cells.eq(5).text().replace('₱', '').replace(',', ''));
+          $form.find('#shoeStock').val(cells.eq(6).text());
+          const shoeImage = $row.data('image') || $row.attr('data-image') || '';
+          $form.find('#shoeImage').val(shoeImage);
       }
 
       function populateBagForm($form, $row) {
@@ -2290,6 +2300,8 @@ if ($branchId) {
           $form.find('#bagSize').val(cells.eq(4).text());
           $form.find('#bagPrice').val(cells.eq(5).text().replace('₱', '').replace(',', ''));
           $form.find('#bagStock').val(cells.eq(6).text());
+          const bagImage = $row.data('image') || $row.attr('data-image') || '';
+          $form.find('#bagImage').val(bagImage);
       }
 
       function populateAccessoryForm($form, $row) {
@@ -2300,6 +2312,8 @@ if ($branchId) {
           $form.find('#handedness').val(cells.eq(3).text());
           $form.find('#accessoryPrice').val(cells.eq(4).text().replace('₱', '').replace(',', ''));
           $form.find('#accessoryStock').val(cells.eq(5).text());
+          const accessoryImage = $row.data('image') || $row.attr('data-image') || '';
+          $form.find('#accessoryImage').val(accessoryImage);
       }
 
       function populateCleaningForm($form, $row) {
@@ -2309,6 +2323,8 @@ if ($branchId) {
           $form.find('#supplyType').val(cells.eq(2).text());
           $form.find('#supplyPrice').val(cells.eq(3).text().replace('₱', '').replace(',', ''));
           $form.find('#supplyStock').val(cells.eq(4).text());
+          const supplyImage = $row.data('image') || $row.attr('data-image') || '';
+          $form.find('#supplyImage').val(supplyImage);
       }
 
       function populateCurrencyForm($form, $row) {
