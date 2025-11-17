@@ -29,8 +29,8 @@ GRANT SELECT, UPDATE ON AnimoBowl.orderdetails TO 'student2'@'127.0.0.1';
 GRANT SELECT, UPDATE ON AnimoBowl.servicedetails TO 'student2'@'127.0.0.1';
 GRANT SELECT, UPDATE ON AnimoBowl.orders TO 'student2'@'127.0.0.1';
 
-GRANT SELECT, UPDATE ON AnimoBowl.users TO 'student2'@'127.0.0.1';
-GRANT SELECT, UPDATE ON AnimoBowl.address TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.users TO 'student2'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.address TO 'student2'@'127.0.0.1';
 GRANT SELECT ON AnimoBowl.staff TO 'student2'@'127.0.0.1';
 FLUSH PRIVILEGES;
 
@@ -52,8 +52,8 @@ GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orderdetails TO 'student3'@'127.0.0.1'
 GRANT SELECT, INSERT, UPDATE ON AnimoBowl.servicedetails TO 'student3'@'127.0.0.1';
 GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orders TO 'student3'@'127.0.0.1';
 
-GRANT SELECT, UPDATE ON AnimoBowl.users TO 'student3'@'127.0.0.1';
-GRANT SELECT, UPDATE ON AnimoBowl.address TO 'student3'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.users TO 'student3'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.address TO 'student3'@'127.0.0.1';
 FLUSH PRIVILEGES; 
 
 CREATE USER 'student4'@'127.0.0.1' IDENTIFIED BY 'Dlsu1234!';
@@ -73,8 +73,8 @@ GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orderdetails TO 'student4'@'127.0.0.1'
 GRANT SELECT, INSERT, UPDATE ON AnimoBowl.servicedetails TO 'student4'@'127.0.0.1';
 GRANT SELECT, INSERT, UPDATE ON AnimoBowl.orders TO 'student4'@'127.0.0.1';
 
-GRANT SELECT, UPDATE ON AnimoBowl.users TO 'student4'@'127.0.0.1';
-GRANT SELECT, UPDATE ON AnimoBowl.address TO 'student4'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.users TO 'student4'@'127.0.0.1';
+GRANT SELECT, INSERT, UPDATE ON AnimoBowl.address TO 'student4'@'127.0.0.1';
 
 FLUSH PRIVILEGES; 
 
