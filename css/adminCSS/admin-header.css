@@ -155,7 +155,11 @@
 
 
 .branch-group{
+  display: flex;
+  flex-direction: row;
   margin-right: 20px;
+  align-items: center;
+  gap:10px;
 }
 
 .branch-label {
@@ -163,6 +167,8 @@
   font-size: 14px;
   font-weight: 500;
   margin-right: 6px;
+ justify-content: center;
+ margin-top: 8px;;
 }
 
 #branch {
