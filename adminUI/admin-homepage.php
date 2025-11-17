@@ -1,6 +1,16 @@
 <?php
 require_once '../dependencies/config.php'; 
-include('admin-header.html')
+include('admin-header.html');
+// Ensure session branch (set by admin-header via set_branch.php) is available
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+$branchId = $_SESSION['staff_branch_id'] ?? null;
+if ($branchId) {
+  $branchFilterSQL_pr = ' AND pr.BranchID = ' . intval($branchId);
+  $branchFilterSQL_product = ' WHERE BranchID = ' . intval($branchId);
+} else {
+  $branchFilterSQL_pr = '';
+  $branchFilterSQL_product = '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,9 +44,9 @@ include('admin-header.html')
     </div>
     <?php
     $productcount = 0;
-    $prodquery = "SELECT DISTINCT ProductID FROM product";
+    $prodquery = "SELECT DISTINCT ProductID FROM product" . $branchFilterSQL_product;
     $prodresult = $conn->query($prodquery);
-    $productcount = $prodresult->num_rows;
+    $productcount = $prodresult ? $prodresult->num_rows : 0;
     ?>
     <!-- Stats Overview -->
     <div id="stats-grid" class="stats-grid">
@@ -49,11 +59,9 @@ include('admin-header.html')
       </div>
       <?php
       $instockproducts = 0;
-      $instockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                       GROUP BY ProductID
-                       HAVING SUM(quantity) >=10"; 
+      $instockquery = "SELECT DISTINCT ProductID, SUM(quantity) as ssum FROM product " . $branchFilterSQL_product . " GROUP BY ProductID HAVING ssum >= 10";
       $instockresult = $conn->query($instockquery);
-      $instockproducts = $instockresult->num_rows;
+      $instockproducts = $instockresult ? $instockresult->num_rows : 0;
       ?>
       <div class="stat-card">
         <div class="stat-icon">
@@ -64,11 +72,9 @@ include('admin-header.html')
       </div>
       <?php
         $lowstockproducts = 0;
-        $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                          GROUP BY ProductID
-                          HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
+        $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) as ssum FROM product " . $branchFilterSQL_product . " GROUP BY ProductID HAVING ssum < 10 AND ssum >= 1";
         $lowstockresult = $conn->query($lowstockquery);
-        $lowstockproducts = $lowstockresult->num_rows;
+        $lowstockproducts = $lowstockresult ? $lowstockresult->num_rows : 0;
         ?>
       <div class="stat-card">
         <div class="stat-icon">
@@ -79,11 +85,9 @@ include('admin-header.html')
       </div>
       <?php
         $nostockproducts = 0;
-        $nostockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                         GROUP BY ProductID
-                         HAVING SUM(quantity) = 0";
+        $nostockquery = "SELECT DISTINCT ProductID, SUM(quantity) as ssum FROM product " . $branchFilterSQL_product . " GROUP BY ProductID HAVING ssum = 0";
         $nostockresult = $conn->query($nostockquery);
-        $nostockproducts = $nostockresult->num_rows;
+        $nostockproducts = $nostockresult ? $nostockresult->num_rows : 0;
         ?>
       <div class="stat-card">
         <div class="stat-icon">
@@ -176,15 +180,17 @@ include('admin-header.html')
         </thead>
         <tbody>
           <?php
-          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity
+          $query = "SELECT DISTINCT bb.ProductID as bbproductid, bb.Name as bbname, br.Name as brandname, bb.Type as bbtype, bb.Quality as bbquality, bb.weight as weight, bb.CoreName as corename, bb.CoreType as coretype, bb.RG as rg, bb.DIFF as diff, bb.INTDIFF as intdiff, bb.Coverstock as coverstock, bb.CoverstockType as coverstocktype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                     FROM bowlingball bb JOIN product pr ON bb.ProductID = pr.ProductID
                     JOIN brand br ON pr.BrandID = br.BrandID
-                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, bb.weight, bb.CoreName, bb.CoreType, bb.RG, bb.DIFF, bb.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pr.ProductID";
+                    WHERE 1=1 " . $branchFilterSQL_pr . "
+                    GROUP BY bb.Name, br.Name, bb.Type, bb.Quality, bb.weight, bb.CoreName, bb.CoreType, bb.RG, bb.DIFF, bb.INTDIFF, bb.Coverstock, bb.CoverstockType, pr.Price, pr.ProductID, pr.BranchID";
           $result = $conn->query($query);
           while ($row = $result->fetch_assoc()){
             $bbproductID = $row['bbproductid'];
             $bbName = $row['bbname'];
             $brand = $row['brandname'];
+            $branchID = $row['branchid'];
             $type = $row['bbtype'];
             $quality = $row['bbquality'];
             $weight = $row['weight'];
@@ -199,7 +205,7 @@ include('admin-header.html')
             $quantity = $row['quantity'];
           ?>
   
-          <tr data-id="<?php echo $bbproductID;?>">
+          <tr data-id="<?php echo $bbproductID;?>" data-branch-id="<?php echo $branchID;?>">
             <td><?php echo $bbName;?></td>
             <td><?php echo $brand;?></td>
             <td><?php echo $type;?></td>
@@ -247,22 +253,24 @@ include('admin-header.html')
         </thead>
         <tbody>
           <?php
-          $bgquery = "SELECT bg.ProductID as bgproductid, bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity
+          $bgquery = "SELECT bg.ProductID as bgproductid, bg.Name as bgname, br.Name as brandname, bg.color as color, bg.Size as size, bg.Type as bgtype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingbag bg JOIN product pr ON bg.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY bg.Name, br.Name, bg.color, bg.Size, bg.Type, pr.Price, pr.ProductID";
+                      WHERE 1=1 " . $branchFilterSQL_pr . "
+                      GROUP BY bg.Name, br.Name, bg.color, bg.Size, bg.Type, pr.Price, pr.ProductID, pr.BranchID";
           $bgresult = $conn->query($bgquery);
           while($bgrow = $bgresult->fetch_assoc()){
             $bgproductID = $bgrow['bgproductid'];
             $bgname = $bgrow['bgname'];
             $brname = $bgrow['brandname'];
+            $branchID = $bgrow['branchid'];
             $bgcolor = $bgrow['color'];
             $bgsize = $bgrow['size'];
             $bgtype = $bgrow['bgtype'];
             $bgprice = $bgrow['price'];
             $bgquantity = $bgrow['quantity'];
           ?>
-          <tr data-id="<?php echo $bgproductID;?>">
+          <tr data-id="<?php echo $bgproductID;?>" data-branch-id="<?php echo $branchID;?>">
             <td><?php echo $bgname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bgcolor;?></td>
@@ -302,10 +310,11 @@ include('admin-header.html')
         </thead>
         <tbody>
            <?php
-          $bsquery = "SELECT bs.ProductID as bsproductid, bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity
+          $bsquery = "SELECT bs.ProductID as bsproductid, bs.Name as bsname, br.Name as brandname, bs.Size as size, bs.sex as sex, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingshoes bs JOIN product pr ON bs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY bs.Name, br.Name, bs.Size, bs.sex, pr.Price, pr.ProductID";   
+                      WHERE 1=1 " . $branchFilterSQL_pr . "
+                      GROUP BY bs.Name, br.Name, bs.Size, bs.sex, pr.Price, pr.ProductID, pr.BranchID";   
           $bsresult = $conn->query($bsquery);
           while($bsrow = $bsresult->fetch_assoc()){
             $bsproductID = $bsrow['bsproductid'];
@@ -315,8 +324,9 @@ include('admin-header.html')
             $bssex = $bsrow['sex'];
             $bsprice = $bsrow['price'];
             $bsquantity = $bsrow['quantity'];
+            $branchID = $bsrow['branchid'];
           ?> 
-           <tr data-id="<?php echo $bsproductID;?>">
+           <tr data-id="<?php echo $bsproductID;?>" data-branch-id="<?php echo $branchID;?>">
             <td><?php echo $bsname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $bssize;?></td>
@@ -355,10 +365,11 @@ include('admin-header.html')
         </thead>
         <tbody>
            <?php
-          $baquery = "SELECT ba.ProductID as baproductid, ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity
+          $baquery = "SELECT ba.ProductID as baproductid, ba.Name as baname, br.Name as brandname, ba.Type as batype, ba.Handedness as bahandedness, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM bowlingaccessories ba JOIN product pr ON ba.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pr.ProductID";
+                      WHERE 1=1 " . $branchFilterSQL_pr . "
+                      GROUP BY ba.Name, br.Name, ba.Type, ba.Handedness, pr.Price, pr.ProductID, pr.BranchID";
 
           $baresult = $conn->query($baquery);
           while($barow = $baresult->fetch_assoc()){
@@ -369,8 +380,9 @@ include('admin-header.html')
             $bahandedness = $barow['bahandedness'];
             $baprice = $barow['price'];
             $baquantity = $barow['quantity'];
+            $branchID = $barow['branchid'];
           ?>
-           <tr data-id="<?php echo $baproductID;?>">
+           <tr data-id="<?php echo $baproductID;?>" data-branch-id="<?php echo $branchID;?>">
             <td><?php echo $baname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $batype;?></td>
@@ -408,20 +420,22 @@ include('admin-header.html')
         </thead>
         <tbody>
            <?php
-          $csquery = "SELECT DISTINCT cs.ProductID as csproductid, cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity
+          $csquery = "SELECT DISTINCT cs.ProductID as csproductid, cs.Name as csname, br.Name as brandname, cs.type as cstype, pr.Price as price, SUM(pr.quantity) as quantity, pr.BranchID as branchid
                       FROM cleaningsupplies cs JOIN product pr ON cs.ProductID = pr.ProductID
                       JOIN brand br ON pr.BrandID = br.BrandID
-                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pr.ProductID";
+                      WHERE 1=1 " . $branchFilterSQL_pr . "
+                      GROUP BY cs.Name, br.Name, cs.type, pr.Price, pr.ProductID, pr.BranchID";
           $csresult = $conn->query($csquery);
           while($csrow = $csresult->fetch_assoc()){
             $csproductID = $csrow['csproductid'];
+            $branchID = $csrow['branchid'];
             $csname = $csrow['csname'];
             $brname = $csrow['brandname'];
             $cstype = $csrow['cstype'];
             $csprice = $csrow['price'];
             $csquantity = $csrow['quantity'];
           ?>
-           <tr data-id="<?php echo $csproductID;?>">
+           <tr data-id="<?php echo $csproductID;?>" data-branch-id="<?php echo $branchID;?>">
             <td><?php echo $csname;?></td>
             <td><?php echo $brname;?></td>
             <td><?php echo $cstype;?></td>
@@ -722,6 +736,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="bowlingBagForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <!-- Basic Information -->
             <input type="hidden" id="ballID" name="ballID" value="<?php echo $bbproductID;?>">
@@ -731,17 +746,7 @@ include('admin-header.html')
             </div>
             <div class="form-group">
               <label for="ballBrand" class="required">Brand</label>
-              <select id="ballBrand" name="ballBrand" required>
-                <option value="">Select Brand</option>
-              <option value="1">Storm</option>
-              <option value="6">Brunswick</option>
-              <option value="8">Ebonite</option>
-              <option value="3">Hammer</option>
-              <option value="9">Roto Grip</option>
-              <option value="2">Motiv</option>
-              <option value="4">Track</option>
-              <option value="7">900 Global</option>
-              </select>
+              <input type="text" id="ballBrand" name="ballBrand" placeholder="e.g., Storm, Brunswick, Ebonite" required>
             </div>
             <div class="form-group">
               <label for="ballPrice" class="required">Price (₱)</label>
@@ -780,7 +785,7 @@ include('admin-header.html')
               <select id="ballQuality" name="ballQuality" required>
                 <option value="">Select Quality</option>
                 <option value="New">New</option>
-                <option value="SecondHand">Second Hand</option>
+                <option value="Second Hand">Second Hand</option>
               </select>
             </div>
 
@@ -825,11 +830,6 @@ include('admin-header.html')
               </select>
             </div>
 
-            
-            <div class="form-group full-width">
-              <label for="ballDescription" class="required">Product Description</label>
-              <textarea id="ballDescription" name="ballDescription" placeholder="Describe the ball's performance characteristics, intended lane conditions, and key features..." required></textarea>
-            </div>
 
             <div class="form-group full-width">
               <label for="ballImage" class="required">Product Images</label>
@@ -856,6 +856,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="bowlingShoesForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <!-- Basic Information -->
             <input type="hidden" id="shoeID" name="shoeID" value="<?php echo $bsproductID;?>">
@@ -865,17 +866,7 @@ include('admin-header.html')
             </div>
             <div class="form-group">
               <label for="shoeBrand" class="required">Brand</label>
-              <select id="shoeBrand" name="shoeBrand" required>
-                <option value="">Select Brand</option>
-                <option value="1">Storm</option>
-                <option value="6">Brunswick</option>
-                <option value="8">Ebonite</option>
-                <option value="3">Hammer</option>
-                <option value="9">Roto Grip</option>
-                <option value="2">Motiv</option>
-                <option value="4">Track</option>
-                <option value="7">900 Global</option>
-              </select>
+              <input type="text" id="shoeBrand" name="shoeBrand" placeholder="e.g., Storm, Brunswick, Ebonite" required>
             </div>
 
             <div class="form-group">
@@ -901,10 +892,6 @@ include('admin-header.html')
               <input type="number" id="shoeStock" name="shoeStock" min="0" placeholder="0" required>
             </div>
             
-            <div class="form-group full-width">
-              <label for="shoeDescription" class="required">Product Description</label>
-              <textarea id="shoeDescription" name="shoeDescription" placeholder="Describe the product..." required></textarea>
-            </div>
 
             <div class="form-group full-width">
               <label for="shoeImage" class="required">Product Images</label>
@@ -931,6 +918,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="bowlingBagForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <!-- Basic Information -->
             <input type="hidden" id="bagID" name="bagID" value="<?php echo $bgproductID;?>">
@@ -940,17 +928,7 @@ include('admin-header.html')
             </div>
             <div class="form-group">
               <label for="bagBrand" class="required">Brand</label>
-              <select id="bagBrand" name="bagBrand" required>
-                <option value="">Select Brand</option>
-                <option value="1">Storm</option>
-                <option value="6">Brunswick</option>
-                <option value="8">Ebonite</option>
-                <option value="3">Hammer</option>
-                <option value="9">Roto Grip</option>
-                <option value="2">Motiv</option>
-                <option value="4">Track</option>
-                <option value="7">900 Global</option>
-              </select>
+              <input type="text" id="bagBrand" name="bagBrand" placeholder="e.g., Storm, Brunswick, Ebonite" required>
             </div>
 
             <div class="form-group">
@@ -962,9 +940,20 @@ include('admin-header.html')
               <label for="bagType" class="required">Type</label>
               <select id="bagType" name="bagType" required>
                 <option value="">Select Type</option>
-                <option value="Storm">Backpack</option>
-                <option value="Brunswick">Roller</option>
-                <option value="Ebonite">Tote</option>
+                <option value="Backpack">Backpack</option>
+                <option value="Roller">Roller</option>
+                <option value="Tote">Tote</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bagSize" class="required">Size</label>
+              <select id="bagSize" name="bagSize" required>
+                <option value="">Select Size</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
               </select>
             </div>
       
@@ -976,11 +965,7 @@ include('admin-header.html')
               <label for="bagStock" class="required">Stock Quantity</label>
               <input type="number" id="bagStock" name="bagStock" min="0" placeholder="0" required>
             </div>
-            
-            <div class="form-group full-width">
-              <label for="bagDescription" class="required">Product Description</label>
-              <textarea id="bagDescription" name="bagDescription" placeholder="Describe the product..." required></textarea>
-            </div>
+          
 
             <div class="form-group full-width">
               <label for="bagImage" class="required">Product Images</label>
@@ -1007,6 +992,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="bowlingAccessoriesForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <!-- Basic Information -->
             <input type="hidden" id="accessoryID" name="accessoryID" value="<?php echo $baproductID;?>">
@@ -1016,17 +1002,7 @@ include('admin-header.html')
             </div>
             <div class="form-group">
               <label for="accessoryBrand" class="required">Brand</label>
-              <select id="accessoryBrand" name="accessoryBrand" required>
-                <option value="">Select Brand</option>
-                <option value="1">Storm</option>
-                <option value="6">Brunswick</option>
-                <option value="8">Ebonite</option>
-                <option value="3">Hammer</option>
-                <option value="9">Roto Grip</option>
-                <option value="2">Motiv</option>
-                <option value="4">Track</option>
-                <option value="7">900 Global</option>
-              </select>
+              <input type="text" id="accessoryBrand" name="accessoryBrand" placeholder="e.g., Storm, Brunswick, Ebonite" required>
             </div>
 
             <div class="form-group">
@@ -1058,11 +1034,6 @@ include('admin-header.html')
             </div>
             
             <div class="form-group full-width">
-              <label for="accessoryDescription" class="required">Product Description</label>
-              <textarea id="accessoryDescription" name="accessoryDescription" placeholder="Describe the product..." required></textarea>
-            </div>
-
-            <div class="form-group full-width">
               <label for="accessoryImage" class="required">Product Images</label>
               <input type="text" id="accessoryImage" name="accessoryImage">
             </div>
@@ -1087,6 +1058,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="CleaningSuppliesForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <!-- Basic Information -->
             <input type="hidden" id="cleaningID" name="cleaningID" value="<?php echo $csproductID;?>">
@@ -1096,17 +1068,7 @@ include('admin-header.html')
             </div>
             <div class="form-group">
               <label for="supplyBrand" class="required">Brand</label>
-              <select id="supplyBrand" name="supplyBrand" required>
-                <option value="">Select Brand</option>
-                <option value="1">Storm</option>
-                <option value="6">Brunswick</option>
-                <option value="8">Ebonite</option>
-                <option value="3">Hammer</option>
-                <option value="9">Roto Grip</option>
-                <option value="2">Motiv</option>
-                <option value="4">Track</option>
-                <option value="7">900 Global</option>
-              </select>
+              <input type="text" id="supplyBrand" name="supplyBrand" placeholder="e.g., Storm, Brunswick, Ebonite" required>
             </div>
 
             <div class="form-group">
@@ -1129,10 +1091,6 @@ include('admin-header.html')
               <input type="number" id="supplyStock" name="supplyStock" min="0" placeholder="0" required>
             </div>
             
-            <div class="form-group full-width">
-              <label for="supplyDescription" class="required">Product Description</label>
-              <textarea id="supplyDescription" name="supplyDescription" placeholder="Describe the product..." required></textarea>
-            </div>
 
             <div class="form-group full-width">
               <label for="supplyImage" class="required">Product Images</label>
@@ -1291,6 +1249,7 @@ include('admin-header.html')
       </div>
       <div class="modal-body">
         <form id="servicesForm">
+          <input type="hidden" name="branchID" value="<?php echo intval($_SESSION['staff_branch_id'] ?? 0); ?>">
           <div class="form-grid">
             <input type="hidden" id="serviceID" name="serviceID" value="">
             <div class="form-group">
@@ -1329,10 +1288,6 @@ include('admin-header.html')
                 <option value="Unavailable">Unavailable</option>
                 <option value="Limited">Limited</option>
               </select>
-            </div>
-            <div class="form-group full-width">
-              <label for="serviceDescription" class="required">Service Description</label>
-              <textarea id="serviceDescription" name="serviceDescription" placeholder="Describe the service in detail, what it includes, requirements, etc..." required></textarea>
             </div>
           </div>
           <div class="form-actions">

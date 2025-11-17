@@ -23,10 +23,39 @@
         <div class="branch-group">
             <label for="branch" class="branch-label">Branch</label>
             <select id="branch" name="branch" required>
-              <option value=""></option>
+              <option value="Makati">Makati</option>
               <option value="Manila">Manila</option>
             </select>
         </div>
+        <script>
+          $(document).ready(function(){
+            // Initialize branch select from session
+            $.getJSON('../get_branch.php').done(function(resp){
+              if(resp && resp.branchName){
+                $('#branch').val(resp.branchName);
+              }
+            }).fail(function(){
+              console.warn('Could not fetch branch from session');
+            });
+
+            // When admin changes branch, post to set_branch.php and reload
+            $('#branch').off('change').on('change', function(){
+              const branchVal = $(this).val();
+              $.post('../set_branch.php', { branch: branchVal })
+                .done(function(r){
+                  if(r && r.success){
+                    location.reload();
+                  } else {
+                    alert('Failed to set branch: ' + (r.message || 'unknown'));
+                  }
+                })
+                .fail(function(xhr){
+                  alert('Error setting branch.');
+                  console.error(xhr.responseText);
+                });
+            });
+          });
+        </script>
         
          <div class="icon-container">
           <button class="icon-button" onclick="location.href ='login-signup.php'">
