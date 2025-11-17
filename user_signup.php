@@ -24,18 +24,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
         exit();
     }
 
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $conn->prepare("INSERT INTO users (FirstName, LastName, Email, MobileNumber, Password) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $firstName, $lastName, $email, $contact, $hashedPassword);
+    // Start transaction for atomic operations
+    $conn->begin_transaction();
 
-    if ($stmt->execute()) {
+    try {
+        // Insert default address
+        $defaultCity = "City";
+        $defaultStreet = "Street"; 
+        $defaultZipCode = "1234";
+        
+        $addressStmt = $conn->prepare("INSERT INTO address (City, Street, zip_code) VALUES (?, ?, ?)");
+        $addressStmt->bind_param("sss", $defaultCity, $defaultStreet, $defaultZipCode);
+        
+        if (!$addressStmt->execute()) {
+            throw new Exception("Failed to create address");
+        }
+        
+        // Get the newly created AddressID
+        $addressID = $conn->insert_id;
+        $addressStmt->close();
+
+        // Insert user with the address reference
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $userStmt = $conn->prepare("INSERT INTO users (FirstName, LastName, Email, MobileNumber, Password, AddressID) VALUES (?, ?, ?, ?, ?, ?)");
+        $userStmt->bind_param("sssssi", $firstName, $lastName, $email, $contact, $hashedPassword, $addressID);
+
+        if (!$userStmt->execute()) {
+            throw new Exception("Failed to create user");
+        }
+
+        // Commit transaction if both operations succeed
+        $conn->commit();
+        
         header("Location: login-signup.php?show=login&success=registered");
         exit();
-    } else {
+        
+    } catch (Exception $e) {
+        // Rollback transaction if any operation fails
+        $conn->rollback();
         header("Location: login-signup.php?show=signup&error=server");
         exit();
     }
-
-    $stmt->close();
 }
 ?>

@@ -177,7 +177,6 @@ $conn->close();
           <div class="no-orders">
             <i class="fas fa-shopping-cart"></i>
             <p>You haven't placed any orders yet.</p>
-            <a href="homepage.php" class="btn btn-primary">Start Shopping</a>
           </div>
         <?php endif; ?>
       </div>

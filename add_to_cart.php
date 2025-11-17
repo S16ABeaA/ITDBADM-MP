@@ -2,8 +2,8 @@
 ob_start(); // Start output buffering
 // Enable error reporting but don't display to users
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't output errors to browser
-ini_set('log_errors', 1); // Log errors instead
+ini_set('display_errors', 0); 
+ini_set('log_errors', 1); 
 
 require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
@@ -97,5 +97,5 @@ try {
 }
 
 $conn->close();
-ob_end_flush(); // Send output buffer and turn off buffering
+ob_end_flush();
 ?>
