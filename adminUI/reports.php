@@ -437,17 +437,6 @@
       <div class="detailed-reports">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h3>Top Selling Products</h3>
-          <div class="export-buttons">
-            <button class="export-btn pdf">
-              <i class="fas fa-file-pdf"></i> Export PDF
-            </button>
-            <button class="export-btn excel">
-              <i class="fas fa-file-excel"></i> Export Excel
-            </button>
-            <button class="export-btn csv">
-              <i class="fas fa-file-csv"></i> Export CSV
-            </button>
-          </div>
         </div>
 
         <table class="report-table">
@@ -542,6 +531,96 @@
               <td>12</td>
               <td><span class="status-badge status-low-stock">Low</span></td>
               <td>2024-01-18</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    <!-- User Deletion Log -->
+      <div class="detailed-reports" style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>User Deletion Log</h3>
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>User ID</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Deleted At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>1</td>
+              <td>adrian</td>
+              <td>user</td>
+              <td>today</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+       <!-- Currency Changes Log -->
+      <div class="detailed-reports" style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>Currency Changes Log</h3>
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Currency</th>
+              <th>Previous Rate</th>
+              <th>New Rate</th>
+              <th>Changed At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Kor</td>
+              <td>21</td>
+              <td>22</td>
+              <td>today</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Inventory Log -->
+      <div class="detailed-reports" style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>Inventory Log</h3>
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Name</th>
+              <th>Branch ID</th>
+              <th>Old Quantity</th>
+              <th>New Quantity</th>
+              <th>Price</th>
+              <th>Change Type</th>
+              <th>Changed At</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>ball</td>
+              <td>1</td>
+              <td>0</td>
+              <td>22</td>
+              <td>8k</td>
+              <td>idk</td>
+              <td>today</td>
             </tr>
           </tbody>
         </table>
