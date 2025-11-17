@@ -19,7 +19,6 @@ if(isset($_POST['insertedit_bb'])){
   $intDiffValue = $_POST['intDiffValue'] ?? '';
   $coverstockName = $_POST['coverstockName'] ?? '';
   $coverstockType = $_POST['coverstockType'] ?? '';
-  $ballDescription = $_POST['ballDescription'] ?? '';
   $ballImage = $_POST['ballImage'] ?? '';
   
   // Validate required fields
@@ -30,6 +29,27 @@ if(isset($_POST['insertedit_bb'])){
       'message' => 'Please fill all fields to update the bowling ball.'
     ]);
     exit;
+  }
+
+  // Resolve Brand: accept numeric BrandID or a brand Name
+  $resolvedBrandId = null;
+  if (is_numeric($ballBrand)) {
+    $candidateId = intval($ballBrand);
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE BrandID = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('i', $candidateId);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  } else {
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE Name = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('s', $ballBrand);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
   }
 
   /* Handle image upload (optional for updates)
@@ -68,11 +88,35 @@ if(isset($_POST['insertedit_bb'])){
     exit;
   }*/
 
-  // Update bowling ball
-  $updatebbquery = "UPDATE bowlingball SET Quality='$ballQuality', Name='$ballName', Type='$ballType', RG='$rgValue', DIFF='$diffValue', INTDIFF='$intDiffValue', weight='$ballWeight', CoreType='$coreType', CoreName='$coreName', Coverstock='$coverstockName', CoverstockType='$coverstockType' WHERE ProductID='$ballId'";
+  // Update bowling ball (escape and cast)
+  $ballQualityEsc = $conn->real_escape_string($ballQuality);
+  $ballNameEsc = $conn->real_escape_string($ballName);
+  $ballTypeEsc = $conn->real_escape_string($ballType);
+  $rgValueNum = is_numeric($rgValue) ? floatval($rgValue) : $conn->real_escape_string($rgValue);
+  $diffValueNum = is_numeric($diffValue) ? floatval($diffValue) : $conn->real_escape_string($diffValue);
+  $intDiffValueNum = is_numeric($intDiffValue) ? floatval($intDiffValue) : $conn->real_escape_string($intDiffValue);
+  $ballWeightNum = is_numeric($ballWeight) ? floatval($ballWeight) : $conn->real_escape_string($ballWeight);
+  $coreTypeEsc = $conn->real_escape_string($coreType);
+  $coreNameEsc = $conn->real_escape_string($coreName);
+  $coverstockNameEsc = $conn->real_escape_string($coverstockName);
+  $coverstockTypeEsc = $conn->real_escape_string($coverstockType);
+  $ballImageEsc = $conn->real_escape_string($ballImage);
+  $ballPriceNum = is_numeric($ballPrice) ? floatval($ballPrice) : $conn->real_escape_string($ballPrice);
+  $ballStockNum = is_numeric($ballStock) ? intval($ballStock) : $conn->real_escape_string($ballStock);
+  $brandParam = intval($resolvedBrandId);
+  // Resolve branch and validate
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  $branchID = $_POST['branchID'] ?? $_SESSION['staff_branch_id'] ?? null;
+  if (!$branchID || !is_numeric($branchID)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid or missing branch']); exit; }
+  $branchID = intval($branchID);
+  $bst = $conn->prepare("SELECT BranchID FROM branches WHERE BranchID = ? LIMIT 1");
+  if (!$bst) { http_response_code(500); echo json_encode(['success'=>false,'message'=>'Database error (branch check).']); exit; }
+  $bst->bind_param('i', $branchID); $bst->execute(); $bst->store_result(); if ($bst->num_rows===0) { http_response_code(404); echo json_encode(['success'=>false,'message'=>'Branch not found']); $bst->close(); exit; } $bst->close();
+
+  $updatebbquery = "UPDATE bowlingball SET Quality='$ballQualityEsc', Name='$ballNameEsc', Type='$ballTypeEsc', RG=$rgValueNum, DIFF=$diffValueNum, INTDIFF=$intDiffValueNum, weight=$ballWeightNum, CoreType='$coreTypeEsc', CoreName='$coreNameEsc', Coverstock='$coverstockNameEsc', CoverstockType='$coverstockTypeEsc' WHERE ProductID='$ballId'";
   $updatebbresult = $conn->query($updatebbquery);
-  
-  $updateproductquery = "UPDATE product SET Price='$ballPrice', Quantity='$ballStock', ImageID='$ballImage', BrandID='$ballBrand' WHERE ProductID='$ballId'";
+
+  $updateproductquery = "UPDATE product SET Price=$ballPriceNum, Quantity=$ballStockNum, ImageID='$ballImageEsc', BrandID=$brandParam WHERE ProductID='$ballId' AND BranchID=$branchID";
   $updateproductresult = $conn->query($updateproductquery);
   
   if($updatebbresult && $updateproductresult){

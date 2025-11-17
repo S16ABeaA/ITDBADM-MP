@@ -8,19 +8,40 @@ if(isset($_POST['insertedit_bg'])){
   $bagName = $_POST['bagName'] ?? '';
   $bagBrand = $_POST['bagBrand'] ?? '';
   $bagColor = $_POST['bagColor'] ?? '';
+  $bagSize = $_POST['bagSize'] ?? '';
   $bagType = $_POST['bagType'] ?? '';
   $bagPrice = $_POST['bagPrice'] ?? '';
   $bagStock = $_POST['bagStock'] ?? '';
-  $bagDescription = $_POST['bagDescription'] ?? '';
   $bagImage = $_POST['bagImage'] ?? '';
   // Validate required fields
-  if(!$bagId || empty($bagImage) || empty($bagName) || empty($bagBrand) || empty($bagColor) || empty($bagType) || empty($bagPrice) || empty($bagStock) || empty($bagDescription)){
+  if(!$bagId || empty($bagImage) || empty($bagName) || empty($bagBrand) || empty($bagColor) || empty($bagType) || empty($bagPrice) || empty($bagStock)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
       'message' => 'Please fill all fields to insert the bowling bag.'
     ]);
     exit;
+  }
+
+  // Resolve Brand: accept numeric BrandID or a brand Name
+  $resolvedBrandId = null;
+  if (is_numeric($bagBrand)) {
+    $candidateId = intval($bagBrand);
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE BrandID = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('i', $candidateId);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  } else {
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE Name = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('s', $bagBrand);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
   }
 
   /* Handle image upload
@@ -60,11 +81,28 @@ if(isset($_POST['insertedit_bg'])){
   }*/
 
 
-  // Update bowling bag
-  $updatebgquery = "UPDATE bowlingbag SET Name='$bagName',  Type='$bagType', Size='$bagSize', color='$bagColor' WHERE ProductID='$bagId'";
+  // Update bowling bag (escape and cast values)
+  $bagNameEsc = $conn->real_escape_string($bagName);
+  $bagTypeEsc = $conn->real_escape_string($bagType);
+  $bagSizeEsc = $conn->real_escape_string($bagSize);
+  $bagColorEsc = $conn->real_escape_string($bagColor);
+  $bagPriceNum = is_numeric($bagPrice) ? floatval($bagPrice) : $conn->real_escape_string($bagPrice);
+  $bagStockNum = is_numeric($bagStock) ? intval($bagStock) : $conn->real_escape_string($bagStock);
+  $bagImageEsc = $conn->real_escape_string($bagImage);
+  $brandParam = intval($resolvedBrandId);
+  // Resolve branch and validate
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  $branchID = $_POST['branchID'] ?? $_SESSION['staff_branch_id'] ?? null;
+  if (!$branchID || !is_numeric($branchID)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid or missing branch']); exit; }
+  $branchID = intval($branchID);
+  $bst = $conn->prepare("SELECT BranchID FROM branches WHERE BranchID = ? LIMIT 1");
+  if (!$bst) { http_response_code(500); echo json_encode(['success'=>false,'message'=>'Database error (branch check).']); exit; }
+  $bst->bind_param('i', $branchID); $bst->execute(); $bst->store_result(); if ($bst->num_rows===0) { http_response_code(404); echo json_encode(['success'=>false,'message'=>'Branch not found']); $bst->close(); exit; } $bst->close();
+
+  $updatebgquery = "UPDATE bowlingbag SET Name='$bagNameEsc', Type='$bagTypeEsc', Size='$bagSizeEsc', color='$bagColorEsc' WHERE ProductID='$bagId'";
   $updatebgresult = $conn->query($updatebgquery);
 
-  $updateproductquery = "UPDATE product SET Price='$bagPrice', Quantity='$bagStock', ImageID='$bagImage', BrandID='$bagBrand' WHERE ProductID='$bagId'";
+  $updateproductquery = "UPDATE product SET Price=$bagPriceNum, Quantity=$bagStockNum, ImageID='$bagImageEsc', BrandID=$brandParam WHERE ProductID='$bagId' AND BranchID=$branchID";
   $updateproductresult = $conn->query($updateproductquery);
   if($updatebgresult && $updateproductresult){
     http_response_code(200);

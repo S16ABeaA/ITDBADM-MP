@@ -10,10 +10,9 @@ if(isset($_POST['insertedit_cs'])){
   $supplyType = $_POST['supplyType'] ?? '';
   $supplyPrice = $_POST['supplyPrice'] ?? '';
   $supplyStock = $_POST['supplyStock'] ?? '';
-  $supplyDescription = $_POST['supplyDescription'] ?? '';
   $supplyImage = $_POST['supplyImage'] ?? '';
   // Validate required fields
-  if(empty($supplyImage) || empty($supplyName) || empty($supplyBrand) || empty($supplyType) || empty($supplyPrice) || empty($supplyStock) || empty($supplyDescription)){
+  if(empty($supplyImage) || empty($supplyName) || empty($supplyBrand) || empty($supplyType) || empty($supplyPrice) || empty($supplyStock)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
@@ -59,7 +58,30 @@ if(isset($_POST['insertedit_cs'])){
   }*/
 
   // Check if bowling accessory already exists
-  $cschecker = "SELECT * FROM cleaningsupplies WHERE Name = '$supplyName' AND Type = '$supplyType'";
+  // Resolve Brand: accept numeric BrandID or a brand Name
+  $resolvedBrandId = null;
+  if (is_numeric($supplyBrand)) {
+    $candidateId = intval($supplyBrand);
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE BrandID = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('i', $candidateId);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  } else {
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE Name = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('s', $supplyBrand);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  }
+
+  $supplyNameEsc = $conn->real_escape_string($supplyName);
+  $supplyTypeEsc = $conn->real_escape_string($supplyType);
+  $cschecker = "SELECT * FROM cleaningsupplies WHERE Name = '$supplyNameEsc' AND Type = '$supplyTypeEsc'";
   $csresult = $conn->query($cschecker);
   
   if($csresult->num_rows > 0){
@@ -71,8 +93,23 @@ if(isset($_POST['insertedit_cs'])){
     exit;
   }
 
-  // Insert new bowling bag
-  $insertcsquery = "CALL AddCleaningSupplies('1', '$supplyBrand', '$supplyName', '$supplyPrice', '$supplyImage', '$supplyType', '$supplyStock')";
+  // Insert new cleaning supply (escape and cast)
+  $brandParam = intval($resolvedBrandId);
+  $supplyNameEsc = $conn->real_escape_string($supplyName);
+  $supplyImageEsc = $conn->real_escape_string($supplyImage);
+  $supplyTypeEsc = $conn->real_escape_string($supplyType);
+  $supplyPriceNum = is_numeric($supplyPrice) ? floatval($supplyPrice) : $conn->real_escape_string($supplyPrice);
+  $supplyStockNum = is_numeric($supplyStock) ? intval($supplyStock) : $conn->real_escape_string($supplyStock);
+  // Resolve branch and validate
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  $branchID = $_POST['branchID'] ?? $_SESSION['staff_branch_id'] ?? null;
+  if (!$branchID || !is_numeric($branchID)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid or missing branch']); exit; }
+  $branchID = intval($branchID);
+  $bst = $conn->prepare("SELECT BranchID FROM branches WHERE BranchID = ? LIMIT 1");
+  if (!$bst) { http_response_code(500); echo json_encode(['success'=>false,'message'=>'Database error (branch check).']); exit; }
+  $bst->bind_param('i', $branchID); $bst->execute(); $bst->store_result(); if ($bst->num_rows===0) { http_response_code(404); echo json_encode(['success'=>false,'message'=>'Branch not found']); $bst->close(); exit; } $bst->close();
+
+  $insertcsquery = "CALL AddCleaningSupplies($branchID, $brandParam, '$supplyNameEsc', $supplyPriceNum, '$supplyImageEsc', '$supplyTypeEsc', $supplyStockNum)";
   $insertcsresult = $conn->query($insertcsquery);
   
   if($insertcsresult){
@@ -94,7 +131,8 @@ if(isset($_POST['insertedit_cs'])){
         'supplyPrice' => '₱' . number_format($supplyPrice, 2),
         'supplyType' => $supplyType,
         'supplyStock' => $supplyStock,
-        'supplyImage' => $supplyImage
+        'supplyImage' => $supplyImage,
+        'branchID' => $branchID
       ]
     ]);
   } else {

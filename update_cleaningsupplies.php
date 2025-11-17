@@ -10,10 +10,9 @@ if(isset($_POST['insertedit_cs'])){
   $supplyType = $_POST['supplyType'] ?? '';
   $supplyPrice = $_POST['supplyPrice'] ?? '';
   $supplyStock = $_POST['supplyStock'] ?? '';
-  $supplyDescription = $_POST['supplyDescription'] ?? '';
   $supplyImage = $_POST['supplyImage'] ?? '';
   // Validate required fields
-  if(!$cleaningId || empty($supplyImage) || empty($supplyName) || empty($supplyBrand) || empty($supplyType) || empty($supplyPrice) || empty($supplyStock) || empty($supplyDescription)){
+  if(!$cleaningId || empty($supplyImage) || empty($supplyName) || empty($supplyBrand) || empty($supplyType) || empty($supplyPrice) || empty($supplyStock)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
@@ -59,10 +58,47 @@ if(isset($_POST['insertedit_cs'])){
   }*/
 
   // Update cleaning supply
-  $updatecsquery = "UPDATE cleaningsupplies SET Name='$supplyName',  Type='$supplyType', WHERE ProductID='$cleaningId'";
+  // Resolve Brand: accept numeric BrandID or a brand Name
+  $resolvedBrandId = null;
+  if (is_numeric($supplyBrand)) {
+    $candidateId = intval($supplyBrand);
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE BrandID = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('i', $candidateId);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  } else {
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE Name = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('s', $supplyBrand);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  }
+
+  // Update cleaning supply (escape and cast)
+  $supplyNameEsc = $conn->real_escape_string($supplyName);
+  $supplyTypeEsc = $conn->real_escape_string($supplyType);
+  $supplyImageEsc = $conn->real_escape_string($supplyImage);
+  $supplyPriceNum = is_numeric($supplyPrice) ? floatval($supplyPrice) : $conn->real_escape_string($supplyPrice);
+  $supplyStockNum = is_numeric($supplyStock) ? intval($supplyStock) : $conn->real_escape_string($supplyStock);
+  $brandParam = intval($resolvedBrandId);
+  // Resolve branch and validate
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  $branchID = $_POST['branchID'] ?? $_SESSION['staff_branch_id'] ?? null;
+  if (!$branchID || !is_numeric($branchID)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid or missing branch']); exit; }
+  $branchID = intval($branchID);
+  $bst = $conn->prepare("SELECT BranchID FROM branches WHERE BranchID = ? LIMIT 1");
+  if (!$bst) { http_response_code(500); echo json_encode(['success'=>false,'message'=>'Database error (branch check).']); exit; }
+  $bst->bind_param('i', $branchID); $bst->execute(); $bst->store_result(); if ($bst->num_rows===0) { http_response_code(404); echo json_encode(['success'=>false,'message'=>'Branch not found']); $bst->close(); exit; } $bst->close();
+
+  $updatecsquery = "UPDATE cleaningsupplies SET Name='$supplyNameEsc', Type='$supplyTypeEsc' WHERE ProductID='$cleaningId'";
   $updatecsresult = $conn->query($updatecsquery);
 
-  $updateproductquery = "UPDATE product SET Price='$supplyPrice', Quantity='$supplyStock', ImageID='$supplyImage', BrandID='$supplyBrand' WHERE ProductID='$cleaningId'";
+  $updateproductquery = "UPDATE product SET Price=$supplyPriceNum, Quantity=$supplyStockNum, ImageID='$supplyImageEsc', BrandID=$brandParam WHERE ProductID='$cleaningId' AND BranchID=$branchID";
   $updateproductresult = $conn->query($updateproductquery);
   
   if($updatecsresult && $updateproductresult){

@@ -11,10 +11,9 @@ if(isset($_POST['insertedit_bs'])){
   $shoeGender = $_POST['shoeGender'] ?? '';
   $shoePrice = $_POST['shoePrice'] ?? '';
   $shoeStock = $_POST['shoeStock'] ?? '';
-  $shoeDescription = $_POST['shoeDescription'] ?? '';
   $shoeImage = $_POST['shoeImage'] ?? '';
   // Validate required fields
-  if(empty($shoeImage) || empty($shoeName) || empty($shoeBrand) || empty($shoeSize) || empty($shoeGender) || empty($shoePrice) || empty($shoeStock) || empty($shoeDescription)){
+  if(empty($shoeImage) || empty($shoeName) || empty($shoeBrand) || empty($shoeSize) || empty($shoeGender) || empty($shoePrice) || empty($shoeStock)){
     http_response_code(400);
     echo json_encode([
       'success' => false,
@@ -60,6 +59,28 @@ if(isset($_POST['insertedit_bs'])){
   }*/
 
   // Check if bowling shoe already exists
+  // Verify that the selected brand exists
+  // Resolve Brand: accept numeric BrandID or a brand Name
+  $resolvedBrandId = null;
+  if (is_numeric($shoeBrand)) {
+    $candidateId = intval($shoeBrand);
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE BrandID = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('i', $candidateId);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  } else {
+    $brandStmt = $conn->prepare("SELECT BrandID FROM brand WHERE Name = ?");
+    if (!$brandStmt) { http_response_code(500); echo json_encode(['success' => false, 'message' => 'Database error (brand check).']); exit; }
+    $brandStmt->bind_param('s', $shoeBrand);
+    $brandStmt->execute();
+    $brandStmt->store_result();
+    if ($brandStmt->num_rows === 0) { http_response_code(400); echo json_encode(['success' => false, 'message' => 'Selected brand does not exist.']); $brandStmt->close(); exit; }
+    $brandStmt->bind_result($foundId); $brandStmt->fetch(); $resolvedBrandId = intval($foundId); $brandStmt->close();
+  }
+
   $bschecker = "SELECT * FROM bowlingshoes WHERE Name = '$shoeName' AND size = '$shoeSize' AND sex = '$shoeGender'";
   $bsresult = $conn->query($bschecker);
   
@@ -72,8 +93,24 @@ if(isset($_POST['insertedit_bs'])){
     exit;
   }
 
-  // Insert new bowling shoe
-  $insertbsquery = "CALL AddBowlingShoes('1', '$shoeBrand', '$shoeName', '$shoePrice', '$shoeImage', '$shoeSize', '$shoeGender', '$shoeStock')";
+  // Insert new bowling shoe (escape and cast)
+  $brandParam = intval($resolvedBrandId);
+  $shoeNameEsc = $conn->real_escape_string($shoeName);
+  $shoeImageEsc = $conn->real_escape_string($shoeImage);
+  $shoeSizeEsc = $conn->real_escape_string($shoeSize);
+  $shoeGenderEsc = $conn->real_escape_string($shoeGender);
+  $shoePriceNum = is_numeric($shoePrice) ? floatval($shoePrice) : $conn->real_escape_string($shoePrice);
+  $shoeStockNum = is_numeric($shoeStock) ? intval($shoeStock) : $conn->real_escape_string($shoeStock);
+  // Resolve branch and validate
+  if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+  $branchID = $_POST['branchID'] ?? $_SESSION['staff_branch_id'] ?? null;
+  if (!$branchID || !is_numeric($branchID)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid or missing branch']); exit; }
+  $branchID = intval($branchID);
+  $bst = $conn->prepare("SELECT BranchID FROM branches WHERE BranchID = ? LIMIT 1");
+  if (!$bst) { http_response_code(500); echo json_encode(['success'=>false,'message'=>'Database error (branch check).']); exit; }
+  $bst->bind_param('i', $branchID); $bst->execute(); $bst->store_result(); if ($bst->num_rows===0) { http_response_code(404); echo json_encode(['success'=>false,'message'=>'Branch not found']); $bst->close(); exit; } $bst->close();
+
+  $insertbsquery = "CALL AddBowlingShoes($branchID, $brandParam, '$shoeNameEsc', $shoePriceNum, '$shoeImageEsc', '$shoeSizeEsc', '$shoeGenderEsc', $shoeStockNum)";
   $insertbsresult = $conn->query($insertbsquery);
   
   if($insertbsresult){
@@ -95,6 +132,7 @@ if(isset($_POST['insertedit_bs'])){
         'shoePrice' => '₱' . number_format($shoePrice, 2),
         'shoeStock' => $shoeStock,
         'shoeImage' => $shoeImage
+      ,  'branchID' => $branchID
       ]
     ]);
   } else {

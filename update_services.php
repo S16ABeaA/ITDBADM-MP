@@ -17,7 +17,6 @@ $serviceID = isset($_POST['serviceID']) ? trim($_POST['serviceID']) : null;
 $serviceType = isset($_POST['serviceType']) ? trim($_POST['serviceType']) : '';
 $servicePrice = isset($_POST['servicePrice']) ? trim($_POST['servicePrice']) : '';
 $serviceAvailability = isset($_POST['serviceAvailability']) ? trim($_POST['serviceAvailability']) : '';
-$serviceDescription = isset($_POST['serviceDescription']) ? trim($_POST['serviceDescription']) : '';
 
 // Validate required fields
 if (empty($serviceID) || empty($serviceType) || empty($servicePrice) || empty($serviceAvailability)) {
@@ -70,8 +69,7 @@ if ($affected >= 0) {
             'serviceId' => $serviceID,
             'serviceType' => $serviceType,
             'price' => floatval($servicePrice),
-            'availability' => $serviceAvailability,
-            'description' => $serviceDescription
+            'availability' => $serviceAvailability
         ]
     ]);
     exit;
