@@ -5,6 +5,14 @@ include("header.html");
 
 $userID = $_SESSION['user_id'];
 
+//debugging
+echo "<script>console.log('User ID: " . json_encode($userID) . "');</script>";
+
+if ($_SESSION['user_id'] == null) {
+  echo "<script>window.location.href='login-signup.php';</script>";
+  exit();
+}
+
 // Call stored procedure GetUserProfile
 $stmt = $conn->prepare("CALL GetUserProfile(?)");
 $stmt->bind_param("i", $userID);

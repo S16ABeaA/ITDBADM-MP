@@ -14,7 +14,6 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
 $branchID = $_SESSION["selected_branch_id"];
 
-// Detect which table this product belongs to
 $tables = [
     'bowlingball' => 'SELECT * FROM bowlingball WHERE ProductID = ? AND BranchID = ?',
     'bowlingshoes' => 'SELECT * FROM bowlingshoes WHERE ProductID = ? AND BranchID = ?',

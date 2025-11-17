@@ -3,7 +3,7 @@ require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 
 $max_attempts = 3;
-$lockout_time = 30; // 30 secs for testing
+$lockout_time = 10; // 10 secs for testing
 
 if (isset($_SESSION['login_attempts']) && isset($_SESSION['last_attempt_time'])) {
     if ($_SESSION['login_attempts'] >= $max_attempts && 
