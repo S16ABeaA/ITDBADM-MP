@@ -15,28 +15,40 @@ include("header.html");
   <body>
 
     <?php
-    // Handle login errors
+    // Ultra simple version
+    echo '<script>
+        $(document).ready(function() {
+            setTimeout(function() {';
+            
     if (isset($_GET['error'])) {
-        echo '<script>
-            $(document).ready(function() {
-                showLogin(); // Show login form
-                ';
-        
-        switch ($_GET['error']) {
-            case 'invalid':
-                echo 'showLoginError("Invalid email or password.");';
-                break;
-            case 'locked':
-                echo 'showLoginError("Too many login attempts. Please try again later.");';
-                break;
-            default:
-                echo 'showLoginError("An error occurred. Please try again.");';
+        // Signup errors
+        if ($_GET['error'] === 'exists' || $_GET['error'] === 'nomatch' || $_GET['error'] === 'server') {
+            echo 'showSignUp();';
+            echo 'showSignupError("' . 
+                ($_GET['error'] === 'exists' ? 'Email already registered.' : 
+                ($_GET['error'] === 'nomatch' ? 'Passwords do not match.' : 'Server error.')) . 
+                '");';
+        } 
+        // Login errors  
+        else {
+            echo 'showLogin();';
+            echo 'showLoginError("' . 
+                ($_GET['error'] === 'invalid' ? 'Invalid email or password.' : 'Too many login attempts.') . 
+                '");';
         }
-        
-        echo '});
-        </script>';
+    } 
+    else if (isset($_GET['show'])) {
+        echo ($_GET['show'] === 'signup' ? 'showSignUp();' : 'showLogin();');
     }
+    else if (isset($_GET['success'])) {
+        echo 'showLogin();';
+    }
+
+    echo '        }, 100);
+        });
+    </script>';
     ?>
+    
     <div class="outer-signup-container">
       <div class="signup-container">
         <!-- Form Section -->
@@ -182,7 +194,7 @@ include("header.html");
         const password = $("#signup-password").val().trim();
         const confirmPassword = $("#confirm-password-input").val().trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const contactRegex = /^\d{11}$/; // 11 digits
+        const contactRegex = /^\d{11}$/;
         
         if(!firstName || !lastName || !email || !contactNo || !password || !confirmPassword){
           showSignupError("All fields are required!");

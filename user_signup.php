@@ -9,60 +9,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["user-email"])) {
     $password = trim($_POST["signup-password"]);
     $confirmPassword = trim($_POST["confirm-password-input"]);
 
-    if ($password !== $confirmPassword) { // passwords do not match
-        header("Location: login-signup.php?show=signup&error=nomatch");
+    // Validate passwords match
+    if ($password !== $confirmPassword) {
+        header("Location: login-signup.php?error=nomatch");
         exit();
     }
-
-    $check = $conn->prepare("SELECT Email FROM users WHERE Email = ?");
-    $check->bind_param("s", $email);
-    $check->execute();
-    $checkResult = $check->get_result();
-
-    if ($checkResult->num_rows > 0) {
-        header("Location: login-signup.php?show=signup&error=exists");
-        exit();
-    }
-
-    // Start transaction for atomic operations
-    $conn->begin_transaction();
 
     try {
-        // Insert default address
-        $defaultCity = "City";
-        $defaultStreet = "Street"; 
-        $defaultZipCode = "1234";
-        
-        $addressStmt = $conn->prepare("INSERT INTO address (City, Street, zip_code) VALUES (?, ?, ?)");
-        $addressStmt->bind_param("sss", $defaultCity, $defaultStreet, $defaultZipCode);
-        
-        if (!$addressStmt->execute()) {
-            throw new Exception("Failed to create address");
-        }
-        
-        // Get the newly created AddressID
-        $addressID = $conn->insert_id;
-        $addressStmt->close();
-
-        // Insert user with the address reference
+        // Call the stored procedure
+        $stmt = $conn->prepare("CALL AddUser(?, ?, ?, ?, ?)");
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $userStmt = $conn->prepare("INSERT INTO users (FirstName, LastName, Email, MobileNumber, Password, AddressID) VALUES (?, ?, ?, ?, ?, ?)");
-        $userStmt->bind_param("sssssi", $firstName, $lastName, $email, $contact, $hashedPassword, $addressID);
-
-        if (!$userStmt->execute()) {
-            throw new Exception("Failed to create user");
-        }
-
-        // Commit transaction if both operations succeed
-        $conn->commit();
+        $stmt->bind_param("sssss", $firstName, $lastName, $contact, $email, $hashedPassword);
         
-        header("Location: login-signup.php?show=login&success=registered");
-        exit();
+        if ($stmt->execute()) {
+            header("Location: login-signup.php?success=registered");
+            exit();
+        } else {
+            throw new Exception("Stored procedure execution failed");
+        }
         
     } catch (Exception $e) {
-        // Rollback transaction if any operation fails
-        $conn->rollback();
-        header("Location: login-signup.php?show=signup&error=server");
+        $errorMessage = $e->getMessage();
+        
+        if (strpos($errorMessage, 'Email already registered') !== false) {
+            header("Location: login-signup.php?error=exists");
+        } else {
+            header("Location: login-signup.php?error=server");
+        }
         exit();
     }
 }
