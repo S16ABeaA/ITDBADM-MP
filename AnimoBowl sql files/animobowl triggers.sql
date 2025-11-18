@@ -449,21 +449,33 @@ DELIMITER ;
 
 
 -- Trigger 14 User delete-- 
-CREATE TABLE user_deletion_log (
+CREATE TABLE user_logs (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NOT NULL,
     Username VARCHAR(100),
     Role ENUM('Staff','User'),
-    DeletedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    Status ENUM('Created','Deleted'),
+    Time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
     
+
 DELIMITER $$
 CREATE TRIGGER DeleteUsers
 AFTER DELETE ON users
 FOR EACH ROW
 BEGIN
-    INSERT INTO user_deletion_log (UserID, Username,Role)
-    VALUES (OLD.UserID, CONCAT(OLD.FirstName,' ',OLD.LastName),Role);
+    INSERT INTO user_logs(UserID, Username,Role,Status)
+    VALUES (OLD.UserID, CONCAT(OLD.FirstName,' ',OLD.LastName),Role,'Deleted');
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER AddUsers
+AFTER INSERT ON users
+FOR EACH ROW
+BEGIN
+    INSERT INTO user_logs(UserID, Username,Role,Status)
+    VALUES (NEW.UserID, CONCAT(NEW.FirstName,' ',NEW.LastName),Role,'Created');
 END $$
 DELIMITER ;
 
