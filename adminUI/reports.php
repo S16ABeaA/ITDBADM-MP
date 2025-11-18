@@ -294,14 +294,6 @@ require_once '../dependencies/config.php';
       <!-- Reports Header -->
       <div class="reports-header">
         <h1 class="reports-title">Analytics & Reports</h1>
-        <div class="date-range-selector">
-          <input type="date" class="date-input" id="startDate" value="2024-01-01">
-          <span>to</span>
-          <input type="date" class="date-input" id="endDate" value="2024-12-31">
-          <button class="generate-report-btn" id="generateReport">
-            <i class="fas fa-sync-alt"></i> Generate Report
-          </button>
-        </div>
       </div>
 
       <!-- Quick Stats -->
@@ -698,6 +690,10 @@ require_once '../dependencies/config.php';
 
       function initializeCharts() {
         // Sales Performance Chart
+
+       fetch('sales-data.php')
+      .then(response => response.json())
+      .then(data => {
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         new Chart(salesCtx, {
           type: 'line',
@@ -705,28 +701,29 @@ require_once '../dependencies/config.php';
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             datasets: [{
               label: 'Sales (₱)',
-              data: [85000, 92000, 78000, 110000, 125000, 145000, 134000, 156000, 142000, 168000, 175000, 189000],
+              data: data, // Access the array inside the data property
               borderColor: '#3498db',
               backgroundColor: 'rgba(52, 152, 219, 0.1)',
               borderWidth: 2,
               fill: true
             }]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return '₱' + value.toLocaleString();
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                        return '₱' + value.toLocaleString();
+                    }
                   }
                 }
               }
             }
-          }
         });
+    });
 
         // Product Categories Chart
         const categoryCtx = document.getElementById('categoryChart').getContext('2d');
@@ -877,15 +874,6 @@ require_once '../dependencies/config.php';
         const newRevenue = Math.floor(1245680 * (1 + Math.random() * 0.1));
         $('.quick-stat-value').first().text('₱' + newRevenue.toLocaleString());
       }
-
-      // Export functionality
-      $('.export-btn').on('click', function() {
-        const format = $(this).hasClass('pdf') ? 'PDF' : 
-                      $(this).hasClass('excel') ? 'Excel' : 'CSV';
-        
-        alert(`Exporting report as ${format} format...`);
-        // Here you would typically make an API call to generate the export
-      });
 
       // Initialize the reports page
       updateReportUI('sales');
