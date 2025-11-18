@@ -85,7 +85,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
         $stmt->close();
         ?>
         <div class="display-view-btn">
-          <button class="view-more-btn" onclick="location.href='view-all-bowlingball.php'">View More</button>
+          <button class="view-more-btn" onclick="location.href='view-all-products.php?type=bowlingball'">View More</button>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
         $stmt->close();
         ?>
         <div class="display-view-btn">
-          <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
+          <button class="view-more-btn" onclick="location.href='view-all-products.php?type=bowlingshoes'">View More</button>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
         $stmt->close();
         ?>
         <div class="display-view-btn">
-          <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
+          <button class="view-more-btn" onclick="location.href='view-all-products.php?type=bowlingbag'">View More</button>
         </div>
       </div>
 
@@ -232,7 +232,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
         $stmt->close();
         ?>
         <div class="display-view-btn">
-          <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
+          <button class="view-more-btn" onclick="location.href='view-all-products.php?type=bowlingaccessories'">View More</button>
         </div>
       </div>
 
@@ -281,7 +281,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
         $stmt->close();
         ?>
         <div class="display-view-btn">
-          <button class="view-more-btn" onclick="location.href='view-all-products.php'">View More</button>
+          <button class="view-more-btn" onclick="location.href='view-all-products.php?type=cleaningsupplies'">View More</button>
         </div>
       </div>
 
