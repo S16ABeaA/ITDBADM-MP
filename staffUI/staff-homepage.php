@@ -17,7 +17,7 @@ if ($branchId) {
 <head>
   <meta charset="UTF-8">
   <title>Staff Dashboard - Product Management</title>
-  <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link href="../css/staffCSS/staff-homepage.css" rel="stylesheet">

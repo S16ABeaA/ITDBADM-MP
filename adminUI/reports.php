@@ -11,6 +11,7 @@ require_once '../dependencies/config.php';
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="../css/staffCSS/staff-homepage.css" rel="stylesheet">
+  <link href="../css/adminCSS/reports.css" rel="stylesheet">
   <style>
     .reports-container {
       padding: 20px;
@@ -271,26 +272,6 @@ require_once '../dependencies/config.php';
   <?php include('admin-header.html')?>
   
   <div class="content-section">
-    <!-- Navigation Menu -->
-    <div class="nav-menu">
-      <div class="nav-row">
-        <div class="nav-item" data-category="bowling-balls">Bowling Balls</div>
-        <div class="nav-item" data-category="shoes">Bowling Shoes</div>
-        <div class="nav-item" data-category="bags">Bowling Bags</div>
-        <div class="nav-item" data-category="accessories">Bowling Accessories</div>
-        <div class="nav-item" data-category="cleaning">Cleaning Supplies</div>
-        <div class="nav-item" data-category="transaction">Transactions</div>
-      </div>
-      <div class="nav-row">
-        <div class="nav-item" data-category="currency">Currency</div>
-        <div class="nav-item" data-category="branch">Branch</div>
-        <div class="nav-item" data-category="address">Address</div>
-        <div class="nav-item" data-category="services">Services</div>
-        <div class="nav-item" data-category="users">Users</div>
-        <div class="nav-item active" data-category="reports">Reports</div>
-      </div>
-    </div>
-
     <div class="reports-container">
       <!-- Reports Header -->
       <div class="reports-header">

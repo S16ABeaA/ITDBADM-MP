@@ -57,24 +57,24 @@
 }
 
 
-.middle-section {
+.ms-middle-section {
   flex: 2;
   display: flex;
   justify-content: center;
 }
 
-.nav-menu {
+.ms-nav-menu {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.nav-row {
+.ms-nav-row {
   display: flex;
   justify-content: center;
 }
 
-.nav-item {
+.ms-nav-item {
   color: var(--light);
   font-size: 14px;
   font-weight: 500;
@@ -86,16 +86,11 @@
   white-space: nowrap;
 }
 
-.nav-item:hover {
+.ms-nav-item:hover {
   color: var(--secondary);
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
-
-.bottom-row{
-  margin-left: -30px;
-}
-
 
 /*right section*/
 .right-section {
