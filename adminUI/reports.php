@@ -399,272 +399,321 @@ require_once '../dependencies/config.php';
           ?>
           <div class="report-card-value"><?php echo $lowstockproducts; ?></div>
         </div>
+
+      </div>
+
+      <!-- Key Metrics Cards -->
+     <div class="reports-grid">
+        <div class="report-card customers">
+          <div class="report-card-header">
+            <h3 class="report-card-title">New Customers</h3>
+            <i class="fas fa-users" style="color: #9b59b6; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value">287</div>
+          <div class="report-card-change change-positive">+15.7% growth</div>
+        </div>
+
+        <div class="report-card financial">
+          <div class="report-card-header">
+            <h3 class="report-card-title">Profit Margin</h3>
+            <i class="fas fa-chart-line" style="color: #f39c12; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value">32.8%</div>
+          <div class="report-card-change change-positive">+2.1% improvement</div>
+        </div>
+      
+
+        <div class="report-card avg-order">
+          <div class="report-card-header">
+            <h3 class="report-card-title">Avg. Order Value</h3>
+            <i class="fas fa-chart-bar" style="color: #9b59b6; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
+          <div class="report-card-change <?php echo $avgGrowthClass?>"><?php echo $avgSign; echo number_format($avgGrowth, 1); ?>% from last month</div>
+        </div>
+
+        <div class="report-card inventory">
+          <div class="report-card-header">
+            <h3 class="report-card-title">Low Stock Items</h3>
+            <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 1.5rem;"></i>
+          </div>
+          <?php
+            $lowstockproducts = 0;
+            $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                              GROUP BY ProductID
+                              HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
+            $lowstockresult = $conn->query($lowstockquery);
+            $lowstockproducts = $lowstockresult->num_rows;
+          ?>
+          <div class="report-card-value"><?php echo $lowstockproducts; ?></div>
+        </div>
+
       </div>
 
       <!-- Charts Section -->
-      <div class="charts-container">
-        <div class="chart-card">
-          <h3 class="chart-title">Sales Performance</h3>
-          <div class="chart-container">
-            <canvas id="salesChart"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Product Categories</h3>
-          <div class="chart-container">
-            <canvas id="categoryChart"></canvas>
-          </div>
+    <div class="charts-container">
+      <div class="chart-card">
+        <h3 class="chart-title">Sales Performance</h3>
+        <div class="chart-container">
+          <canvas id="salesChart"></canvas>
         </div>
       </div>
 
-      <!-- Additional Charts -->
-      <div class="charts-container">
-        <div class="chart-card">
-          <h3 class="chart-title">Monthly Revenue Trend</h3>
-          <div class="chart-container">
-            <canvas id="revenueChart"></canvas>
-          </div>
+      <div class="chart-card">
+        <h3 class="chart-title">Product Categories</h3>
+        <div class="chart-container">
+          <canvas id="categoryChart"></canvas>
         </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Branch Performance</h3>
-          <div class="chart-container">
-            <canvas id="branchChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detailed Reports Section -->
-      <div class="detailed-reports">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3>Top Selling Products</h3>
-        </div>
-
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Category</th>
-              <th>Units Sold</th>
-              <th>Revenue</th>
-              <th>Profit</th>
-              <th>Stock Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Phantom Bowling Ball</td>
-              <td>Bowling Balls</td>
-              <td>156</td>
-              <td>₱1,267,478</td>
-              <td>₱415,892</td>
-              <td><span class="status-badge status-active">In Stock</span></td>
-            </tr>
-            <tr>
-              <td>Tournament Roller Pro</td>
-              <td>Bowling Bags</td>
-              <td>89</td>
-              <td>₱382,699</td>
-              <td>₱125,456</td>
-              <td><span class="status-badge status-active">In Stock</span></td>
-            </tr>
-            <tr>
-              <td>Pro Performance Shoes</td>
-              <td>Bowling Shoes</td>
-              <td>67</td>
-              <td>₱234,567</td>
-              <td>₱76,890</td>
-              <td><span class="status-badge status-low-stock">Low Stock</span></td>
-            </tr>
-            <tr>
-              <td>Elite Grip Set</td>
-              <td>Accessories</td>
-              <td>234</td>
-              <td>₱187,654</td>
-              <td>₱61,567</td>
-              <td><span class="status-badge status-active">In Stock</span></td>
-            </tr>
-            <tr>
-              <td>Premium Cleaner Kit</td>
-              <td>Cleaning Supplies</td>
-              <td>178</td>
-              <td>₱156,789</td>
-              <td>₱51,345</td>
-              <td><span class="status-badge status-active">In Stock</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Low Stock Alert -->
-      <div class="detailed-reports" style="margin-top: 30px;">
-        <h3 style="color: #e74c3c; margin-bottom: 20px;">
-          <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
-        </h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Current Stock</th>
-              <th>Minimum Required</th>
-              <th>Status</th>
-              <th>Last Ordered</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Black Widow 2.0</td>
-              <td>3</td>
-              <td>15</td>
-              <td><span class="status-badge status-low-stock">Critical</span></td>
-              <td>2024-01-15</td>
-            </tr>
-            <tr>
-              <td>Pro Performance Shoes (Size 9)</td>
-              <td>2</td>
-              <td>10</td>
-              <td><span class="status-badge status-low-stock">Critical</span></td>
-              <td>2024-01-10</td>
-            </tr>
-            <tr>
-              <td>Compact Single Bag</td>
-              <td>5</td>
-              <td>12</td>
-              <td><span class="status-badge status-low-stock">Low</span></td>
-              <td>2024-01-18</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    <!-- User Deletion Log -->
-      <div class="detailed-reports" style="margin-top: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3>User Deletion Log</h3>
-        </div>
-
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Log ID</th>
-              <th>User ID</th>
-              <th>Username</th>
-              <th>Role</th>
-              <th>Deleted At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php
-            $userdeletion = "SELECT LogID as log_id, UserID as user_id, Username as username, Role as role, Time as DeletedAt FROM user_logs WHERE Status = 'Deleted' ORDER BY Time DESC";
-            $deletionresult = $conn->query($userdeletion);
-            if ($deletionresult->num_rows > 0) {
-              while ($deletiondata = $deletionresult->fetch_assoc()) {
-                $logid = $deletiondata['log_id'];
-                $userid = $deletiondata['user_id'];
-                $username = $deletiondata['username'];
-                $role = $deletiondata['role'];
-                $deletedat = $deletiondata['DeletedAt'];
-            ?>
-            <tr>
-              <td><?php echo $logid; ?></td>
-              <td><?php echo $userid; ?></td>
-              <td><?php echo $username; ?></td>
-              <td><?php echo $role; ?></td>
-              <td><?php echo $deletedat; ?></td>
-            </tr><?php }} ?>
-          </tbody>
-        </table>
-      </div>
-
-       <!-- Currency Changes Log -->
-      <div class="detailed-reports" style="margin-top: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3>Currency Changes Log</h3>
-        </div>
-
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Log ID</th>
-              <th>Currency</th>
-              <th>Previous Rate</th>
-              <th>New Rate</th>
-              <th>Changed At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php
-            $currencychange = "SELECT LogID as log_id, currency, previous_rate, new_rate, date_time FROM currency_changes_log ORDER BY date_time DESC";
-            $currencyresult = $conn->query($currencychange);
-            if ($currencyresult->num_rows > 0) {
-              while ($currencydata = $currencyresult->fetch_assoc()) {
-                $logid = $currencydata['log_id'];
-                $currency = $currencydata['currency'];
-                $previousrate = $currencydata['previous_rate'];
-                $newrate = $currencydata['new_rate'];
-                $datetime = $currencydata['date_time'];
-            ?>
-            <tr>
-              <td><?php echo $logid; ?></td>
-              <td><?php echo $currency; ?></td>
-              <td><?php echo $previousrate; ?></td>
-              <td><?php echo $newrate; ?></td>
-              <td><?php echo $datetime; ?></td>
-            </tr> <?php }}?>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Inventory Log -->
-      <div class="detailed-reports" style="margin-top: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3>Inventory Log</h3>
-        </div>
-
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Log ID</th>
-              <th>Name</th>
-              <th>Branch ID</th>
-              <th>Old Quantity</th>
-              <th>New Quantity</th>
-              <th>Price</th>
-              <th>Change Type</th>
-              <th>Changed At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php
-            $inventorylog = "SELECT LogID, Name, BranchID, OldQuantity, NewQuantity, Price, ChangeType, ChangedAt FROM inventory_log ORDER BY ChangedAt DESC";
-            $inventoryresult = $conn->query($inventorylog);
-            if ($inventoryresult->num_rows > 0) {
-              while ($inventorydata = $inventoryresult->fetch_assoc()) {
-                $logid = $inventorydata['LogID'];
-                $name = $inventorydata['Name'];
-                $branchid = $inventorydata['BranchID'];
-                $oldquantity = $inventorydata['OldQuantity'];
-                $newquantity = $inventorydata['NewQuantity'];
-                $price = $inventorydata['Price'];
-                $changetype = $inventorydata['ChangeType'];
-                $changedat = $inventorydata['ChangedAt'];
-            ?>
-            <tr>
-              <td><?php echo $logid; ?></td>
-              <td><?php echo $name; ?></td>
-              <td><?php echo $branchid; ?></td>
-              <td><?php echo $oldquantity; ?></td>
-              <td><?php echo $newquantity; ?></td>
-              <td><?php echo $price; ?></td>
-              <td><?php echo $changetype; ?></td>
-              <td><?php echo $changedat; ?></td>
-            </tr> <?php }}?>
-          </tbody>
-        </table>
       </div>
     </div>
+
+    <!-- Additional Charts -->
+    <div class="charts-container">
+      <div class="chart-card">
+        <h3 class="chart-title">Monthly Revenue Trend</h3>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Branch Performance</h3>
+        <div class="chart-container">
+          <canvas id="branchChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Reports Section -->
+    <div class="detailed-reports">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Top Selling Products</h3>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Units Sold</th>
+            <th>Revenue</th>
+            <th>Profit</th>
+            <th>Stock Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Phantom Bowling Ball</td>
+            <td>Bowling Balls</td>
+            <td>156</td>
+            <td>₱1,267,478</td>
+            <td>₱415,892</td>
+            <td><span class="status-badge status-active">In Stock</span></td>
+          </tr>
+          <tr>
+            <td>Tournament Roller Pro</td>
+            <td>Bowling Bags</td>
+            <td>89</td>
+            <td>₱382,699</td>
+            <td>₱125,456</td>
+            <td><span class="status-badge status-active">In Stock</span></td>
+          </tr>
+          <tr>
+            <td>Pro Performance Shoes</td>
+            <td>Bowling Shoes</td>
+            <td>67</td>
+            <td>₱234,567</td>
+            <td>₱76,890</td>
+            <td><span class="status-badge status-low-stock">Low Stock</span></td>
+          </tr>
+          <tr>
+            <td>Elite Grip Set</td>
+            <td>Accessories</td>
+            <td>234</td>
+            <td>₱187,654</td>
+            <td>₱61,567</td>
+            <td><span class="status-badge status-active">In Stock</span></td>
+          </tr>
+          <tr>
+            <td>Premium Cleaner Kit</td>
+            <td>Cleaning Supplies</td>
+            <td>178</td>
+            <td>₱156,789</td>
+            <td>₱51,345</td>
+            <td><span class="status-badge status-active">In Stock</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Low Stock Alert -->
+    <div class="detailed-reports" style="margin-top: 30px;">
+      <h3 style="color: #e74c3c; margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
+      </h3>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Current Stock</th>
+            <th>Minimum Required</th>
+            <th>Status</th>
+            <th>Last Ordered</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Black Widow 2.0</td>
+            <td>3</td>
+            <td>15</td>
+            <td><span class="status-badge status-low-stock">Critical</span></td>
+            <td>2024-01-15</td>
+          </tr>
+          <tr>
+            <td>Pro Performance Shoes (Size 9)</td>
+            <td>2</td>
+            <td>10</td>
+            <td><span class="status-badge status-low-stock">Critical</span></td>
+            <td>2024-01-10</td>
+          </tr>
+          <tr>
+            <td>Compact Single Bag</td>
+            <td>5</td>
+            <td>12</td>
+            <td><span class="status-badge status-low-stock">Low</span></td>
+            <td>2024-01-18</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+        
+    <!-- User Deletion Log -->
+    <div class="detailed-reports" style="margin-top: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>User Deletion Log</h3>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>User ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Deleted At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $userdeletion = "SELECT LogID as log_id, UserID as user_id, Username as username, Role as role, Time as DeletedAt FROM user_logs WHERE Status = 'Deleted' ORDER BY Time DESC";
+          $deletionresult = $conn->query($userdeletion);
+          if ($deletionresult->num_rows > 0) {
+            while ($deletiondata = $deletionresult->fetch_assoc()) {
+              $logid = $deletiondata['log_id'];
+              $userid = $deletiondata['user_id'];
+              $username = $deletiondata['username'];
+              $role = $deletiondata['role'];
+              $deletedat = $deletiondata['DeletedAt'];
+          ?>
+          <tr>
+            <td><?php echo $logid; ?></td>
+            <td><?php echo $userid; ?></td>
+            <td><?php echo $username; ?></td>
+            <td><?php echo $role; ?></td>
+            <td><?php echo $deletedat; ?></td>
+          </tr><?php }} ?>
+        </tbody>
+      </table>
+    </div>
+
+      <!-- Currency Changes Log -->
+    <div class="detailed-reports" style="margin-top: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Currency Changes Log</h3>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>Currency</th>
+            <th>Previous Rate</th>
+            <th>New Rate</th>
+            <th>Changed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $currencychange = "SELECT LogID as log_id, currency, previous_rate, new_rate, date_time FROM currency_changes_log ORDER BY date_time DESC";
+          $currencyresult = $conn->query($currencychange);
+          if ($currencyresult->num_rows > 0) {
+            while ($currencydata = $currencyresult->fetch_assoc()) {
+              $logid = $currencydata['log_id'];
+              $currency = $currencydata['currency'];
+              $previousrate = $currencydata['previous_rate'];
+              $newrate = $currencydata['new_rate'];
+              $datetime = $currencydata['date_time'];
+          ?>
+          <tr>
+            <td><?php echo $logid; ?></td>
+            <td><?php echo $currency; ?></td>
+            <td><?php echo $previousrate; ?></td>
+            <td><?php echo $newrate; ?></td>
+            <td><?php echo $datetime; ?></td>
+          </tr> <?php }}?>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Inventory Log -->
+    <div class="detailed-reports" style="margin-top: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Inventory Log</h3>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Log ID</th>
+            <th>Name</th>
+            <th>Branch ID</th>
+            <th>Old Quantity</th>
+            <th>New Quantity</th>
+            <th>Price</th>
+            <th>Change Type</th>
+            <th>Changed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $inventorylog = "SELECT LogID, Name, BranchID, OldQuantity, NewQuantity, Price, ChangeType, ChangedAt FROM inventory_log ORDER BY ChangedAt DESC";
+          $inventoryresult = $conn->query($inventorylog);
+          if ($inventoryresult->num_rows > 0) {
+            while ($inventorydata = $inventoryresult->fetch_assoc()) {
+              $logid = $inventorydata['LogID'];
+              $name = $inventorydata['Name'];
+              $branchid = $inventorydata['BranchID'];
+              $oldquantity = $inventorydata['OldQuantity'];
+              $newquantity = $inventorydata['NewQuantity'];
+              $price = $inventorydata['Price'];
+              $changetype = $inventorydata['ChangeType'];
+              $changedat = $inventorydata['ChangedAt'];
+          ?>
+          <tr>
+            <td><?php echo $logid; ?></td>
+            <td><?php echo $name; ?></td>
+            <td><?php echo $branchid; ?></td>
+            <td><?php echo $oldquantity; ?></td>
+            <td><?php echo $newquantity; ?></td>
+            <td><?php echo $price; ?></td>
+            <td><?php echo $changetype; ?></td>
+            <td><?php echo $changedat; ?></td>
+          </tr> <?php }}?>
+        </tbody>
+      </table>
+    </div>
   </div>
+</div>
 
   <script>
     $(document).ready(function() {
