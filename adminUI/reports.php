@@ -84,7 +84,7 @@ require_once '../dependencies/config.php';
       border-left-color: #e74c3c;
     }
 
-    .report-card.avg-order {
+    .report-card.customers {
       border-left-color: #9b59b6;
     }
 
@@ -97,7 +97,6 @@ require_once '../dependencies/config.php';
       justify-content: between;
       align-items: center;
       margin-bottom: 15px;
-      gap:10px;
     }
 
     .report-card-title {
@@ -297,90 +296,131 @@ require_once '../dependencies/config.php';
         <h1 class="reports-title">Analytics & Reports</h1>
       </div>
 
-      <div class="reports-grid">
-        <?php
-          $totalrevenue = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS revenue_this_month,
-                                  SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS revenue_last_month
-                            FROM orders";
-          $revenueresult = $conn->query($totalrevenue);
-          $revenuedata = $revenueresult->fetch_assoc();
-          $thismonthrevenue = $revenuedata['revenue_this_month'];
-          $lastmonthrevenue = $revenuedata['revenue_last_month'];
-          if ($lastmonthrevenue > 0) {
-            $revenueGrowth = (($thismonthrevenue - $lastmonthrevenue) / $lastmonthrevenue) * 100;
-          } else {
-            $revenueGrowth = $thismonthrevenue > 0 ? 100 : 0; 
-          }
-          $revenueGrowthClass = $revenueGrowth >= 0 ? 'change-positive' : 'change-negative';
-          $revenueSign = $revenueGrowthClass > 0 ? '+' : "";
-        ?>
-
-        <div class="report-card sales">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Total Revenue</h3>
-            <i class="fa-solid fa-money-bill" style="color: #2ecc71; font-size: 1.5rem;"></i>
-          </div>
-          <div class="report-card-value"><?php echo number_format($thismonthrevenue, 2); ?></div>
+      <!-- Quick Stats -->
+       <?php
+       $totalrevenue = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS revenue_this_month,
+                               SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS revenue_last_month
+                        FROM orders";
+      $revenueresult = $conn->query($totalrevenue);
+      $revenuedata = $revenueresult->fetch_assoc();
+      $thismonthrevenue = $revenuedata['revenue_this_month'];
+      $lastmonthrevenue = $revenuedata['revenue_last_month'];
+      if ($lastmonthrevenue > 0) {
+        $revenueGrowth = (($thismonthrevenue - $lastmonthrevenue) / $lastmonthrevenue) * 100;
+      } else {
+        $revenueGrowth = $thismonthrevenue > 0 ? 100 : 0; 
+      }
+      $revenueGrowthClass = $revenueGrowth >= 0 ? 'change-positive' : 'change-negative';
+      $revenueSign = $revenueGrowthClass > 0 ? '+' : "";
+       ?>
+      <div class="quick-stats">
+        <div class="quick-stat">
+          <div class="quick-stat-label">Total Revenue</div>
+          <div class="quick-stat-value">₱<?php echo number_format($thismonthrevenue, 2); ?></div>
           <div class="report-card-change <?php echo $revenueGrowthClass?>"><?php echo $revenueSign; echo number_format($revenueGrowth, 1); ?>% from last month
-          </div>
+        </div>
         </div>
 
         <?php
-          $ordercomp = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN 1 ELSE 0 END) AS this_month,
-                        SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m')
-                        THEN 1 ELSE 0 END) AS last_month, COUNT(*) as total_orders
-                        FROM orders";
-          $orderresult = $conn->query($ordercomp);
-          $orderdata = $orderresult->fetch_assoc();
-          $totalorders = $orderdata['total_orders'];
-          $thismonthorders = $orderdata['this_month'];
-          $lastmonthorders = $orderdata['last_month'];
-          $growth = 0;
-          if ($lastmonthorders > 0) {
-            $growth = (($thismonthorders - $lastmonthorders) / $lastmonthorders) * 100;
-          } else $growth = $thismonthorders > 0 ? 100 : 0;
-          $orderGrowthClass = $growth >= 0 ? 'change-positive' : 'change-negative';
-          $orderSign = $orderGrowthClass > 0 ? '+' : "";
+        $ordercomp = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN 1 ELSE 0 END) AS this_month,
+                      SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m')
+                      THEN 1 ELSE 0 END) AS last_month, COUNT(*) as total_orders
+                      FROM orders";
+        $orderresult = $conn->query($ordercomp);
+        $orderdata = $orderresult->fetch_assoc();
+        $totalorders = $orderdata['total_orders'];
+        $thismonthorders = $orderdata['this_month'];
+        $lastmonthorders = $orderdata['last_month'];
+        $growth = 0;
+        if ($lastmonthorders > 0) {
+          $growth = (($thismonthorders - $lastmonthorders) / $lastmonthorders) * 100;
+        } else $growth = $thismonthorders > 0 ? 100 : 0;
+        $orderGrowthClass = $growth >= 0 ? 'change-positive' : 'change-negative';
+        $orderSign = $orderGrowthClass > 0 ? '+' : "";
         ?>
-
-        <div class="report-card total-order">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Total Orders</h3>
-            <i class="fas fa-shopping-cart" style="color: #3498db; font-size: 1.5rem;"></i>
-          </div>
-          <div class="report-card-value"><?php echo $totalorders; ?></div>
-          <div class="report-card-change <?php echo $orderGrowthClass ?>"> 
+        <div class="quick-stat">
+          <div class="quick-stat-label">Total Orders</div>
+          <div class="quick-stat-value"><?php echo $totalorders; ?></div>
+          <div class="report-card-change <?php echo $orderGrowthClass ?>">
             <?php echo $orderSign; echo number_format($growth, 1); ?>% from last month
           </div>
         </div>
-
-
         <?php
-          $avgsalesmonth = "SELECT AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS avg_this_month,
-                                  AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS avg_last_month
-                            FROM orders";
-          $avgsalesresult = $conn->query($avgsalesmonth);
-          $avgsalesdata = $avgsalesresult->fetch_assoc();
-          $avgthismonth = $avgsalesdata['avg_this_month'];
-          $avglastmonth = $avgsalesdata['avg_last_month'];
-          if ($avglastmonth > 0) {
-              $avgGrowth = (($avgthismonth - $avglastmonth) / $avglastmonth) * 100;
-          } 
-          else {
-              $avgGrowth = $avgthismonth > 0 ? 100 : 0;
-          }
+        $avgsalesmonth = "SELECT AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS avg_this_month,
+                                 AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS avg_last_month
+                          FROM orders";
+        $avgsalesresult = $conn->query($avgsalesmonth);
+        $avgsalesdata = $avgsalesresult->fetch_assoc();
+        $avgthismonth = $avgsalesdata['avg_this_month'];
+        $avglastmonth = $avgsalesdata['avg_last_month'];
+        if ($avglastmonth > 0) {
+            $avgGrowth = (($avgthismonth - $avglastmonth) / $avglastmonth) * 100;
+        } 
+        else {
+            $avgGrowth = $avgthismonth > 0 ? 100 : 0;
+        }
           $avgGrowthClass = $avgGrowth >= 0 ? 'change-positive' : 'change-negative';
           $avgSign = $avgGrowth > 0 ? '+' : "";
         ?>
-      
-
-        <div class="report-card avg-order">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Avg. Order Value</h3>
-            <i class="fas fa-chart-bar" style="color: #9b59b6; font-size: 1.5rem;"></i>
+        <div class="quick-stat">
+          <div class="quick-stat-label">Avg. Order Value</div>
+          <div class="quick-stat-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
+          <div class="report-card-change <?php echo $avgGrowthClass?>">
+            <?php echo $avgSign; echo number_format($avgGrowth, 1); ?>% from last month
           </div>
-          <div class="report-card-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
-          <div class="report-card-change <?php echo $avgGrowthClass?>"><?php echo $avgSign; echo number_format($avgGrowth, 1); ?>% from last month</div>
+        </div>
+        <div class="quick-stat">
+          <div class="quick-stat-label">Customer Growth</div>
+          <div class="quick-stat-value">+287</div>
+          <div class="report-card-change change-positive">+15.7% from last month</div>
+        </div>
+      </div>
+
+      <!-- Report Filters -->
+      <div class="report-filters">
+        <select class="filter-select" id="reportType">
+          <option value="sales">Sales Report</option>
+          <option value="inventory">Inventory Report</option>
+          <option value="customer">Customer Report</option>
+          <option value="financial">Financial Report</option>
+        </select>
+        
+        <select class="filter-select" id="branchFilter">
+          <option value="">All Branches</option>
+          <option value="downtown">Downtown</option>
+          <option value="west-mall">West Mall</option>
+          <option value="east-side">East Side</option>
+          <option value="north-plaza">North Plaza</option>
+        </select>
+        
+        <select class="filter-select" id="categoryFilter">
+          <option value="">All Categories</option>
+          <option value="bowling-balls">Bowling Balls</option>
+          <option value="shoes">Bowling Shoes</option>
+          <option value="bags">Bowling Bags</option>
+          <option value="accessories">Accessories</option>
+          <option value="cleaning">Cleaning Supplies</option>
+        </select>
+        
+        <select class="filter-select" id="timeFrame">
+          <option value="daily">Daily</option>
+          <option value="weekly" selected>Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      <!-- Key Metrics Cards -->
+      <div class="reports-grid">
+        <div class="report-card sales">
+          <div class="report-card-header">
+            <h3 class="report-card-title">Total Sales</h3>
+            <i class="fas fa-shopping-cart" style="color: #2ecc71; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value"><?php echo number_format($thismonthrevenue, 2); ?></div>
+          <div class="report-card-change <?php echo $revenueGrowthClass?>"><?php echo $revenueSign; echo number_format($revenueGrowth, 1); ?>% from last month
+        </div>
         </div>
 
         <div class="report-card inventory">
@@ -395,8 +435,27 @@ require_once '../dependencies/config.php';
                               HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
             $lowstockresult = $conn->query($lowstockquery);
             $lowstockproducts = $lowstockresult->num_rows;
-          ?>
+        ?>
           <div class="report-card-value"><?php echo $lowstockproducts; ?></div>
+          <div class="report-card-change change-negative">+3 from last week</div>
+        </div>
+
+        <div class="report-card customers">
+          <div class="report-card-header">
+            <h3 class="report-card-title">New Customers</h3>
+            <i class="fas fa-users" style="color: #9b59b6; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value">287</div>
+          <div class="report-card-change change-positive">+15.7% growth</div>
+        </div>
+
+        <div class="report-card financial">
+          <div class="report-card-header">
+            <h3 class="report-card-title">Profit Margin</h3>
+            <i class="fas fa-chart-line" style="color: #f39c12; font-size: 1.5rem;"></i>
+          </div>
+          <div class="report-card-value">32.8%</div>
+          <div class="report-card-change change-positive">+2.1% improvement</div>
         </div>
       </div>
 
@@ -555,7 +614,7 @@ require_once '../dependencies/config.php';
           </thead>
           <tbody>
             <?php
-            $userdeletion = "SELECT LogID as log_id, UserID as user_id, Username as username, Role as role, DeletedAt FROM user_deletion_log ORDER BY DeletedAt DESC";
+            $userdeletion = "SELECT LogID as log_id, UserID as user_id, Username as username, Role as role, Time as DeletedAt FROM user_logs WHERE Status = 'Deleted' ORDER BY Time DESC";
             $deletionresult = $conn->query($userdeletion);
             if ($deletionresult->num_rows > 0) {
               while ($deletiondata = $deletionresult->fetch_assoc()) {
