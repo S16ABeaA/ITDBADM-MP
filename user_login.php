@@ -1,5 +1,4 @@
 <?php
-require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 
 $max_attempts = 3;
@@ -22,6 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
     $user_result = $user_check->get_result();
     
     if ($user_result->num_rows === 0) {
+        // Just insert into login_attempts - trigger will handle logging
         $record_attempt = $conn->prepare("INSERT INTO login_attempts (UserID, IPAddress, Successful) VALUES (NULL, ?, FALSE)");
         $record_attempt->bind_param("s", $ip_address);
         $record_attempt->execute();
@@ -73,7 +73,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
             // Legacy password verification
             if (hash_equals((string)$stored, (string)$password)) {
                 $login_successful = true;
-                // Rehash password
                 $newHash = password_hash($password, PASSWORD_DEFAULT);
                 $update = $conn->prepare("UPDATE users SET Password = ? WHERE UserID = ?");
                 $update->bind_param("si", $newHash, $user['UserID']);
@@ -83,7 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         }
     }
 
-    // Step 4: Record the attempt
+    // Step 4: Record the attempt - trigger will handle logging
     $record_attempt = $conn->prepare("INSERT INTO login_attempts (UserID, IPAddress, Successful) VALUES (?, ?, ?)");
     $success_val = $login_successful ? 1 : 0;
     $record_attempt->bind_param("isi", $user_id, $ip_address, $success_val);
@@ -96,6 +95,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["login-email"])) {
         $_SESSION['user_name'] = $user['FirstName'];
         $_SESSION['user_email'] = $user['Email'];
         $_SESSION['user_role'] = $user['Role'];
+        
+        // Get appropriate database connection for the user's role
+        $conn = getDBConnection($user['Role']);
         
         // Redirect based on role and branch selection
         if (isset($_SESSION['selected_branch_id']) && !empty($_SESSION['selected_branch_id'])) {

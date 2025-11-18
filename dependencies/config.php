@@ -1,18 +1,53 @@
 <?php
-define('DB_SERVER', '127.0.0.1');     
-define('DB_USERNAME', 'student1');  
-define('DB_PASSWORD', 'Dlsu1234!');   
-define('DB_NAME', 'AnimoBowl');       
-define('DB_PORT', 3308);         
+function getDBConnection($role = 'customer') {
+    $config = [
+        'staff' => [
+            'server' => '127.0.0.1',
+            'username' => 'student2',
+            'password' => 'Dlsu1234!',
+            'name' => 'AnimoBowl',
+            'port' => 3307
+        ],
+        'admin' => [
+            'server' => '127.0.0.1',
+            'username' => 'student1',
+            'password' => 'Dlsu1234!',
+            'name' => 'AnimoBowl',
+            'port' => 3307
+        ],
+        'customer' => [
+            'server' => '127.0.0.1',
+            'username' => 'student3',
+            'password' => 'Dlsu1234!',
+            'name' => 'AnimoBowl',
+            'port' => 3307
+        ]
+    ];
 
-try {
-    $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_PORT);
-
-    if ($conn->connect_error) {
-        throw new Exception("Connection failed: " . $conn->connect_error);
+    $role = strtolower($role);
+    if (!isset($config[$role])) {
+        $role = 'customer';
     }
-} catch (Exception $e) {
-    die("ERROR: Could not connect to the database. " . $e->getMessage());
-}
-?>
 
+    try {
+        $conn = new mysqli(
+            $config[$role]['server'],
+            $config[$role]['username'],
+            $config[$role]['password'],
+            $config[$role]['name'],
+            $config[$role]['port']
+        );
+
+        if ($conn->connect_error) {
+            throw new Exception("Connection failed: " . $conn->connect_error);
+        }
+        
+        return $conn;
+    } catch (Exception $e) {
+        die("ERROR: Could not connect to the database. " . $e->getMessage());
+    }
+}
+
+// Default connection (for login page, etc.)
+$conn = getDBConnection('customer');
+?>
