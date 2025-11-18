@@ -308,15 +308,19 @@ require_once '../dependencies/config.php';
       if ($lastmonthrevenue > 0) {
         $revenueGrowth = (($thismonthrevenue - $lastmonthrevenue) / $lastmonthrevenue) * 100;
       } else {
-        $revenueGrowth = 0; 
+        $revenueGrowth = $thismonthrevenue > 0 ? 100 : 0; 
       }
+      $revenueGrowthClass = $revenueGrowth >= 0 ? 'change-positive' : 'change-negative';
+      $revenueSign = $revenueGrowthClass > 0 ? '+' : "";
        ?>
       <div class="quick-stats">
         <div class="quick-stat">
           <div class="quick-stat-label">Total Revenue</div>
           <div class="quick-stat-value">₱<?php echo number_format($thismonthrevenue, 2); ?></div>
-          <div class="report-card-change change-positive"><?php echo number_format($revenueGrowth, 1); ?>% from last month</div>
+          <div class="report-card-change <?php echo $revenueGrowthClass?>"><?php echo $revenueSign; echo number_format($revenueGrowth, 1); ?>% from last month
         </div>
+        </div>
+
         <?php
         $ordercomp = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN 1 ELSE 0 END) AS this_month,
                       SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m')
@@ -330,12 +334,16 @@ require_once '../dependencies/config.php';
         $growth = 0;
         if ($lastmonthorders > 0) {
           $growth = (($thismonthorders - $lastmonthorders) / $lastmonthorders) * 100;
-        }
+        } else $growth = $thismonthorders > 0 ? 100 : 0;
+        $orderGrowthClass = $growth >= 0 ? 'change-positive' : 'change-negative';
+        $orderSign = $orderGrowthClass > 0 ? '+' : "";
         ?>
         <div class="quick-stat">
           <div class="quick-stat-label">Total Orders</div>
           <div class="quick-stat-value"><?php echo $totalorders; ?></div>
-          <div class="report-card-change change-positive"><?php echo number_format($growth, 1); ?>% from last month</div>
+          <div class="report-card-change <?php echo $orderGrowthClass ?>">
+            <?php echo $orderSign; echo number_format($growth, 1); ?>% from last month
+          </div>
         </div>
         <?php
         $avgsalesmonth = "SELECT AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS avg_this_month,
@@ -347,13 +355,19 @@ require_once '../dependencies/config.php';
         $avglastmonth = $avgsalesdata['avg_last_month'];
         if ($avglastmonth > 0) {
             $avgGrowth = (($avgthismonth - $avglastmonth) / $avglastmonth) * 100;
-        } else {
-            $avgGrowth = 0; }
+        } 
+        else {
+            $avgGrowth = $avgthismonth > 0 ? 100 : 0;
+        }
+          $avgGrowthClass = $avgGrowth >= 0 ? 'change-positive' : 'change-negative';
+          $avgSign = $avgGrowth > 0 ? '+' : "";
         ?>
         <div class="quick-stat">
           <div class="quick-stat-label">Avg. Order Value</div>
           <div class="quick-stat-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
-          <div class="report-card-change change-positive"><?php echo number_format($avgGrowth, 1); ?>% from last month</div>
+          <div class="report-card-change <?php echo $avgGrowthClass?>">
+            <?php echo $avgSign; echo number_format($avgGrowth, 1); ?>% from last month
+          </div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-label">Customer Growth</div>
@@ -404,8 +418,9 @@ require_once '../dependencies/config.php';
             <h3 class="report-card-title">Total Sales</h3>
             <i class="fas fa-shopping-cart" style="color: #2ecc71; font-size: 1.5rem;"></i>
           </div>
-          <div class="report-card-value">₱1,245,680</div>
-          <div class="report-card-change change-positive">+12.5% from last period</div>
+          <div class="report-card-value"><?php echo number_format($thismonthrevenue, 2); ?></div>
+          <div class="report-card-change <?php echo $revenueGrowthClass?>"><?php echo $revenueSign; echo number_format($revenueGrowth, 1); ?>% from last month
+        </div>
         </div>
 
         <div class="report-card inventory">
