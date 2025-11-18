@@ -776,60 +776,89 @@ require_once '../dependencies/config.php';
         });
     });
 
-        // Product Categories Chart
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        new Chart(categoryCtx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Bowling Balls', 'Shoes', 'Bags', 'Accessories', 'Cleaning'],
-            datasets: [{
-              data: [45, 20, 15, 12, 8],
-              backgroundColor: [
-                '#3498db',
-                '#2ecc71',
-                '#e74c3c',
-                '#9b59b6',
-                '#f39c12'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
+        fetch('products_category.php')
+  .then(response => response.json())
+  .then(stats => {
+      
+    const ctx = document.getElementById('categoryChart').getContext('2d');
 
-        // Revenue Trend Chart
-        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(revenueCtx, {
-          type: 'bar',
-          data: {
-            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-            datasets: [{
-              label: 'Revenue',
-              data: [320000, 425000, 392000, 485000],
-              backgroundColor: '#2ecc71'
-            }, {
-              label: 'Profit',
-              data: [104000, 138000, 127000, 157000],
-              backgroundColor: '#3498db'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return '₱' + value.toLocaleString();
-                  }
-                }
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: stats.labels,
+        datasets: [{
+          data: stats.data,
+          backgroundColor: [
+            '#3498db',
+            '#2ecc71',
+            '#e74c3c',
+            '#9b59b6',
+            '#f39c12'
+          ]
+        }]
+      },
+      options: {
+        plugins:{
+          tooltip:{
+            callbacks:{
+              label: function(context) {
+              let label = context.label || '';
+              let value = context.raw || 0;
+              return `${label}: ${value}%`;
               }
             }
           }
-        });
+        }, 
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+  });
+
+  fetch('revenue_trend.php')
+  .then(r => r.json())
+  .then(data => {
+    const labels = data.map(d => d.label);
+    const revenue = data.map(d => d.revenue);
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+     new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Revenue',
+            data: revenue,
+            borderColor: '#2ecc71',
+            backgroundColor: '#2ecc71',
+            borderWidth: 2,
+            tension: 0.3,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ₱${ctx.raw.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => '₱' + value.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  });
+
 
         // Branch Performance Chart
         const branchCtx = document.getElementById('branchChart').getContext('2d');
