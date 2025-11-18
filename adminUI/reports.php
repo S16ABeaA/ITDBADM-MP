@@ -403,49 +403,41 @@ require_once '../dependencies/config.php';
       </div>
 
       <!-- Key Metrics Cards -->
+    <?php
+    $newcustomers = "SELECT
+    (SELECT COUNT(*)
+     FROM user_logs
+     WHERE Status = 'Created'
+       AND MONTH(Time) = MONTH(CURRENT_DATE())
+       AND YEAR(Time) = YEAR(CURRENT_DATE())
+    ) AS current_users,
+    (SELECT COUNT(*)
+     FROM user_logs
+     WHERE Status = 'Created'
+       AND MONTH(Time) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH)
+       AND YEAR(Time) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH)
+    ) AS last_users";
+    $customerresult = $conn->query($newcustomers);
+    $customerdata = $customerresult->fetch_assoc();
+    $currentusers = $customerdata['current_users'];
+    $lastusers = $customerdata['last_users'];
+    if ($lastusers > 0) {
+        $customerGrowth = (($currentusers - $lastusers) / $lastusers) * 100;
+    } 
+    else {
+        $customerGrowth = $currentusers > 0 ? 100 : 0;
+    }
+    ?>
      <div class="reports-grid">
         <div class="report-card customers">
           <div class="report-card-header">
             <h3 class="report-card-title">New Customers</h3>
             <i class="fas fa-users" style="color: #9b59b6; font-size: 1.5rem;"></i>
           </div>
-          <div class="report-card-value">287</div>
-          <div class="report-card-change change-positive">+15.7% growth</div>
-        </div>
-
-        <div class="report-card financial">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Profit Margin</h3>
-            <i class="fas fa-chart-line" style="color: #f39c12; font-size: 1.5rem;"></i>
+          <div class="report-card-value"><?php echo $currentusers; ?></div>
+          <div class="report-card-change <?php echo $customerGrowth >= 0 ? 'change-positive' : 'change-negative'; ?>">
+            <?php echo ($customerGrowth >= 0 ? '+' : '') . number_format($customerGrowth, 1); ?>% growth
           </div>
-          <div class="report-card-value">32.8%</div>
-          <div class="report-card-change change-positive">+2.1% improvement</div>
-        </div>
-      
-
-        <div class="report-card avg-order">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Avg. Order Value</h3>
-            <i class="fas fa-chart-bar" style="color: #9b59b6; font-size: 1.5rem;"></i>
-          </div>
-          <div class="report-card-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
-          <div class="report-card-change <?php echo $avgGrowthClass?>"><?php echo $avgSign; echo number_format($avgGrowth, 1); ?>% from last month</div>
-        </div>
-
-        <div class="report-card inventory">
-          <div class="report-card-header">
-            <h3 class="report-card-title">Low Stock Items</h3>
-            <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 1.5rem;"></i>
-          </div>
-          <?php
-            $lowstockproducts = 0;
-            $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
-                              GROUP BY ProductID
-                              HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
-            $lowstockresult = $conn->query($lowstockquery);
-            $lowstockproducts = $lowstockresult->num_rows;
-          ?>
-          <div class="report-card-value"><?php echo $lowstockproducts; ?></div>
         </div>
 
       </div>
