@@ -620,9 +620,7 @@ END $$ DELIMITER ;
 
 -- Procedure 25-29 CRUD User Information -- 
 DELIMITER $$
-
 CREATE PROCEDURE AddUser(
-    IN p_AddressID INT,
     IN p_FirstName VARCHAR(50),
     IN p_LastName VARCHAR(50),
     IN p_Number VARCHAR(20),
@@ -631,29 +629,34 @@ CREATE PROCEDURE AddUser(
 )
 BEGIN
     DECLARE existingUser INT;
+    DECLARE newAddressID INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        INSERT INTO signup_log (email, attempt_date, first_name, last_name, contact_number, status)
+        VALUES (p_Email, CONVERT_TZ(NOW(), 'SYSTEM', '+08:00'), p_FirstName, p_LastName, p_Number, 'failed');
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
-    SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
     START TRANSACTION;
 
-
-    SELECT COUNT(*) INTO existingUser
-    FROM users
-    WHERE Email = p_Email;
+    SELECT COUNT(*) INTO existingUser FROM users WHERE Email = p_Email;
 
     IF existingUser > 0 THEN
+        INSERT INTO signup_log (email, attempt_date, first_name, last_name, contact_number, status)
+        VALUES (p_Email, CONVERT_TZ(NOW(), 'SYSTEM', '+08:00'), p_FirstName, p_LastName, p_Number, 'failed');
         ROLLBACK;
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Email already registered.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Email already registered.';
     END IF;
 
-    
+    INSERT INTO address (City, Street, zip_code) VALUES ('City', 'Street', '1234');
+    SET newAddressID = LAST_INSERT_ID();
     INSERT INTO users (AddressID, FirstName, LastName, MobileNumber, Email, Password)
-    VALUES (p_AddressID, p_FirstName, p_LastName, p_Number, p_Email, p_Pass);
+    VALUES (newAddressID, p_FirstName, p_LastName, p_Number, p_Email, p_Pass);
 
     COMMIT;
-END $$
-
-DELIMITER ;
+END
+$$ DELIMITER ;
 
 
 DELIMITER $$
