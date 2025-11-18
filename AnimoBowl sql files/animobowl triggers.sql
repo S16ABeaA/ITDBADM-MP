@@ -573,3 +573,14 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- Trigger to log successful signups automatically
+DELIMITER $$
+CREATE TRIGGER after_user_insert
+AFTER INSERT ON users
+FOR EACH ROW
+BEGIN
+    INSERT INTO signup_log (email, attempt_date, first_name, last_name, contact_number, status)
+    VALUES (NEW.Email, CONVERT_TZ(NOW(), 'SYSTEM', '+08:00'), NEW.FirstName, NEW.LastName, NEW.MobileNumber, 'success');
+END
+$$ DELIMITER ;
