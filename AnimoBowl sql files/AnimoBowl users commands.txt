@@ -59,6 +59,8 @@ GRANT SELECT, INSERT, UPDATE ON AnimoBowl.signup_log TO 'student3'@'127.0.0.1';
 GRANT EXECUTE ON PROCEDURE AnimoBowl.GetUserProfile TO 'student3'@'127.0.0.1';
 GRANT EXECUTE ON PROCEDURE AnimoBowl.ChangeUserInformation TO 'student3'@'127.0.0.1';
 GRANT EXECUTE ON PROCEDURE AnimoBowl.UpdateUserPassword TO 'student3'@'127.0.0.1';
+GRANT EXECUTE ON PROCEDURE AnimoBowl.GetUserProfile TO 'student3'@'127.0.0.1';
+GRANT EXECUTE ON PROCEDURE AnimoBowl.GetCurrencyRate TO 'student3'@'127.0.0.1';
 FLUSH PRIVILEGES; 
 
 CREATE USER 'student4'@'127.0.0.1' IDENTIFIED BY 'Dlsu1234!';

@@ -5,6 +5,10 @@ include("header.html");
 
 $userID = $_SESSION['user_id'];
 
+// Get appropriate database connection
+$role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'customer';
+$conn = getDBConnection($role);
+
 // Call stored procedure GetUserProfile
 $stmt = $conn->prepare("CALL GetUserProfile(?)");
 $stmt->bind_param("i", $userID);

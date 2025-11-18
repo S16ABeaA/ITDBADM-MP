@@ -3,6 +3,10 @@ require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 include("header.html");
 
+// Get appropriate database connection
+$role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'customer';
+$conn = getDBConnection($role);
+
 // Check if branch is selected
 $branchSelected = isset($_SESSION['selected_branch_id']) && !empty($_SESSION['selected_branch_id']);
 $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
@@ -62,7 +66,7 @@ $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
             $id = (int)$row['ProductID'];
             $img = htmlspecialchars($row['ImageID'] ?: 'images/placeholder.png');
             $name = htmlspecialchars($row['Name'] ?? 'Unnamed');
-            $weight = isset($row['weight']) ? (int)$row['weight'] : ''; // Fixed: lowercase 'weight'
+            $weight = isset($row['weight']) ? (int)$row['weight'] : '';
             $price = htmlspecialchars($row['Price']);
             $quantity = (int)$row['quantity'];
             $soldOut = ($quantity <= 0);
