@@ -1,3 +1,6 @@
+<?php
+require_once '../dependencies/config.php'; 
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -302,21 +305,63 @@
       </div>
 
       <!-- Quick Stats -->
+       <?php
+       $totalrevenue = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS revenue_this_month,
+                               SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS revenue_last_month
+                        FROM orders";
+      $revenueresult = $conn->query($totalrevenue);
+      $revenuedata = $revenueresult->fetch_assoc();
+      $thismonthrevenue = $revenuedata['revenue_this_month'];
+      $lastmonthrevenue = $revenuedata['revenue_last_month'];
+      if ($lastmonthrevenue > 0) {
+        $revenueGrowth = (($thismonthrevenue - $lastmonthrevenue) / $lastmonthrevenue) * 100;
+      } else {
+        $revenueGrowth = 0; 
+      }
+       ?>
       <div class="quick-stats">
         <div class="quick-stat">
           <div class="quick-stat-label">Total Revenue</div>
-          <div class="quick-stat-value">₱1,245,680</div>
-          <div class="report-card-change change-positive">+12.5% from last month</div>
+          <div class="quick-stat-value">₱<?php echo number_format($thismonthrevenue, 2); ?></div>
+          <div class="report-card-change change-positive"><?php echo number_format($revenueGrowth, 1); ?>% from last month</div>
         </div>
+        <?php
+        $ordercomp = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN 1 ELSE 0 END) AS this_month,
+                      SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m')
+                      THEN 1 ELSE 0 END) AS last_month, COUNT(*) as total_orders
+                      FROM orders";
+        $orderresult = $conn->query($ordercomp);
+        $orderdata = $orderresult->fetch_assoc();
+        $totalorders = $orderdata['total_orders'];
+        $thismonthorders = $orderdata['this_month'];
+        $lastmonthorders = $orderdata['last_month'];
+        $growth = 0;
+        if ($lastmonthorders > 0) {
+          $growth = (($thismonthorders - $lastmonthorders) / $lastmonthorders) * 100;
+        }
+        ?>
         <div class="quick-stat">
           <div class="quick-stat-label">Total Orders</div>
-          <div class="quick-stat-value">1,847</div>
-          <div class="report-card-change change-positive">+8.3% from last month</div>
+          <div class="quick-stat-value"><?php echo $totalorders; ?></div>
+          <div class="report-card-change change-positive"><?php echo number_format($growth, 1); ?>% from last month</div>
         </div>
+        <?php
+        $avgsalesmonth = "SELECT AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS avg_this_month,
+                                 AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS avg_last_month
+                          FROM orders";
+        $avgsalesresult = $conn->query($avgsalesmonth);
+        $avgsalesdata = $avgsalesresult->fetch_assoc();
+        $avgthismonth = $avgsalesdata['avg_this_month'];
+        $avglastmonth = $avgsalesdata['avg_last_month'];
+        if ($avglastmonth > 0) {
+            $avgGrowth = (($avgthismonth - $avglastmonth) / $avglastmonth) * 100;
+        } else {
+            $avgGrowth = 0; }
+        ?>
         <div class="quick-stat">
           <div class="quick-stat-label">Avg. Order Value</div>
-          <div class="quick-stat-value">₱674.50</div>
-          <div class="report-card-change change-positive">+4.2% from last month</div>
+          <div class="quick-stat-value">₱<?php echo number_format($avgthismonth, 2); ?></div>
+          <div class="report-card-change change-positive"><?php echo number_format($avgGrowth, 1); ?>% from last month</div>
         </div>
         <div class="quick-stat">
           <div class="quick-stat-label">Customer Growth</div>
@@ -376,7 +421,15 @@
             <h3 class="report-card-title">Low Stock Items</h3>
             <i class="fas fa-exclamation-triangle" style="color: #e74c3c; font-size: 1.5rem;"></i>
           </div>
-          <div class="report-card-value">18</div>
+          <?php
+            $lowstockproducts = 0;
+            $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                              GROUP BY ProductID
+                              HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
+            $lowstockresult = $conn->query($lowstockquery);
+            $lowstockproducts = $lowstockresult->num_rows;
+        ?>
+          <div class="report-card-value"><?php echo $lowstockproducts; ?></div>
           <div class="report-card-change change-negative">+3 from last week</div>
         </div>
 
