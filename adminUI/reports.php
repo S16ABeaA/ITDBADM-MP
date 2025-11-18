@@ -613,13 +613,24 @@ require_once '../dependencies/config.php';
             </tr>
           </thead>
           <tbody>
+            <?php
+            $userdeletion = "SELECT LogID as log_id, UserID as user_id, Username as username, Role as role, DeletedAt FROM user_deletion_log ORDER BY DeletedAt DESC";
+            $deletionresult = $conn->query($userdeletion);
+            if ($deletionresult->num_rows > 0) {
+              while ($deletiondata = $deletionresult->fetch_assoc()) {
+                $logid = $deletiondata['log_id'];
+                $userid = $deletiondata['user_id'];
+                $username = $deletiondata['username'];
+                $role = $deletiondata['role'];
+                $deletedat = $deletiondata['DeletedAt'];
+            ?>
             <tr>
-              <td>1</td>
-              <td>1</td>
-              <td>adrian</td>
-              <td>user</td>
-              <td>today</td>
-            </tr>
+              <td><?php echo $logid; ?></td>
+              <td><?php echo $userid; ?></td>
+              <td><?php echo $username; ?></td>
+              <td><?php echo $role; ?></td>
+              <td><?php echo $deletedat; ?></td>
+            </tr><?php }} ?>
           </tbody>
         </table>
       </div>
@@ -641,13 +652,24 @@ require_once '../dependencies/config.php';
             </tr>
           </thead>
           <tbody>
+            <?php
+            $currencychange = "SELECT LogID as log_id, currency, previous_rate, new_rate, date_time FROM currency_changes_log ORDER BY date_time DESC";
+            $currencyresult = $conn->query($currencychange);
+            if ($currencyresult->num_rows > 0) {
+              while ($currencydata = $currencyresult->fetch_assoc()) {
+                $logid = $currencydata['log_id'];
+                $currency = $currencydata['currency'];
+                $previousrate = $currencydata['previous_rate'];
+                $newrate = $currencydata['new_rate'];
+                $datetime = $currencydata['date_time'];
+            ?>
             <tr>
-              <td>1</td>
-              <td>Kor</td>
-              <td>21</td>
-              <td>22</td>
-              <td>today</td>
-            </tr>
+              <td><?php echo $logid; ?></td>
+              <td><?php echo $currency; ?></td>
+              <td><?php echo $previousrate; ?></td>
+              <td><?php echo $newrate; ?></td>
+              <td><?php echo $datetime; ?></td>
+            </tr> <?php }}?>
           </tbody>
         </table>
       </div>
@@ -672,16 +694,30 @@ require_once '../dependencies/config.php';
             </tr>
           </thead>
           <tbody>
+            <?php
+            $inventorylog = "SELECT LogID, Name, BranchID, OldQuantity, NewQuantity, Price, ChangeType, ChangedAt FROM inventory_log ORDER BY ChangedAt DESC";
+            $inventoryresult = $conn->query($inventorylog);
+            if ($inventoryresult->num_rows > 0) {
+              while ($inventorydata = $inventoryresult->fetch_assoc()) {
+                $logid = $inventorydata['LogID'];
+                $name = $inventorydata['Name'];
+                $branchid = $inventorydata['BranchID'];
+                $oldquantity = $inventorydata['OldQuantity'];
+                $newquantity = $inventorydata['NewQuantity'];
+                $price = $inventorydata['Price'];
+                $changetype = $inventorydata['ChangeType'];
+                $changedat = $inventorydata['ChangedAt'];
+            ?>
             <tr>
-              <td>1</td>
-              <td>ball</td>
-              <td>1</td>
-              <td>0</td>
-              <td>22</td>
-              <td>8k</td>
-              <td>idk</td>
-              <td>today</td>
-            </tr>
+              <td><?php echo $logid; ?></td>
+              <td><?php echo $name; ?></td>
+              <td><?php echo $branchid; ?></td>
+              <td><?php echo $oldquantity; ?></td>
+              <td><?php echo $newquantity; ?></td>
+              <td><?php echo $price; ?></td>
+              <td><?php echo $changetype; ?></td>
+              <td><?php echo $changedat; ?></td>
+            </tr> <?php }}?>
           </tbody>
         </table>
       </div>
