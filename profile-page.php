@@ -153,13 +153,60 @@ if (isset($_POST['saveChanges'])) {
     $currentPassword = $_POST['currentPassword'];
     $newPassword = $_POST['newPassword'];
 
-    $stmt = $conn->prepare("CALL UpdateUserPassword(?, ?)");
-    $stmt->bind_param("is", $userID, $newPassword);
-    $stmt->execute();
-    $stmt->close();
-    $conn->next_result();
+    // Debug: Check what we're receiving
+    error_log("Password change attempt - UserID: $userID, CurrentPassLength: " . strlen($currentPassword));
+    
+    try {
+        // First, verify the current password
+        $verifyStmt = $conn->prepare("SELECT Password FROM users WHERE UserID = ?");
+        $verifyStmt->bind_param("i", $userID);
+        
+        if (!$verifyStmt->execute()) {
+            throw new Exception("Failed to verify current password");
+        }
+        
+        $verifyStmt->store_result();
+        
+        if ($verifyStmt->num_rows === 0) {
+            throw new Exception("User not found");
+        }
+        
+        $verifyStmt->bind_result($storedHashedPassword);
+        $verifyStmt->fetch();
+        $verifyStmt->close();
 
-    echo "<script>alert('Password changed successfully!'); window.location.href='profile-page.php';</script>";
+        // Debug: Check the hash we retrieved
+        error_log("Stored hash: " . $storedHashedPassword);
+        
+        // Verify current password - THIS SHOULD WORK
+        if (!password_verify($currentPassword, $storedHashedPassword)) {
+            error_log("Password verification failed for user: $userID");
+            echo "<script>alert('Current password is incorrect!'); window.location.href='profile-page.php';</script>";
+            exit;
+        }
+
+        error_log("Password verification successful for user: $userID");
+        
+        // Hash the new password before storing it
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare("CALL UpdateUserPassword(?, ?)");
+        $stmt->bind_param("is", $userID, $hashedPassword);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Password changed successfully!'); window.location.href='profile-page.php';</script>";
+        } else {
+            throw new Exception("Failed to update password in database");
+        }
+        
+        $stmt->close();
+        $conn->next_result();
+        
+    } catch (Exception $e) {
+        // Log the error for debugging
+        error_log("Password change error: " . $e->getMessage());
+        echo "<script>alert('Error changing password! Please try again.'); window.location.href='profile-page.php';</script>";
+    }
     exit;
 }
 
@@ -466,7 +513,7 @@ $conn->close();
     // Change Password Modal functionality
     const changePasswordBtn = document.getElementById('changePasswordBtn');
     const changePasswordModal = document.getElementById('changePasswordModal');
-    const closeModal = document.querySelector('.close');
+    const changePasswordClose = changePasswordModal.querySelector('.close'); // Get close button from THIS modal
     const cancelPasswordChange = document.getElementById('cancelPasswordChange');
     const changePasswordForm = document.getElementById('changePasswordForm');
 
@@ -482,7 +529,8 @@ $conn->close();
       changePasswordForm.reset();
     }
 
-    closeModal.addEventListener('click', closePasswordModal);
+    // Use the specific close button for this modal
+    changePasswordClose.addEventListener('click', closePasswordModal);
     cancelPasswordChange.addEventListener('click', closePasswordModal);
 
     // Close modal when clicking outside
@@ -497,22 +545,46 @@ $conn->close();
       const currentPassword = document.getElementById('currentPassword').value;
       const newPassword = document.getElementById('newPassword').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
+      let isValid = true;
+      
+      // Clear previous error messages
+      document.querySelectorAll('.error-message').forEach(error => error.remove());
       
       if (newPassword !== confirmPassword) {
-        alert('New passwords do not match');
-        document.getElementById('confirmPassword').focus();
-        return;
+        showError('confirmPassword', 'New passwords do not match');
+        isValid = false;
       }
       
       if (newPassword.length < 8) {
-        alert('New password must be at least 8 characters long');
-        document.getElementById('newPassword').focus();
-        return;
+        showError('newPassword', 'New password must be at least 8 characters long');
+        isValid = false;
       }
       
-      // After validation, submit the form to PHP
-      changePasswordForm.submit();
+      if (currentPassword.length === 0) {
+        showError('currentPassword', 'Please enter your current password');
+        isValid = false;
+      }
+      
+      if (!isValid) {
+        event.preventDefault();
+      }
     });
+
+    function showError(fieldId, message) {
+      const field = document.getElementById(fieldId);
+      const error = document.createElement('div');
+      error.className = 'error-message';
+      error.style.color = 'var(--secondary)';
+      error.style.fontSize = '14px';
+      error.style.marginTop = '5px';
+      error.textContent = message;
+      
+      // Insert error after the field
+      field.parentNode.appendChild(error);
+      
+      // Highlight the field
+      field.style.borderColor = 'var(--secondary)';
+    }
 
     // Order Details Modal functionality
     function setupOrderDetailsModal() {
