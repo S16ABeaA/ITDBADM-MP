@@ -449,15 +449,16 @@ require_once '../dependencies/config.php';
         </div>
       </div>
 
+      <!--  
       <div class="chart-card">
         <h3 class="chart-title">Branch Performance</h3>
         <div class="chart-container">
           <canvas id="branchChart"></canvas>
         </div>
       </div>
-    </div>
+    </div>-->
 
-    <!-- Detailed Reports Section -->
+    <!-- Detailed Reports Section 
     <div class="detailed-reports">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3>Top Selling Products</h3>
@@ -517,9 +518,9 @@ require_once '../dependencies/config.php';
           </tr>
         </tbody>
       </table>
-    </div>
+    </div> -->
 
-    <!-- Low Stock Alert -->
+    <!-- Low Stock Alert 
     <div class="detailed-reports" style="margin-top: 30px;">
       <h3 style="color: #e74c3c; margin-bottom: 20px;">
         <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
@@ -558,7 +559,7 @@ require_once '../dependencies/config.php';
           </tr>
         </tbody>
       </table>
-    </div>
+    </div>  -->
         
     <!-- User Deletion Log -->
     <div class="detailed-reports" style="margin-top: 30px;">
@@ -824,7 +825,7 @@ require_once '../dependencies/config.php';
   });
 
 
-        // Branch Performance Chart
+        /*// Branch Performance Chart
         const branchCtx = document.getElementById('branchChart').getContext('2d');
         new Chart(branchCtx, {
           type: 'radar',
@@ -852,7 +853,7 @@ require_once '../dependencies/config.php';
               }
             }
           }
-        });
+        });*/
       }
 
       function generateReport() {
