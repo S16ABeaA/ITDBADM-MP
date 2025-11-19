@@ -458,7 +458,7 @@ require_once '../dependencies/config.php';
       </div>
     </div>-->
 
-    <!-- Detailed Reports Section 
+    <!-- Detailed Reports Section -->
     <div class="detailed-reports">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h3>Top Selling Products</h3>
@@ -471,56 +471,39 @@ require_once '../dependencies/config.php';
             <th>Category</th>
             <th>Units Sold</th>
             <th>Revenue</th>
-            <th>Profit</th>
-            <th>Stock Status</th>
           </tr>
         </thead>
         <tbody>
+          <?php
+          $topselling = "SELECT COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name) AS ProductName, p.Type AS Category, SUM(od.Quantity) AS UnitsSold, SUM(od.Quantity * od.Price) AS TotalRevenue
+                        FROM orderdetails od
+                        JOIN orders o ON o.OrderID = od.OrderID
+                        JOIN product p ON p.ProductID = od.ProductID
+                        LEFT JOIN bowlingball bb ON bb.ProductID = p.ProductID AND bb.BranchID = p.BranchID
+                        LEFT JOIN bowlingshoes bs ON bs.ProductID = p.ProductID AND bs.BranchID = p.BranchID
+                        LEFT JOIN bowlingbag bg ON bg.ProductID = p.ProductID AND bg.BranchID = p.BranchID
+                        LEFT JOIN bowlingaccessories ba ON ba.ProductID = p.ProductID AND ba.BranchID = p.BranchID
+                        LEFT JOIN cleaningsupplies cs ON cs.ProductID = p.ProductID AND cs.BranchID = p.BranchID
+                        GROUP BY ProductName, Category
+                        ORDER BY UnitsSold DESC, TotalRevenue DESC";
+          $topsellingresult = $conn->query($topselling);
+          while ($topsellingdata = $topsellingresult->fetch_assoc()) {
+            $productname = $topsellingdata['ProductName'];
+            $category = $topsellingdata['Category'];
+            $unitssold = $topsellingdata['UnitsSold'];
+            $totalrevenue = $topsellingdata['TotalRevenue'];
+          ?>
           <tr>
-            <td>Phantom Bowling Ball</td>
-            <td>Bowling Balls</td>
-            <td>156</td>
-            <td>₱1,267,478</td>
-            <td>₱415,892</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-          </tr>
-          <tr>
-            <td>Tournament Roller Pro</td>
-            <td>Bowling Bags</td>
-            <td>89</td>
-            <td>₱382,699</td>
-            <td>₱125,456</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-          </tr>
-          <tr>
-            <td>Pro Performance Shoes</td>
-            <td>Bowling Shoes</td>
-            <td>67</td>
-            <td>₱234,567</td>
-            <td>₱76,890</td>
-            <td><span class="status-badge status-low-stock">Low Stock</span></td>
-          </tr>
-          <tr>
-            <td>Elite Grip Set</td>
-            <td>Accessories</td>
-            <td>234</td>
-            <td>₱187,654</td>
-            <td>₱61,567</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-          </tr>
-          <tr>
-            <td>Premium Cleaner Kit</td>
-            <td>Cleaning Supplies</td>
-            <td>178</td>
-            <td>₱156,789</td>
-            <td>₱51,345</td>
-            <td><span class="status-badge status-active">In Stock</span></td>
-          </tr>
+            <td><?php echo htmlspecialchars($productname); ?></td>
+            <td><?php echo htmlspecialchars($category); ?></td>
+            <td><?php echo htmlspecialchars($unitssold); ?></td>
+            <td>₱<?php echo number_format($totalrevenue, 2); ?></td>
+          </tr> <?php } ?>
         </tbody>
       </table>
-    </div> -->
+    </div> 
 
-    <!-- Low Stock Alert 
+    <!-- Low Stock Alert -->
     <div class="detailed-reports" style="margin-top: 30px;">
       <h3 style="color: #e74c3c; margin-bottom: 20px;">
         <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
@@ -530,36 +513,35 @@ require_once '../dependencies/config.php';
           <tr>
             <th>Product Name</th>
             <th>Current Stock</th>
-            <th>Minimum Required</th>
-            <th>Status</th>
             <th>Last Ordered</th>
           </tr>
         </thead>
         <tbody>
+          <?php
+          $lowstockalert = "SELECT COALESCE(bb.Name, bs.Name, bg.Name, ba.Name, cs.Name) AS ProductName, p.quantity AS CurrentStock, 
+                          (SELECT MAX(o.DatePurchased) FROM orderdetails od JOIN orders o ON o.OrderID = od.OrderID WHERE od.ProductID = p.ProductID) AS LastOrdered
+                            FROM product p
+                            LEFT JOIN bowlingball bb ON bb.ProductID = p.ProductID AND bb.BranchID = p.BranchID
+                            LEFT JOIN bowlingshoes bs ON bs.ProductID = p.ProductID AND bs.BranchID = p.BranchID
+                            LEFT JOIN bowlingbag bg ON bg.ProductID = p.ProductID AND bg.BranchID = p.BranchID
+                            LEFT JOIN bowlingaccessories ba ON ba.ProductID = p.ProductID AND ba.BranchID = p.BranchID
+                            LEFT JOIN cleaningsupplies cs ON cs.ProductID = p.ProductID AND cs.BranchID = p.BranchID
+                            WHERE p.quantity < 10 AND p.quantity >=1
+                            ORDER BY p.quantity ASC";
+          $lowstockresult = $conn->query($lowstockalert);
+          while ($lowstockdata = $lowstockresult->fetch_assoc()) {
+            $productname = $lowstockdata['ProductName'];
+            $currentstock = $lowstockdata['CurrentStock'];
+            $lastordered = $lowstockdata['LastOrdered'];
+          ?>
           <tr>
-            <td>Black Widow 2.0</td>
-            <td>3</td>
-            <td>15</td>
-            <td><span class="status-badge status-low-stock">Critical</span></td>
-            <td>2024-01-15</td>
-          </tr>
-          <tr>
-            <td>Pro Performance Shoes (Size 9)</td>
-            <td>2</td>
-            <td>10</td>
-            <td><span class="status-badge status-low-stock">Critical</span></td>
-            <td>2024-01-10</td>
-          </tr>
-          <tr>
-            <td>Compact Single Bag</td>
-            <td>5</td>
-            <td>12</td>
-            <td><span class="status-badge status-low-stock">Low</span></td>
-            <td>2024-01-18</td>
-          </tr>
+            <td><?php echo htmlspecialchars($productname); ?></td>
+            <td><?php echo htmlspecialchars($currentstock); ?></td>
+            <td><?php echo htmlspecialchars($lastordered); ?></td>
+          </tr> <?php } ?>
         </tbody>
       </table>
-    </div>  -->
+    </div>  
         
     <!-- User Deletion Log -->
     <div class="detailed-reports" style="margin-top: 30px;">
