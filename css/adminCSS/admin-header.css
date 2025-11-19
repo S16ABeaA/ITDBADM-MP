@@ -22,7 +22,8 @@
   align-items: center;
   border-bottom: 2px solid rgb(240, 240, 240);
   background-color: var(--primary);
-  z-index: 100; /* Ensure header is above other content */
+  z-index: 100;
+  overflow: visible;
 }
 
 .header-format{
@@ -155,6 +156,8 @@
   margin-right: 20px;
   align-items: center;
   gap:10px;
+  position: relative;
+  z-index: 1000;
 }
 
 .branch-label {
@@ -176,9 +179,17 @@
   outline: none;
   cursor: pointer;
   transition: 0.2s ease;
+  position: relative;
+  z-index: 1000;
 }
 
 #branch option {
-  background-color: var(--primary);
-  color: var(--light);
+  background-color: white;
+  color: #2c3e50;
+  padding: 8px;
+}
+
+#branch option:checked {
+  background-color: #3498db;
+  color: white;
 }
