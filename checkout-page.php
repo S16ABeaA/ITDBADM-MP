@@ -264,7 +264,7 @@ echo "<script>console.log('Currencies: " . json_encode($currencies) . "');</scri
 
         <div class="order product-order">
           <div class="order-image-container">
-            <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($productName); ?>">
+            <img class="order-image" src="<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($productName); ?>">
           </div>
           <div class="order-info">
             <div class="product-name">

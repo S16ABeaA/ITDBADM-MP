@@ -78,7 +78,7 @@ if ($_SESSION['user_id'] === null) {
             $displayName = $weight ? ($name . ' - ' . $weight . 'lbs') : $name;
 
             echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
-            echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $displayName . '">';
+            echo '  <img class="hp-product-image" src="'. $img . '" alt="' . $displayName . '">';
             if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
             echo '  <h5 class="hp-product-name">' . $displayName . '</h5>';
             echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
@@ -127,7 +127,7 @@ if ($_SESSION['user_id'] === null) {
             $soldOut = ($quantity <= 0);
 
             echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
-            echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+            echo '  <img class="hp-product-image" src="'. $img . '" alt="' . $name . '">';
             if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
             echo '  <h5 class="hp-product-name">' . $name . '</h5>';
             echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
@@ -175,7 +175,7 @@ if ($_SESSION['user_id'] === null) {
             $soldOut = ($quantity <= 0);
 
             echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
-            echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+            echo '  <img class="hp-product-image" src="'. $img . '" alt="' . $name . '">';
             if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
             echo '  <h5 class="hp-product-name">' . $name . '</h5>';
             echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
@@ -225,7 +225,7 @@ if ($_SESSION['user_id'] === null) {
             $soldOut = ($quantity <= 0);
 
             echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
-            echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+            echo '  <img class="hp-product-image" src="'. $img . '" alt="' . $name . '">';
             if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
             echo '  <h5 class="hp-product-name">' . $name . '</h5>';
             echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';
@@ -274,7 +274,7 @@ if ($_SESSION['user_id'] === null) {
             $soldOut = ($quantity <= 0);
 
             echo '<div class="hp-product-container" onclick="location.href=\'product-page.php?id=' . $id . '\'">';
-            echo '  <img class="hp-product-image" src="./images/' . $img . '" alt="' . $name . '">';
+            echo '  <img class="hp-product-image" src="'. $img . '" alt="' . $name . '">';
             if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>';
             echo '  <h5 class="hp-product-name">' . $name . '</h5>';
             echo '  <h2 class="hp-product-price">₱' . number_format($price, 2) . '</h2>';

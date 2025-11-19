@@ -175,7 +175,7 @@ $stmt->close();
                 $displayName = $extra ? ($name . ' - ' . $extra) : $name;
             ?>
             <div class="hp-product-container" onclick="location.href='product-page.php?id=<?php echo $id; ?>'">
-                <img class="hp-product-image" src="./images/<?php echo $img; ?>" alt="<?php echo $displayName; ?>">
+                <img class="hp-product-image" src="<?php echo $img; ?>" alt="<?php echo $displayName; ?>">
                 <?php if ($soldOut) echo '<div class="sold-out">SOLD OUT</div>'; ?>
                 <h5 class="hp-product-name"><?php echo $displayName; ?></h5>
                 <h2 class="hp-product-price">₱<?php echo number_format($priceVal, 2); ?></h2>

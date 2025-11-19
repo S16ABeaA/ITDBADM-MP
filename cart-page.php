@@ -107,7 +107,7 @@ if ($_SESSION['user_id'] == null) {
           <div class="order product-order" data-product="<?php echo $product['productID']; ?>" data-branch="<?php echo $product['branchID']; ?>" data-cartkey="<?php echo htmlspecialchars($cartKey); ?>" data-price="<?php echo $cartItem['price']; ?>">
 
             <div class="order-image-container">
-              <img class="order-image" src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+              <img class="order-image" src="<?php echo htmlspecialchars($product['ImageID']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
             </div>
 
             <div class="order-info">

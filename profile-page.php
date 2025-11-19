@@ -253,7 +253,7 @@ $conn->close();
               <?php if ($hasProducts || $hasServices): ?>
                 <div class="order-image">
                   <?php if ($hasProducts): ?>
-                    <img src="./images/<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ImageID']); ?>" 
+                    <img src="<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ImageID']); ?>" 
                          alt="<?php echo htmlspecialchars($orderItems[$order['OrderID']][0]['ProductName']); ?>"
                          onerror="this.src='./images/default_product.jpg'">
                   <?php else: ?>
@@ -626,7 +626,7 @@ $conn->close();
             itemElement.className = 'order-item';
             itemElement.innerHTML = `
               <div class="item-image">
-                <img src="./images/${item.ImageID}" alt="${item.ProductName}" onerror="this.src='./images/default_product.jpg'">
+                <img src="${item.ImageID}" alt="${item.ProductName}" onerror="this.src='./images/default_product.jpg'">
               </div>
               <div class="item-details">
                 <div class="item-name">${item.ProductName}</div>

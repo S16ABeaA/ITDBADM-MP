@@ -6,21 +6,21 @@ function getDBConnection($role = 'customer') {
             'username' => 'student2',
             'password' => 'Dlsu1234!',
             'name' => 'AnimoBowl',
-            'port' => 3307
+            'port' => 3308
         ],
         'admin' => [
             'server' => '127.0.0.1',
             'username' => 'student1',
             'password' => 'Dlsu1234!',
             'name' => 'AnimoBowl',
-            'port' => 3307
+            'port' => 3308
         ],
         'customer' => [
             'server' => '127.0.0.1',
             'username' => 'student3',
             'password' => 'Dlsu1234!',
             'name' => 'AnimoBowl',
-            'port' => 3307
+            'port' => 3308
         ]
     ];
 

@@ -159,7 +159,7 @@ $conn->close();
       <!-- Product Image -->
       <div class="image-container">
         <img class="image" 
-             src="./images/<?php echo htmlspecialchars($product['ImageID']); ?>" 
+             src="<?php echo htmlspecialchars($product['ImageID']); ?>" 
              alt="<?php echo htmlspecialchars($categoryData['Name']); ?>">
       </div>
 
