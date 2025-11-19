@@ -6,20 +6,8 @@ include("header.html");
 $userID = $_SESSION['user_id'];
 $role = $_SESSION['user_role'];
 
-// Test the connection
-if (!$conn) {
-    echo "<script>console.log('Database connection failed!');</script>";
-} else {
-    echo "<script>console.log('Database connected successfully.');</script>";
-}
-
-//debugging
-echo "<script>console.log('User ID: " . json_encode($userID) . "');</script>";
-echo "<script>console.log('User Role: " . json_encode($role) . "');</script>";
-
 if ($_SESSION['user_id'] == null) {
-  echo "<script>window.location.href='login-signup.php';</script>";
-  exit();
+  header("Location: login-signup.php");
 }
 
 // Call stored procedure GetUserProfile

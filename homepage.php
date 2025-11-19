@@ -12,7 +12,7 @@ $branchSelected = isset($_SESSION['selected_branch_id']) && !empty($_SESSION['se
 $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
 
 if ($_SESSION['user_id'] === null) {
-    header("Location: login-signup.php");
+  header("Location: login-signup.php");
 }
 ?>
 
