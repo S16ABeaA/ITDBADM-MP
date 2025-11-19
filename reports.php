@@ -1,5 +1,6 @@
 <?php
-require_once '../dependencies/config.php';
+require_once 'dependencies/config.php';
+require_once 'dependencies/session.php';
 // Get branch ID from session (set by header via set_branch.php)
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 $branchId = $_SESSION['staff_branch_id'] ?? null;
@@ -7,6 +8,10 @@ $branchFilterSQL = '';
 if ($branchId) {
   $branchFilterSQL = ' AND BranchID = ' . intval($branchId);
 }
+
+// Get appropriate database connection
+$role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'staff';
+$conn = getDBConnection($role);
 ?>
 <!DOCTYPE html>
 <html lang="en">

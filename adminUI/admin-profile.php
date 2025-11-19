@@ -1,7 +1,7 @@
 <?php 
 require_once '../dependencies/session.php';
 require_once '../dependencies/config.php';
-include("./admin-header.html");
+include("admin-header.html");
 
 $userID = $_SESSION['user_id'];
 $role = $_SESSION['user_role'];
@@ -566,4 +566,4 @@ $conn->close();
 </body>
 </html>
 
-<?php include("footer.html")?>
+<?php include("../footer.html")?>
