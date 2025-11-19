@@ -1,0 +1,569 @@
+<?php 
+require_once '../dependencies/session.php';
+require_once '../dependencies/config.php';
+include("./admin-header.html");
+
+$userID = $_SESSION['user_id'];
+$role = $_SESSION['user_role'];
+
+if ($_SESSION['user_id'] == null) {
+  header("Location: ../login-signup.php");
+}
+
+// Call stored procedure GetUserProfile
+$stmt = $conn->prepare("CALL GetUserProfile(?)");
+$stmt->bind_param("i", $userID);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+
+//debugging
+echo "<script>console.log('User ID: " . json_encode($user) . "');</script>";
+
+$stmt->close();
+$conn->next_result();
+
+// Fetch user's recent orders
+$ordersSQL = "SELECT o.OrderID, o.CurrencyID, o.DatePurchased, o.Status, o.Total, o.PaymentMode, o.DeliveryMethod
+              FROM orders o 
+              WHERE o.CustomerID = ? 
+              ORDER BY o.DatePurchased DESC 
+              LIMIT 10";
+$ordersStmt = $conn->prepare($ordersSQL);
+$ordersStmt->bind_param("i", $userID);
+$ordersStmt->execute();
+$ordersResult = $ordersStmt->get_result();
+$recentOrders = $ordersResult->fetch_all(MYSQLI_ASSOC);
+$ordersStmt->close();
+
+// Get currency rates for conversion
+$currencySQL = "SELECT CurrencyID, Currency_Rate, Symbol FROM currency";
+$currencyStmt = $conn->prepare($currencySQL);
+$currencyStmt->execute();
+$currencyResult = $currencyStmt->get_result();
+$currencyRates = [];
+$currencySymbols = [];
+
+while ($currency = $currencyResult->fetch_assoc()) {
+    $currencyRates[$currency['CurrencyID']] = $currency['Currency_Rate'];
+    $currencySymbols[$currency['CurrencyID']] = $currency['Symbol'];
+}
+$currencyStmt->close();
+
+// Fetch order items for all orders - FIXED to avoid duplicates
+$orderItems = [];
+$serviceItems = [];
+
+if (!empty($recentOrders)) {
+    $orderIDs = array_column($recentOrders, 'OrderID');
+    $placeholders = str_repeat('?,', count($orderIDs) - 1) . '?';
+    
+    // Get PRODUCT items
+    $itemsSQL = "SELECT DISTINCT od.OrderID, od.ProductID, od.Quantity, od.price,
+                        p.ImageID,
+                        COALESCE(bb.Name, bs.name, bg.Name, ba.Name, cs.Name) as ProductName
+                 FROM orderdetails od
+                 JOIN product p ON od.ProductID = p.ProductID
+                 LEFT JOIN bowlingball bb ON (od.ProductID = bb.ProductID)
+                 LEFT JOIN bowlingshoes bs ON (od.ProductID = bs.ProductID)
+                 LEFT JOIN bowlingbag bg ON (od.ProductID = bg.ProductID)
+                 LEFT JOIN bowlingaccessories ba ON (od.ProductID = ba.ProductID)
+                 LEFT JOIN cleaningsupplies cs ON (od.ProductID = cs.ProductID)
+                 WHERE od.OrderID IN ($placeholders)
+                 ORDER BY od.OrderID, od.ProductID";
+    
+    $itemsStmt = $conn->prepare($itemsSQL);
+    $itemsStmt->bind_param(str_repeat('i', count($orderIDs)), ...$orderIDs);
+    $itemsStmt->execute();
+    $itemsResult = $itemsStmt->get_result();
+    
+    while ($item = $itemsResult->fetch_assoc()) {
+        $orderItems[$item['OrderID']][] = $item;
+    }
+    $itemsStmt->close();
+    
+    // Get SERVICE items
+    $servicesSQL = "SELECT sd.OrderID, sd.ServiceID, sd.isFromStore, sd.price,
+                           s.Type as ServiceName
+                    FROM servicedetails sd
+                    JOIN services s ON sd.ServiceID = s.ServiceID
+                    WHERE sd.OrderID IN ($placeholders)
+                    ORDER BY sd.OrderID, sd.ServiceID";
+    
+    $servicesStmt = $conn->prepare($servicesSQL);
+    $servicesStmt->bind_param(str_repeat('i', count($orderIDs)), ...$orderIDs);
+    $servicesStmt->execute();
+    $servicesResult = $servicesStmt->get_result();
+    
+    while ($service = $servicesResult->fetch_assoc()) {
+        $serviceItems[$service['OrderID']][] = $service;
+    }
+    $servicesStmt->close();
+}
+
+// Handle Save Changes POST
+if (isset($_POST['saveChanges'])) {
+    $firstname = trim($_POST['firstname']);
+    $lastname = trim($_POST['lastname']);
+    $email = trim($_POST['email']);
+    $mobile = trim($_POST['mobile']);
+    $city = trim($_POST['city']);
+    $street = trim($_POST['street']);
+    $zip = trim($_POST['zip']);
+
+    // Check for actual changes
+    $changes = [];
+    if ($firstname !== $user['FirstName']) $changes[] = "Firstname: '{$firstname}' != '{$user['FirstName']}'";
+    if ($lastname !== $user['LastName']) $changes[] = "Lastname: '{$lastname}' != '{$user['LastName']}'";
+    if ($email !== $user['Email']) $changes[] = "Email: '{$email}' != '{$user['Email']}'";
+    if ($mobile !== $user['MobileNumber']) $changes[] = "Mobile: '{$mobile}' != '{$user['MobileNumber']}'";
+    if ($city !== $user['City']) $changes[] = "City: '{$city}' != '{$user['City']}'";
+    if ($street !== $user['Street']) $changes[] = "Street: '{$street}' != '{$user['Street']}'";
+    if ($zip !== $user['zip_code']) $changes[] = "ZIP: '{$zip}' != '{$user['zip_code']}'";
+
+    try {
+        $stmt = $conn->prepare("CALL ChangeUserInformation(?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssssss", $userID, $firstname, $lastname, $mobile, $email, $city, $street, $zip);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Profile updated successfully!'); window.location.href='admin-profile.php';</script>";
+        } else {
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
+        $stmt->close();
+        $conn->next_result();
+        
+    } catch (Exception $e) {
+        echo "<script>alert('Error updating profile: " . addslashes($e->getMessage()) . "'); console.error('Update error:', '" . addslashes($e->getMessage()) . "');</script>";
+    }
+    exit;
+} elseif (isset($_POST['savePasswordChanges'])) {
+    $currentPassword = $_POST['currentPassword'];
+    $newPassword = $_POST['newPassword'];
+
+    // Debug: Check what we're receiving
+    error_log("Password change attempt - UserID: $userID, CurrentPassLength: " . strlen($currentPassword));
+    
+    try {
+        // First, verify the current password
+        $verifyStmt = $conn->prepare("SELECT Password FROM users WHERE UserID = ?");
+        $verifyStmt->bind_param("i", $userID);
+        
+        if (!$verifyStmt->execute()) {
+            throw new Exception("Failed to verify current password");
+        }
+        
+        $verifyStmt->store_result();
+        
+        if ($verifyStmt->num_rows === 0) {
+            throw new Exception("User not found");
+        }
+        
+        $verifyStmt->bind_result($storedHashedPassword);
+        $verifyStmt->fetch();
+        $verifyStmt->close();
+
+        // Debug: Check the hash we retrieved
+        error_log("Stored hash: " . $storedHashedPassword);
+        
+        // Verify current password - THIS SHOULD WORK
+        if (!password_verify($currentPassword, $storedHashedPassword)) {
+            error_log("Password verification failed for user: $userID");
+            echo "<script>alert('Current password is incorrect!'); window.location.href='admin-profile.php';</script>";
+            exit;
+        }
+
+        error_log("Password verification successful for user: $userID");
+        
+        // Hash the new password before storing it
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $stmt = $conn->prepare("CALL UpdateUserPassword(?, ?)");
+        $stmt->bind_param("is", $userID, $hashedPassword);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Password changed successfully!'); window.location.href='admin-profile.php';</script>";
+        } else {
+            throw new Exception("Failed to update password in database");
+        }
+        
+        $stmt->close();
+        $conn->next_result();
+        
+    } catch (Exception $e) {
+        // Log the error for debugging
+        error_log("Password change error: " . $e->getMessage());
+        echo "<script>alert('Error changing password! Please try again.'); window.location.href='admin-profile.php';</script>";
+    }
+    exit;
+}
+
+$conn->close();
+?>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Page</title>
+  <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/profile-page.css">
+</head>
+<body>
+  <div class="content-section">
+    <div class="user-info-section">
+      <div class="image-container">
+        <img class="profile-picture" src="../images/default_profilepic.jpg" alt="Profile Picture">
+      </div>
+      
+      <div class="user-info">
+        <div class="name"><?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?></div>
+        <div class="email"><?php echo htmlspecialchars($user['Email']); ?></div>
+        <button id="logoutBtn" class="btn-logout">Logout</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="account">Account Details</div>
+    </div>
+
+    <!-- Account Details Tab -->
+    <div class="tab-content active" id="account">
+      <div class="account-details-section">
+        <div class="section-title">
+          <i class="fas fa-user"></i>
+          Account Details
+        </div>
+
+        <!-- Form to update account details -->
+        <form method="POST">
+          <div class="details-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" name="firstname" value="<?php echo htmlspecialchars($user['FirstName']); ?>" required>
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" name="lastname" value="<?php echo htmlspecialchars($user['LastName']); ?>" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" name="email" value="<?php echo htmlspecialchars($user['Email']); ?>" required>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="text" name="mobile" value="<?php echo htmlspecialchars($user['MobileNumber']); ?>" required>
+            </div>
+
+            <div class="form-group">
+              <br><label for="address">Address</label>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" name="city" value="<?php echo htmlspecialchars($user['City']); ?>">
+              </div>
+              <div class="form-group">
+                <label for="street">Street</label>
+                <input type="text" name="street" value="<?php echo htmlspecialchars($user['Street']); ?>">
+              </div>
+              <div class="form-group">
+                <label for="zip">ZIP Code</label>
+                <input type="text" name="zip" value="<?php echo htmlspecialchars($user['zip_code']); ?>">
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-change-password" id="changePasswordBtn" type="button">Change Password</button>
+              <button class="btn btn-secondary" type="reset">Cancel</button>
+              <button class="btn btn-primary" type="submit" name="saveChanges">Save Changes</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="modal" id="changePasswordModal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Change Password</h3>
+              <span class="close">&times;</span>
+            </div>
+            <form id="changePasswordForm" method="POST">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="currentPassword">Current Password</label>
+                  <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password" required>
+                </div>
+                <div class="form-group">
+                  <label for="newPassword">New Password</label>
+                  <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" required minlength="8">
+                </div>
+                <div class="form-group">
+                  <label for="confirmPassword">Confirm New Password</label>
+                  <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm new password" required>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelPasswordChange">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="savePasswordChange" name="savePasswordChanges">Change Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pass PHP data to JavaScript
+    const orderData = <?php echo json_encode([
+        'orders' => $recentOrders,
+        'orderItems' => $orderItems,
+        'serviceItems' => $serviceItems,
+        'user' => $user,
+        'currencySymbols' => $currencySymbols,
+        'currencyRates' => $currencyRates
+    ]); ?>;
+
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        window.location.href = '../user_logout.php';
+    });
+
+    // Tab functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
+        });
+        
+        // Add active class to clicked tab
+        tab.classList.add('active');
+        
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Show the selected tab content
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+
+    // Change Password Modal functionality
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    const changePasswordClose = changePasswordModal.querySelector('.close'); // Get close button from THIS modal
+    const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+
+    // Open modal
+    changePasswordBtn.addEventListener('click', () => {
+      changePasswordModal.style.display = 'block';
+    });
+
+    // Close modal functions
+    function closePasswordModal() {
+      changePasswordModal.style.display = 'none';
+      // Clear form fields and reset validation
+      changePasswordForm.reset();
+    }
+
+    // Use the specific close button for this modal
+    changePasswordClose.addEventListener('click', closePasswordModal);
+    cancelPasswordChange.addEventListener('click', closePasswordModal);
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === changePasswordModal) {
+        closePasswordModal();
+      }
+    });
+
+    // Handle form submission
+    changePasswordForm.addEventListener('submit', (event) => {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      let isValid = true;
+      
+      // Clear previous error messages
+      document.querySelectorAll('.error-message').forEach(error => error.remove());
+      
+      if (newPassword !== confirmPassword) {
+        showError('confirmPassword', 'New passwords do not match');
+        isValid = false;
+      }
+      
+      if (newPassword.length < 8) {
+        showError('newPassword', 'New password must be at least 8 characters long');
+        isValid = false;
+      }
+      
+      if (currentPassword.length === 0) {
+        showError('currentPassword', 'Please enter your current password');
+        isValid = false;
+      }
+      
+      if (!isValid) {
+        event.preventDefault();
+      }
+    });
+
+    function showError(fieldId, message) {
+      const field = document.getElementById(fieldId);
+      const error = document.createElement('div');
+      error.className = 'error-message';
+      error.style.color = 'var(--secondary)';
+      error.style.fontSize = '14px';
+      error.style.marginTop = '5px';
+      error.textContent = message;
+      
+      // Insert error after the field
+      field.parentNode.appendChild(error);
+      
+      // Highlight the field
+      field.style.borderColor = 'var(--secondary)';
+    }
+
+    // Order Details Modal functionality
+    function setupOrderDetailsModal() {
+      const orderDetailsModal = document.getElementById('orderDetailsModal');
+      const closeOrderModal = document.getElementById('closeOrderModal');
+      const closeBtn = orderDetailsModal.querySelector('.close');
+
+      // Function to open modal with order data
+      function openOrderDetailsModal(orderId) {
+        const order = orderData.orders.find(o => o.OrderID == orderId);
+        const products = orderData.orderItems[orderId] || [];
+        const services = orderData.serviceItems[orderId] || [];
+        const currencySymbol = orderData.currencySymbols[order.CurrencyID] || '₱';
+
+        if (!order) return;
+
+        // Populate modal with order data
+        document.getElementById('modalOrderId').textContent = order.OrderID;
+        document.getElementById('modalOrderDate').textContent = new Date(order.DatePurchased).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        document.getElementById('modalOrderStatus').textContent = order.Status;
+        document.getElementById('modalOrderStatus').className = `status-${order.Status.toLowerCase()}`;
+        document.getElementById('modalOrderPayment').textContent = order.PaymentMode;
+        document.getElementById('modalOrderDelivery').textContent = order.DeliveryMethod;
+
+        // Use the stored order total
+        const storedTotal = parseFloat(order.Total);
+
+        // Populate order items (both products and services)
+        const itemsContainer = document.getElementById('modalOrderItems');
+        itemsContainer.innerHTML = '';
+
+        // Display products
+        if (products.length > 0) {
+          const uniqueProducts = [];
+          const seenProducts = new Set();
+          
+          products.forEach(item => {
+            const productKey = `${item.ProductID}-${item.price}`;
+            if (!seenProducts.has(productKey)) {
+              seenProducts.add(productKey);
+              uniqueProducts.push(item);
+            }
+          });
+
+          uniqueProducts.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'order-item';
+            itemElement.innerHTML = `
+              <div class="item-image">
+                <img src="${item.ImageID}" alt="${item.ProductName}" onerror="this.src='./images/default_product.jpg'">
+              </div>
+              <div class="item-details">
+                <div class="item-name">${item.ProductName}</div>
+                <div class="item-price">${currencySymbol}${parseFloat(item.price).toFixed(2)}</div>
+                <div class="item-quantity">Quantity: ${item.Quantity}</div>
+              </div>
+              <div class="item-total">${currencySymbol}${(parseFloat(item.price) * parseInt(item.Quantity)).toFixed(2)}</div>
+            `;
+            itemsContainer.appendChild(itemElement);
+          });
+        }
+
+        // Display services
+        if (services.length > 0) {
+          services.forEach(service => {
+            const serviceElement = document.createElement('div');
+            serviceElement.className = 'order-item service-item';
+            const isFromStore = service.isFromStore ? 'Yes' : 'No';
+            const surchargeText = service.isFromStore ? '' : ' (+5% surcharge)';
+            
+            serviceElement.innerHTML = `
+              <div class="item-image">
+                <div class="service-icon">
+                  <i class="fas fa-tools"></i>
+                </div>
+              </div>
+              <div class="item-details">
+                <div class="item-name">${service.ServiceName} Service</div>
+                <div class="item-price">${currencySymbol}${parseFloat(service.price).toFixed(2)}</div>
+                <div class="item-quantity">Ball from store: ${isFromStore}${surchargeText}</div>
+              </div>
+              <div class="item-total">${currencySymbol}${parseFloat(service.price).toFixed(2)}</div>
+            `;
+            itemsContainer.appendChild(serviceElement);
+          });
+        }
+
+        if (products.length === 0 && services.length === 0) {
+          itemsContainer.innerHTML = '<p>No items found for this order.</p>';
+        }
+
+        // Populate total with correct currency symbol
+        document.getElementById('modalTotal').textContent = `${currencySymbol}${storedTotal.toFixed(2)}`;
+
+        // Show modal
+        orderDetailsModal.style.display = 'block';
+      }
+
+      // Function to close modal
+      function closeOrderModalFunc() {
+        orderDetailsModal.style.display = 'none';
+      }
+
+      // Close modal events
+      closeOrderModal.addEventListener('click', closeOrderModalFunc);
+      closeBtn.addEventListener('click', closeOrderModalFunc);
+
+      // Close modal when clicking outside
+      window.addEventListener('click', (event) => {
+        if (event.target === orderDetailsModal) {
+          closeOrderModalFunc();
+        }
+      });
+
+      // Add event listeners to view details buttons
+      document.querySelectorAll('.view-details-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const orderId = button.getAttribute('data-order-id');
+          openOrderDetailsModal(orderId);
+        });
+      });
+    }
+
+    // Initialize the modal when page loads
+    document.addEventListener('DOMContentLoaded', setupOrderDetailsModal);
+  </script>
+</body>
+</html>
+
+<?php include("footer.html")?>

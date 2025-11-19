@@ -186,3 +186,40 @@
   background-color: var(--primary);
   color: var(--light);
 }
+
+
+
+.ms-middle-section {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.ms-nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ms-nav-row {
+  display: flex;
+  justify-content: center;
+}
+
+.ms-nav-item {
+  color: var(--light);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ms-nav-item:hover {
+  color: var(--secondary);
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
