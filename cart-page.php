@@ -2,6 +2,10 @@
 require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 include("header.html"); 
+
+if ($_SESSION['user_id'] == null) {
+  header("Location: login-signup.php");
+}
 ?>
 
 <!DOCTYPE html>
