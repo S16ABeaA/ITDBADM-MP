@@ -1,6 +1,5 @@
 <?php
-require_once '../dependencies/config.php'; 
-include('admin-header.html');
+require_once '../dependencies/config.php';
 // Ensure session branch (set by admin-header via set_branch.php) is available
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 $branchId = $_SESSION['staff_branch_id'] ?? null;
@@ -20,9 +19,11 @@ if ($branchId) {
   <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link href="../css/adminCSS/admin-header.css" rel="stylesheet">
   <link href="../css/adminCSS/admin-homepage.css" rel="stylesheet">
 </head>
 <body>
+  <?php include('admin-header-fragment.html'); ?>
   <div class="content-section">
     <!-- Navigation Menu -->
     <div class="nav-menu">

@@ -32,24 +32,51 @@
         <div class="branch-group">
             <label for="branch" class="branch-label">Branch</label>
             <select id="branch" name="branch" required>
-              <option value="Makati">Makati</option>
-              <option value="Manila">Manila</option>
+              <option value="">Select Branch</option>
             </select>
         </div>
         <script>
           $(document).ready(function(){
-            // Initialize branch select from session
-            $.getJSON('../get_branch.php').done(function(resp){
-              if(resp && resp.branchName){
-                $('#branch').val(resp.branchName);
-              }
-            }).fail(function(){
-              console.warn('Could not fetch branch from session');
-            });
+            // Load all available branches from database
+            fetch('../get_branches.php')
+              .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+              })
+              .then(data => {
+                console.log('Branches data:', data);
+                if(data && data.branches && Array.isArray(data.branches)){
+                  // Clear and populate options
+                  $('#branch').empty().append('<option value="">Select Branch</option>');
+                  data.branches.forEach(function(branch){
+                    console.log('Adding branch:', branch.BranchID, branch.Name);
+                    $('#branch').append('<option value="' + branch.BranchID + '">' + branch.Name + '</option>');
+                  });
+                  
+                  // Set current branch if in session
+                  fetch('../get_branch.php')
+                    .then(r => r.json())
+                    .then(branchResp => {
+                      console.log('Current branch:', branchResp);
+                      if(branchResp && branchResp.branchId){
+                        $('#branch').val(branchResp.branchId);
+                      }
+                    });
+                } else {
+                  console.error('Invalid branches data:', data);
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching branches:', error);
+              });
 
             // When admin changes branch, post to set_branch.php and reload
             $('#branch').off('change').on('change', function(){
               const branchVal = $(this).val();
+              if(!branchVal){
+                alert('Please select a branch');
+                return;
+              }
               $.post('../set_branch.php', { branch: branchVal })
                 .done(function(r){
                   if(r && r.success){

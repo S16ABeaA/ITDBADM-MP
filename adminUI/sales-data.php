@@ -1,12 +1,19 @@
 <?php
 require_once '../dependencies/config.php';
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 header('Content-Type: application/json');
+
+$branchId = $_GET['branch_id'] ?? $_SESSION['staff_branch_id'] ?? null;
+$branchFilterSQL = '';
+if ($branchId) {
+  $branchFilterSQL = ' AND BranchID = ' . intval($branchId);
+}
 
 $monthlyData = [];
 
 // Loop through each month (1 to 12)
 for ($i = 1; $i <= 12; $i++) {
-    $sql = "SELECT SUM(Total) as total_per_month FROM orders WHERE MONTH(DatePurchased) = ? AND YEAR(DatePurchased) = YEAR(CURDATE());";
+    $sql = "SELECT SUM(Total) as total_per_month FROM orders WHERE MONTH(DatePurchased) = ? AND YEAR(DatePurchased) = YEAR(CURDATE())" . $branchFilterSQL . ";";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $i);
     $stmt->execute();

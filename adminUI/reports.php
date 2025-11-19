@@ -1,5 +1,13 @@
 <?php
-require_once '../dependencies/config.php'; 
+require_once '../dependencies/config.php';
+// Get branch ID from session (set by header via set_branch.php)
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+$branchId = $_SESSION['staff_branch_id'] ?? null;
+$branchFilterSQL = '';
+if ($branchId) {
+  $branchFilterSQL = ' AND BranchID = ' . intval($branchId);
+}
+include('admin-header.html');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,10 +15,11 @@ require_once '../dependencies/config.php';
   <meta charset="UTF-8">
   <title>Reports - Bowling Management System</title>
   <script src="https://kit.fontawesome.com/a39233b32c.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="../css/staffCSS/staff-homepage.css" rel="stylesheet">
+  <link href="../css/adminCSS/admin-header.css" rel="stylesheet">
   <link href="../css/adminCSS/reports.css" rel="stylesheet">
   <style>
     .reports-container {
@@ -269,7 +278,7 @@ require_once '../dependencies/config.php';
   </style>
 </head>
 <body>
-  <?php include('admin-header.html')?>
+  <?php include('admin-header-fragment.html'); ?>
   
   <div class="content-section">
     <div class="reports-container">
@@ -283,7 +292,7 @@ require_once '../dependencies/config.php';
         <?php
           $totalrevenue = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS revenue_this_month,
                                   SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS revenue_last_month
-                            FROM orders";
+                            FROM orders WHERE 1=1" . $branchFilterSQL;
           $revenueresult = $conn->query($totalrevenue);
           $revenuedata = $revenueresult->fetch_assoc();
           $thismonthrevenue = $revenuedata['revenue_this_month'];
@@ -311,7 +320,7 @@ require_once '../dependencies/config.php';
           $ordercomp = "SELECT SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN 1 ELSE 0 END) AS this_month,
                         SUM(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m')
                         THEN 1 ELSE 0 END) AS last_month, COUNT(*) as total_orders
-                        FROM orders";
+                        FROM orders WHERE 1=1" . $branchFilterSQL;
           $orderresult = $conn->query($ordercomp);
           $orderdata = $orderresult->fetch_assoc();
           $totalorders = $orderdata['total_orders'];
@@ -340,7 +349,7 @@ require_once '../dependencies/config.php';
         <?php
           $avgsalesmonth = "SELECT AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE, '%Y-%m') THEN Total END) AS avg_this_month,
                                   AVG(CASE WHEN DATE_FORMAT(DatePurchased, '%Y-%m') = DATE_FORMAT(CURRENT_DATE - INTERVAL 1 MONTH, '%Y-%m') THEN Total END) AS avg_last_month
-                            FROM orders";
+                            FROM orders WHERE 1=1" . $branchFilterSQL;
           $avgsalesresult = $conn->query($avgsalesmonth);
           $avgsalesdata = $avgsalesresult->fetch_assoc();
           $avgthismonth = $avgsalesdata['avg_this_month'];
@@ -372,7 +381,9 @@ require_once '../dependencies/config.php';
           </div>
           <?php
             $lowstockproducts = 0;
+            $branchProductFilter = empty($branchFilterSQL) ? '' : ' AND BranchID = ' . intval($branchId);
             $lowstockquery = "SELECT DISTINCT ProductID, SUM(quantity) FROM product
+                              WHERE 1=1" . $branchProductFilter . "
                               GROUP BY ProductID
                               HAVING SUM(quantity) < 10 AND SUM(quantity) >= 1";
             $lowstockresult = $conn->query($lowstockquery);
@@ -484,6 +495,7 @@ require_once '../dependencies/config.php';
                         LEFT JOIN bowlingbag bg ON bg.ProductID = p.ProductID AND bg.BranchID = p.BranchID
                         LEFT JOIN bowlingaccessories ba ON ba.ProductID = p.ProductID AND ba.BranchID = p.BranchID
                         LEFT JOIN cleaningsupplies cs ON cs.ProductID = p.ProductID AND cs.BranchID = p.BranchID
+                        WHERE 1=1" . (empty($branchFilterSQL) ? '' : ' AND o.BranchID = ' . intval($branchId)) . "
                         GROUP BY ProductName, Category
                         ORDER BY UnitsSold DESC, TotalRevenue DESC";
           $topsellingresult = $conn->query($topselling);
@@ -526,7 +538,7 @@ require_once '../dependencies/config.php';
                             LEFT JOIN bowlingbag bg ON bg.ProductID = p.ProductID AND bg.BranchID = p.BranchID
                             LEFT JOIN bowlingaccessories ba ON ba.ProductID = p.ProductID AND ba.BranchID = p.BranchID
                             LEFT JOIN cleaningsupplies cs ON cs.ProductID = p.ProductID AND cs.BranchID = p.BranchID
-                            WHERE p.quantity < 10 AND p.quantity >=1
+                            WHERE p.quantity < 10 AND p.quantity >=1" . (empty($branchFilterSQL) ? '' : ' AND p.BranchID = ' . intval($branchId)) . "
                             ORDER BY p.quantity ASC";
           $lowstockresult = $conn->query($lowstockalert);
           while ($lowstockdata = $lowstockresult->fetch_assoc()) {
@@ -642,7 +654,7 @@ require_once '../dependencies/config.php';
         </thead>
         <tbody>
           <?php
-          $inventorylog = "SELECT LogID, Name, BranchID, OldQuantity, NewQuantity, Price, ChangeType, ChangedAt FROM inventory_log ORDER BY ChangedAt DESC";
+          $inventorylog = "SELECT LogID, Name, BranchID, OldQuantity, NewQuantity, Price, ChangeType, ChangedAt FROM inventory_log WHERE BranchID = " . intval($branchId) . " ORDER BY ChangedAt DESC";
           $inventoryresult = $conn->query($inventorylog);
           if ($inventoryresult->num_rows > 0) {
             while ($inventorydata = $inventoryresult->fetch_assoc()) {
@@ -687,9 +699,13 @@ require_once '../dependencies/config.php';
       });
 
       function initializeCharts() {
+        // Get branch ID from PHP
+        const branchId = <?php echo $branchId ? intval($branchId) : 'null'; ?>;
+        const branchParam = branchId ? `?branch_id=${branchId}` : '';
+
         // Sales Performance Chart
 
-       fetch('sales-data.php')
+       fetch(`sales-data.php${branchParam}`)
       .then(response => response.json())
       .then(data => {
         const salesCtx = document.getElementById('salesChart').getContext('2d');
@@ -723,7 +739,7 @@ require_once '../dependencies/config.php';
         });
     });
 
-        fetch('products_category.php')
+        fetch(`products_category.php${branchParam}`)
   .then(response => response.json())
   .then(stats => {
       
@@ -763,7 +779,7 @@ require_once '../dependencies/config.php';
 
   });
 
-  fetch('revenue_trend.php')
+  fetch(`revenue_trend.php${branchParam}`)
   .then(r => r.json())
   .then(data => {
     const labels = data.map(d => d.label);
