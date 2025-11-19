@@ -10,6 +10,10 @@ $conn = getDBConnection($role);
 // Check if branch is selected
 $branchSelected = isset($_SESSION['selected_branch_id']) && !empty($_SESSION['selected_branch_id']);
 $branchId = $branchSelected ? $_SESSION['selected_branch_id'] : null;
+
+if ($_SESSION['user_id'] === null) {
+    header("Location: login-signup.php");
+}
 ?>
 
 <!DOCTYPE html>
