@@ -2,8 +2,6 @@
 require_once 'dependencies/session.php';
 require_once 'dependencies/config.php';
 include("header.html");
-
-// Get appropriate database connection
 $role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'customer';
 $conn = getDBConnection($role);
 
@@ -286,7 +284,7 @@ if ($_SESSION['user_id'] === null) {
         ?>
         <div class="display-view-btn">
           <button class="view-more-btn" onclick="location.href='view-all-products.php?type=cleaningsupplies'">View More</button>
-        </div>
+      </div>
       </div>
 
     <?php endif;?>
